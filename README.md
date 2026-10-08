@@ -25,7 +25,19 @@ The demo login is `demo@isker.local` / `IskerDemo2026`.
 The single image (`Dockerfile` at the repository root) builds the frontend and serves it from the API on one origin.
 Free Render services sleep after 15 minutes without traffic, so the first request after that takes about a minute.
 
-## Run with Docker
+## Develop in Docker (hot reload, nothing else to install)
+
+```bash
+docker compose -f docker-compose.dev.yml up      # first start takes a few minutes
+```
+
+- App: http://localhost:5173. Edit files in `frontend/`, `design-system/` or `backend/` and the page or API reloads by itself.
+- API docs: http://localhost:8000/api/docs
+- Demo: `demo@isker.local` / `IskerDemo2026`
+- Stop with `Ctrl+C` or `docker compose -f docker-compose.dev.yml down`. Add `-v` to also wipe the local database.
+- After changing `package.json` or `backend/requirements.txt`, restart with `--build`.
+
+## Run with Docker (production-like)
 
 ```bash
 cp .env.example .env      # optional; sensible development defaults are built in

@@ -1,0 +1,76 @@
+# Development in Docker with hot reload — nothing to install except Docker.
+#
+#   docker compose -f docker-compose.dev.yml up        # start (first run takes a few minutes)
+#   docker compose -f docker-compose.dev.yml down      # stop
+#
+# App (instant updates when you edit files):  http://localhost:5173
+# API + Swagger:                                http://localhost:8000/api/docs
+# Edit files in frontend/, design-system/ or backend/ — the browser / API reload automatically.
+name: isker-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: isker
+      POSTGRES_PASSWORD: isker
+      POSTGRES_DB: isker
+    volumes:
+      - dev-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"   # change the left number (e.g. "5433:5432") if 5432 is busy on your computer
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U isker -d isker"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    user: root
+    working_dir: /app
+    volumes:
+      - ./backend:/app          # your code, live
+    environment:
+      DATABASE_URL: postgresql+psycopg://isker:isker@postgres:5432/isker
+      JWT_SECRET: dev-only-secret-change-me-dev-only-secret
+      MOCK_AI: "true"
+      CORS_ORIGINS: http://localhost:5173
+      WATCHFILES_FORCE_POLLING: "true"
+    entrypoint: ["sh", "-c"]
+    command:
+      - >
+        alembic upgrade head &&
+        python -m app.seed.run &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /repo
+    volumes:
+      - ./:/repo                         # your code, live
+      - dev-node-modules:/repo/node_modules             # dependencies stay inside Docker,
+      - dev-frontend-node-modules:/repo/frontend/node_modules   # separate from your computer's
+    environment:
+      VITE_API_PROXY: http://backend:8000
+      VITE_USE_POLLING: "true"
+    command:
+      - sh
+      - -c
+      - >
+        (cmp -s package-lock.json node_modules/.lock-copy || (npm ci --no-audit --no-fund && cp package-lock.json node_modules/.lock-copy)) &&
+        npm -w frontend run dev -- --host 0.0.0.0
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  dev-pgdata:
+  dev-node-modules:
+  dev-frontend-node-modules:

@@ -11,6 +11,8 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    // In Docker on Windows/macOS file events from bind mounts are unreliable; poll instead.
+    watch: process.env.VITE_USE_POLLING === "true" ? { usePolling: true, interval: 300 } : undefined,
     proxy: { "/api": { target: apiTarget, changeOrigin: true } },
   },
   preview: { port: 4173, proxy: { "/api": { target: apiTarget, changeOrigin: true } } },
