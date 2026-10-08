@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     environment: str = Field(default="development", description="development | test | production")
     database_url: str = "postgresql+psycopg://isker:isker@localhost:5432/isker"
+    # Optional: directory with the built frontend (index.html). When set, the API also serves the SPA,
+    # so a single service hosts the whole platform (used by the one-click Render deployment).
+    static_dir: str = ""
 
     jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
@@ -39,6 +42,15 @@ class Settings(BaseSettings):
     demo_password: str = ""
     admin_email: str = "admin@isker.local"
     admin_password: str = ""
+
+    @field_validator("database_url")
+    @classmethod
+    def _psycopg_driver(cls, v: str) -> str:
+        # Hosting providers hand out postgres:// URLs; SQLAlchemy needs the psycopg 3 driver name.
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                return "postgresql+psycopg://" + v[len(prefix) :]
+        return v
 
     @field_validator("cors_origins", mode="before")
     @classmethod

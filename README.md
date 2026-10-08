@@ -13,6 +13,18 @@ AI-powered platform for **assessing and developing entrepreneurial competencies*
 | Database | PostgreSQL 16 |
 | AI | Provider abstraction: deterministic mock (default) or OpenAI; rubric-constrained, validated, logged |
 
+## Public link (deploy in one click)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ksvtmr/isker)
+
+The button creates a web service and a PostgreSQL database on Render's free plan from `render.yaml`. During
+deployment you choose an admin password (`ADMIN_PASSWORD`), and optionally an `OPENAI_API_KEY`. After about 5–10
+minutes the platform is available at a public address such as `https://isker.onrender.com`, which you can share.
+The demo login is `demo@isker.local` / `IskerDemo2026`.
+
+The single image (`Dockerfile` at the repository root) builds the frontend and serves it from the API on one origin.
+Free Render services sleep after 15 minutes without traffic, so the first request after that takes about a minute.
+
 ## Run with Docker
 
 ```bash

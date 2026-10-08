@@ -90,3 +90,29 @@ def test_cors_origins_parsed_from_comma_separated_env(monkeypatch):
 
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:8080, http://example.com")
     assert Settings().cors_origins == ["http://localhost:8080", "http://example.com"]
+
+
+def test_render_style_database_url_is_normalised(monkeypatch):
+    from app.core.config import Settings
+
+    monkeypatch.setenv("DATABASE_URL", "postgres://u:p@host:5432/db")
+    assert Settings().database_url == "postgresql+psycopg://u:p@host:5432/db"
+
+
+def test_spa_is_served_with_client_side_routes(tmp_path):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.main import mount_spa
+
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<html>isker</html>")
+    (tmp_path / "assets" / "app.js").write_text("console.log(1)")
+    (tmp_path.parent / "secret.txt").write_text("nope")
+    a = FastAPI()
+    mount_spa(a, tmp_path)
+    c = TestClient(a)
+    assert c.get("/dashboard").text == "<html>isker</html>"
+    assert c.get("/assets/app.js").text == "console.log(1)"
+    assert "nope" not in c.get("/../secret.txt").text
+    assert c.get("/api/unknown").status_code == 404

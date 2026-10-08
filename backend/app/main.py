@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.api.routes import admin, assessments, auth, competencies, learning, plan, practice, profile, progress
@@ -77,7 +80,29 @@ def create_app() -> FastAPI:
             db.close()
         return {"status": "ok" if ok else "degraded", "database": ok}
 
+    if settings.static_dir:
+        mount_spa(app, Path(settings.static_dir))
     return app
+
+
+def mount_spa(app: FastAPI, root: Path) -> None:
+    """Serve the built React app: real files when they exist, otherwise index.html (client-side routes)."""
+    root = root.resolve()
+    index = root / "index.html"
+    if not index.is_file():
+        logging.getLogger("isker").warning("STATIC_DIR %s has no index.html; SPA not served", root)
+        return
+    if (root / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=root / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str) -> FileResponse:
+        if path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        candidate = (root / path).resolve()
+        if path and candidate.is_file() and candidate.is_relative_to(root):
+            return FileResponse(candidate)
+        return FileResponse(index)
 
 
 app = create_app()
