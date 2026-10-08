@@ -1,0 +1,13 @@
+{
+  "name": "isker",
+  "private": true,
+  "description": "Isker — AI-powered platform for assessing and developing entrepreneurial competencies (EntreComp).",
+  "workspaces": ["design-system", "frontend"],
+  "scripts": {
+    "dev": "npm -w frontend run dev",
+    "build": "npm -w frontend run build",
+    "test": "npm -w frontend run test",
+    "lint": "npm -w frontend run lint",
+    "typecheck": "npm -w frontend run typecheck"
+  }
+}

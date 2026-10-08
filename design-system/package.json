@@ -1,0 +1,17 @@
+{
+  "name": "@isker/design-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Isker design system: tokens, styles and React components (single source of truth).",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "sideEffects": ["*.css"],
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "dependencies": {
+    "lucide-react": "0.460.0"
+  }
+}

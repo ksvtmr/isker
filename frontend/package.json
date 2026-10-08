@@ -1,0 +1,45 @@
+{
+  "name": "@isker/frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "3.9.1",
+    "@isker/design-system": "1.0.0",
+    "@tanstack/react-query": "5.62.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "7.54.0",
+    "react-router-dom": "6.28.0",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.17.0",
+    "@tailwindcss/vite": "4.0.0",
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.1.0",
+    "@testing-library/user-event": "14.5.2",
+    "@types/react": "18.3.17",
+    "@types/react-dom": "18.3.5",
+    "@vitejs/plugin-react": "4.3.4",
+    "eslint": "9.17.0",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "5.1.0",
+    "globals": "15.14.0",
+    "jsdom": "25.0.1",
+    "tailwindcss": "4.0.0",
+    "typescript": "5.7.2",
+    "typescript-eslint": "8.18.0",
+    "vite": "5.4.11",
+    "vitest": "2.1.8"
+  }
+}

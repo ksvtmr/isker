@@ -1,0 +1,87 @@
+/* Isker Design System — tokens (source of truth). Ported from the Isker DS bundle; see DESIGN_SYSTEM.md. */
+
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(./assets/fonts/Inter-cyrillic-ext.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(./assets/fonts/Inter-cyrillic.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(./assets/fonts/Inter-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(./assets/fonts/Inter-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root{
+--color-brand-50:#eef6ff;--color-brand-100:#d9eaff;--color-brand-200:#b9d8ff;--color-brand-300:#8fc0ff;--color-brand-400:#5c9fff;--color-brand-500:#347ff1;--color-brand-600:#2464d5;--color-brand-700:#1f50ad;--color-brand-800:#21458f;--color-brand-900:#203d76;
+--color-growth-50:#effcf6;--color-growth-100:#d9f8e9;--color-growth-200:#b7efd3;--color-growth-300:#83dfb6;--color-growth-400:#4dcc91;--color-growth-500:#25b875;--color-growth-600:#17965e;--color-growth-700:#14784e;--color-growth-800:#145f40;--color-growth-900:#124e37;
+--color-neutral-0:#ffffff;--color-neutral-50:#f8fafc;--color-neutral-100:#f1f5f9;--color-neutral-200:#e2e8f0;--color-neutral-300:#cbd5e1;--color-neutral-400:#94a3b8;--color-neutral-500:#64748b;--color-neutral-600:#475569;--color-neutral-700:#334155;--color-neutral-800:#1e293b;--color-neutral-900:#0f172a;
+--color-success:#16a34a;--color-success-bg:#f0fdf4;--color-warning:#d97706;--color-warning-bg:#fffbeb;--color-error:#dc2626;--color-error-bg:#fef2f2;--color-info:#2563eb;--color-info-bg:#eff6ff;
+--color-level-foundation:#94a3b8;--color-level-developing:#60a5fa;--color-level-intermediate:#3b82f6;--color-level-advanced:#22c55e;--color-level-proficient:#16a34a;
+/* Badge pairs (from LevelBadge / GapBadge source) */
+--level-foundation-bg:#f1f5f9;--level-foundation-fg:#334155;
+--level-developing-bg:#eff6ff;--level-developing-fg:#1d4ed8;
+--level-intermediate-bg:#eef2ff;--level-intermediate-fg:#4338ca;
+--level-advanced-bg:#f0fdf4;--level-advanced-fg:#15803d;
+--level-proficient-bg:#ecfdf5;--level-proficient-fg:#047857;
+--gap-low-bg:#f0fdf4;--gap-low-fg:#15803d;--gap-medium-bg:#fffbeb;--gap-medium-fg:#b45309;--gap-high-bg:#fef2f2;--gap-high-fg:#b91c1c;
+/* Domains */
+--domain-ideas:#347ff1;--domain-resources:#25b875;--domain-action:#1f50ad;
+/* Semantic aliases */
+--surface-page:var(--color-neutral-50);--surface-card:var(--color-neutral-0);--surface-subtle:var(--color-neutral-100);--surface-ai:var(--color-brand-50);
+--border-default:var(--color-neutral-200);--border-strong:var(--color-neutral-300);--border-ai:var(--color-brand-100);
+--text-primary:var(--color-neutral-900);--text-body:var(--color-neutral-700);--text-secondary:var(--color-neutral-500);--text-muted:var(--color-neutral-400);--text-on-accent:#ffffff;
+--accent:var(--color-brand-600);--accent-hover:var(--color-brand-700);--accent-soft:var(--color-brand-50);--accent-text:var(--color-brand-700);
+--growth:var(--color-growth-600);--growth-hover:var(--color-growth-700);
+--focus-ring:var(--color-brand-200);
+--danger-hover:#b91c1c;
+}
+:root{
+--font-sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+--text-xs:0.75rem;--text-sm:0.875rem;--text-md:1rem;--text-lg:1.125rem;--text-xl:1.25rem;--text-2xl:1.5rem;--text-3xl:1.875rem;--text-4xl:2.25rem;
+--weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+--leading-tight:1.2;--leading-snug:1.35;--leading-body:1.5;--leading-relaxed:1.714;
+--tracking-tight:-0.025em;--tracking-normal:0;--tracking-caps:0.06em;
+/* Roles */
+--type-page-title:600 var(--text-2xl)/1.25 var(--font-sans);
+--type-section-title:600 var(--text-lg)/1.35 var(--font-sans);
+--type-card-title:600 var(--text-md)/1.4 var(--font-sans);
+--type-body:400 var(--text-sm)/1.5 var(--font-sans);
+--type-label:500 var(--text-xs)/1.4 var(--font-sans);
+--type-metric:600 var(--text-3xl)/1.1 var(--font-sans);
+}
+:root{
+--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;
+--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:20px;--radius-2xl:28px;--radius-full:9999px;
+--shadow-sm:0 1px 2px rgb(15 23 42 / 0.05);--shadow-md:0 4px 12px rgb(15 23 42 / 0.08);--shadow-lg:0 10px 30px rgb(15 23 42 / 0.10);
+--sidebar-width:248px;--content-max-width:1440px;--bottom-nav-height:64px;
+--duration-fast:150ms; /* @kind other */
+--duration-base:200ms; /* @kind other */
+--duration-slow:500ms; /* @kind other */
+--ease-standard:cubic-bezier(0.2,0,0,1); /* @kind other */
+}

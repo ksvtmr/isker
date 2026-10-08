@@ -1,0 +1,86 @@
+/*
+ * App styles. Visual language comes exclusively from the Isker design system (tokens + isk-* classes).
+ * Tailwind is used only for layout/spacing utilities; its default colour palette is disabled so it cannot
+ * introduce colours outside the design system. Preflight is skipped: the DS base layer is the reset.
+ */
+@import "@isker/design-system/styles.css";
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --font-sans: var(--font-sans);
+}
+
+/* --- Layout grid (from the Isker UI kit) --- */
+
+.ik-app{display:flex;min-height:100vh}
+.ik-side{flex:none}
+.ik-main{flex:1;min-width:0}
+.ik-content{max-width:1200px;margin:0 auto;padding:32px 40px 64px}
+.ik-mobile-top,.ik-bottom{display:none}
+.ik-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.ik-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.ik-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.ik-span2{grid-column:span 2}
+.ik-grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.ik-row-btn{all:unset;display:block;cursor:pointer;border-radius:6px}.ik-row-btn:hover span{color:var(--color-neutral-900)}.ik-row-btn:focus-visible{outline:3px solid var(--color-brand-200)}
+.ik-list-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 0;border:0;border-bottom:1px solid var(--color-neutral-100);background:transparent;text-align:left;color:var(--color-neutral-900)}
+.ik-list-row:last-child{border-bottom:0}button.ik-list-row:hover{background:var(--color-neutral-50);margin:0 -8px;padding:12px 8px;width:calc(100% + 16px);border-radius:8px}
+.ik-link{border:0;background:transparent;padding:0;font-size:14px;font-weight:500;color:var(--color-neutral-900);text-align:left}.ik-link:hover{color:var(--color-brand-700);text-decoration:underline}
+.ik-table-wrap{overflow-x:auto}
+.ik-table{width:100%;border-collapse:collapse;font-size:14px}
+.ik-table th{text-align:left;font-size:12px;font-weight:500;color:var(--color-neutral-500);padding:12px 16px;border-bottom:1px solid var(--color-neutral-200);background:var(--color-neutral-50);white-space:nowrap}
+.ik-table td{padding:14px 16px;border-bottom:1px solid var(--color-neutral-100);vertical-align:middle}
+.ik-table tr:last-child td{border-bottom:0}.ik-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.ik-plan{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.ik-plan-item{display:block;text-align:left;width:100%;padding:16px;border-radius:var(--radius-lg);border:1px solid var(--color-neutral-200);background:#fff;transition:all .15s}
+.ik-plan-item:hover{border-color:var(--color-brand-300)}
+.ik-plan-item[aria-current]{border-color:var(--color-brand-600);box-shadow:0 0 0 1px var(--color-brand-600);background:#fff}
+.ik-filters{display:grid;grid-template-columns:minmax(200px,1.4fr) repeat(5,minmax(0,1fr));gap:10px}
+.ik-form2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ik-focus{min-height:100vh;background:var(--color-neutral-50)}
+.ik-assess__top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid var(--color-neutral-200);background:#fff}
+.ik-assess__top .ik-back{margin:0}
+.ik-assess__body{max-width:720px;margin:0 auto;padding:40px 24px 120px}
+.ik-assess__nav{margin-top:24px;display:flex;justify-content:space-between;gap:12px}
+.ik-toast{position:fixed;right:24px;bottom:24px;z-index:60;animation:isk-rise .2s ease;width:min(380px,calc(100vw - 32px))}
+.ik-avatar{width:32px;height:32px;border-radius:999px;border:0;background:var(--color-brand-100);color:var(--color-brand-700);font-size:12px;font-weight:600}
+@media (max-width:1100px){.ik-grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.ik-grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.ik-grid3>.ik-span2{grid-column:1/-1}.ik-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.ik-filters>:first-child{grid-column:1/-1}.ik-plan{grid-template-columns:1fr}}
+@media (max-width:767px){
+.ik-side{display:none}.ik-mobile-top{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;height:56px;padding:0 16px;background:#fff;border-bottom:1px solid var(--color-neutral-200)}
+.ik-app{flex-direction:column}.ik-bottom{display:block}
+.ik-content{padding:20px 16px 96px}
+.ik-grid2,.ik-grid3,.ik-grid4,.ik-form2{grid-template-columns:minmax(0,1fr)}.ik-span2,.ik-grid3>.ik-span2{grid-column:auto}
+.ik-grid4{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ik-filters{grid-template-columns:1fr 1fr}
+.ik-assess__top{padding:0 16px}.ik-assess__body{padding:20px 16px 112px}
+.ik-q-card{padding:20px!important}
+.ik-assess__nav{position:fixed;left:0;right:0;bottom:0;margin:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--color-neutral-200)}.ik-assess__nav .isk-btn{flex:1}
+.ik-toast{right:16px;bottom:80px}
+}
+
+/* --- App additions --- */
+.ik-main:focus{outline:none}
+.ik-auth{min-height:100vh;display:grid;place-items:center;padding:32px 16px;background:var(--color-neutral-50)}
+.ik-auth__box{width:100%;max-width:420px}
+.ik-mobile-top .ik-mobile-actions{display:flex;align-items:center;gap:8px}
+.ik-icon-btn{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:var(--radius-md);background:transparent;color:var(--color-neutral-700)}
+.ik-icon-btn:hover{background:var(--color-neutral-100)}
+.ik-evidence{padding:16px;border-radius:10px;background:var(--color-neutral-50);border:1px solid var(--color-neutral-100)}
+.ik-landing-hero{max-width:1200px;margin:0 auto;padding:72px 40px 48px}
+.ik-landing-top{max-width:1200px;margin:0 auto;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.ik-loop{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ik-loop__step{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:9999px;background:#fff;border:1px solid var(--color-neutral-200);font-size:13px;font-weight:500;color:var(--color-neutral-700)}
+.ik-admin-nav{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:24px}
+.ik-kv{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:8px 16px;font-size:14px}
+.ik-kv dt{color:var(--color-neutral-500)}
+.ik-pre{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;background:var(--color-neutral-50);border:1px solid var(--color-neutral-100);border-radius:var(--radius-md);padding:12px;max-height:320px;overflow:auto}
+.ik-steps{display:flex;gap:6px}
+.ik-steps span{flex:1;height:4px;border-radius:9999px;background:var(--color-neutral-200)}
+.ik-steps span[data-on="true"]{background:var(--color-brand-600)}
+@media (max-width:767px){
+  .ik-landing-hero{padding:40px 16px 32px}.ik-landing-top{padding:16px}
+  .ik-kv{grid-template-columns:1fr}
+}
