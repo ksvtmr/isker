@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import secrets
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -21,7 +22,8 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "isker_session"
     cookie_secure: bool = False
 
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8080"]
+    # Comma-separated in the environment (NoDecode: not parsed as JSON).
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173", "http://localhost:8080"]
 
     # AI
     mock_ai: bool = True

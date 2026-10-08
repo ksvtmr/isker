@@ -1,0 +1,9841 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Isker API",
+  "description": "\nIsker assesses and develops entrepreneurial competencies (EntreComp, 15 competencies).\n\n**Product loop:** Assess \u2192 Profile \u2192 Identify Gaps \u2192 Recommend \u2192 Learn \u2192 Practice \u2192 Re-assess \u2192 Track Progress.\n\n**Authentication:** `POST /api/auth/login` returns a JWT and also sets an httpOnly session cookie.\nSend the token as `Authorization: Bearer <token>` (or rely on the cookie in a browser).\n\n**Errors** always use one envelope: `{\"error\": {\"code\": \"ASSESSMENT_NOT_FOUND\", \"message\": \"...\", \"details\": ...}}`.\n",
+  "version": "1.0.0"
+ },
+ "paths": {
+  "/api/auth/register": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Create an account and start a session",
+    "operationId": "register_api_auth_register_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RegisterIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AuthOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/auth/login": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Sign in with email and password",
+    "operationId": "login_api_auth_login_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LoginIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AuthOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/auth/logout": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Sign out and revoke the current token",
+    "operationId": "logout_api_auth_logout_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/auth/me": {
+   "get": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Current user",
+    "operationId": "me_api_auth_me_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/auth/password": {
+   "post": {
+    "tags": [
+     "auth"
+    ],
+    "summary": "Change password",
+    "operationId": "change_password_api_auth_password_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ChangePasswordIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/goals": {
+   "get": {
+    "tags": [
+     "profile"
+    ],
+    "summary": "Goal catalogue for onboarding/profile",
+    "operationId": "list_goals_api_goals_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/GoalOut"
+         },
+         "type": "array",
+         "title": "Response List Goals Api Goals Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/profile": {
+   "get": {
+    "tags": [
+     "profile"
+    ],
+    "summary": "Current user's profile, goals and preferences",
+    "operationId": "get_profile_api_profile_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProfileOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "put": {
+    "tags": [
+     "profile"
+    ],
+    "summary": "Update profile, goals and preferences",
+    "operationId": "update_profile_api_profile_put",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ProfileUpdate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProfileOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/profile/onboarding": {
+   "post": {
+    "tags": [
+     "profile"
+    ],
+    "summary": "Complete onboarding",
+    "operationId": "onboarding_api_profile_onboarding_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/OnboardingIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProfileOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/users/me": {
+   "delete": {
+    "tags": [
+     "profile"
+    ],
+    "summary": "Delete account and all personal data",
+    "operationId": "delete_account_api_users_me_delete",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/assessments": {
+   "get": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Active assessment, resumable attempt and history",
+    "operationId": "overview_api_assessments_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AssessmentOverview"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/assessments/attempts": {
+   "post": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Start (or resume) a full assessment or a single-competency reassessment",
+    "operationId": "start_api_assessments_attempts_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StartAttemptIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StartAttemptOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/assessments/attempts/{attempt_id}": {
+   "get": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Attempt state: questions (one per screen), saved answers, position",
+    "operationId": "get_state_api_assessments_attempts__attempt_id__get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "attempt_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Attempt Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AttemptState"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/assessments/attempts/{attempt_id}/answers/{question_id}": {
+   "put": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Autosave an answer",
+    "operationId": "save_answer_api_assessments_attempts__attempt_id__answers__question_id__put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "attempt_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Attempt Id"
+      }
+     },
+     {
+      "name": "question_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Question Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AnswerIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AnswerOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/assessments/attempts/{attempt_id}/position": {
+   "put": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Save current question",
+    "operationId": "save_position_api_assessments_attempts__attempt_id__position_put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "attempt_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Attempt Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PositionIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AttemptSummary"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/assessments/attempts/{attempt_id}/submit": {
+   "post": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Finish: score, AI-evaluate open answers, gap analysis, recommendations, snapshot",
+    "operationId": "submit_api_assessments_attempts__attempt_id__submit_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "attempt_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Attempt Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AttemptResults"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/assessments/attempts/{attempt_id}/abandon": {
+   "post": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Discard an attempt",
+    "operationId": "abandon_api_assessments_attempts__attempt_id__abandon_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "attempt_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Attempt Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AttemptSummary"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/assessments/attempts/{attempt_id}/results": {
+   "get": {
+    "tags": [
+     "assessments"
+    ],
+    "summary": "Results of an attempt",
+    "operationId": "results_api_assessments_attempts__attempt_id__results_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "attempt_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Attempt Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AttemptResults"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/competencies": {
+   "get": {
+    "tags": [
+     "competencies"
+    ],
+    "summary": "EntreComp catalogue",
+    "operationId": "catalog_api_competencies_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CompetencyCatalog"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/scores/profile": {
+   "get": {
+    "tags": [
+     "competencies",
+     "scores"
+    ],
+    "summary": "Current competency profile (latest score per competency)",
+    "operationId": "profile_api_scores_profile_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProfileOverview"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/gaps": {
+   "get": {
+    "tags": [
+     "competencies",
+     "gaps"
+    ],
+    "summary": "Latest gap analysis, by priority",
+    "operationId": "gaps_api_gaps_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/GapOut"
+         },
+         "type": "array",
+         "title": "Response Gaps Api Gaps Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/competencies/{key}": {
+   "get": {
+    "tags": [
+     "competencies"
+    ],
+    "summary": "Competency detail: score, why this score (evidence + AI), history, recommendations",
+    "operationId": "detail_api_competencies__key__get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "key",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Key"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CompetencyDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/recommendations": {
+   "get": {
+    "tags": [
+     "recommendations"
+    ],
+    "summary": "Active recommendations (each linked to competency, gap, goal and resource/task)",
+    "operationId": "list_recommendations_api_recommendations_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/RecommendationOut"
+         },
+         "type": "array",
+         "title": "Response List Recommendations Api Recommendations Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/recommendations/regenerate": {
+   "post": {
+    "tags": [
+     "recommendations"
+    ],
+    "summary": "Re-run the recommendation engine on the latest gap analysis",
+    "operationId": "regenerate_api_recommendations_regenerate_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/RecommendationOut"
+         },
+         "type": "array",
+         "title": "Response Regenerate Api Recommendations Regenerate Post"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/plan": {
+   "get": {
+    "tags": [
+     "recommendations",
+     "plan"
+    ],
+    "summary": "Development plan: Learn \u2192 Practice \u2192 Reflect \u2192 Reassess per priority",
+    "operationId": "plan_api_plan_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlanOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/plan/activities/{activity_id}/reflection": {
+   "post": {
+    "tags": [
+     "recommendations",
+     "plan"
+    ],
+    "summary": "Save a reflection (Reflect step)",
+    "operationId": "reflect_api_plan_activities__activity_id__reflection_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "activity_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Activity Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReflectionIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ActivityOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/learning/resources": {
+   "get": {
+    "tags": [
+     "learning"
+    ],
+    "summary": "Browse learning resources (filterable)",
+    "operationId": "list_resources_api_learning_resources_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "competency",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Competency"
+      }
+     },
+     {
+      "name": "type",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/ResourceType"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Type"
+      }
+     },
+     {
+      "name": "difficulty",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/Difficulty"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Difficulty"
+      }
+     },
+     {
+      "name": "max_minutes",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer",
+         "maximum": 600,
+         "minimum": 1
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Max Minutes"
+      }
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 100
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     },
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/ProgressStatus"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Status"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 24,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_ResourceOut_"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/learning/resources/{resource_id}": {
+   "get": {
+    "tags": [
+     "learning"
+    ],
+    "summary": "Resource content and progress",
+    "operationId": "get_resource_api_learning_resources__resource_id__get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resource_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Resource Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourceDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/learning/resources/{resource_id}/start": {
+   "post": {
+    "tags": [
+     "learning"
+    ],
+    "summary": "Start (or continue)",
+    "operationId": "start_api_learning_resources__resource_id__start_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resource_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Resource Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourceDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/learning/resources/{resource_id}/progress": {
+   "put": {
+    "tags": [
+     "learning"
+    ],
+    "summary": "Update reading progress",
+    "operationId": "update_progress_api_learning_resources__resource_id__progress_put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resource_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Resource Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ProgressIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourceDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/learning/resources/{resource_id}/complete": {
+   "post": {
+    "tags": [
+     "learning"
+    ],
+    "summary": "Mark as completed",
+    "operationId": "complete_api_learning_resources__resource_id__complete_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resource_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Resource Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourceDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/practice/tasks": {
+   "get": {
+    "tags": [
+     "practice"
+    ],
+    "summary": "Practical entrepreneurship tasks",
+    "operationId": "list_tasks_api_practice_tasks_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "competency",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Competency"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/TaskOut"
+         },
+         "title": "Response List Tasks Api Practice Tasks Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/practice/tasks/{task_id}": {
+   "get": {
+    "tags": [
+     "practice"
+    ],
+    "summary": "Task, your response and AI feedback",
+    "operationId": "get_task_api_practice_tasks__task_id__get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "task_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Task Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/practice/tasks/{task_id}/start": {
+   "post": {
+    "tags": [
+     "practice"
+    ],
+    "summary": "Start a task",
+    "operationId": "start_api_practice_tasks__task_id__start_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "task_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Task Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/practice/tasks/{task_id}/submit": {
+   "post": {
+    "tags": [
+     "practice"
+    ],
+    "summary": "Submit a response and receive rubric-based AI feedback",
+    "operationId": "submit_api_practice_tasks__task_id__submit_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "task_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Task Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SubmitIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/practice/tasks/{task_id}/complete": {
+   "post": {
+    "tags": [
+     "practice"
+    ],
+    "summary": "Mark a submitted task complete",
+    "operationId": "complete_api_practice_tasks__task_id__complete_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "task_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Task Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/progress": {
+   "get": {
+    "tags": [
+     "progress"
+    ],
+    "summary": "Longitudinal development: snapshots, competency trends, activity counts",
+    "operationId": "progress_api_progress_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ProgressOverview"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/dashboard": {
+   "get": {
+    "tags": [
+     "progress"
+    ],
+    "summary": "Everything the dashboard needs in one call",
+    "operationId": "dashboard_api_dashboard_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DashboardOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/notifications": {
+   "get": {
+    "tags": [
+     "notifications"
+    ],
+    "summary": "Notifications",
+    "operationId": "notifications_api_notifications_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/NotificationOut"
+         },
+         "type": "array",
+         "title": "Response Notifications Api Notifications Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/notifications/{notification_id}/read": {
+   "post": {
+    "tags": [
+     "notifications"
+    ],
+    "summary": "Mark Read",
+    "operationId": "mark_read_api_notifications__notification_id__read_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "notification_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Notification Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/ai/status": {
+   "get": {
+    "tags": [
+     "ai"
+    ],
+    "summary": "Which AI provider is active (never exposes keys)",
+    "operationId": "ai_status_api_ai_status_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "type": "object",
+         "title": "Response Ai Status Api Ai Status Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/ai/evaluations/{evaluation_id}": {
+   "get": {
+    "tags": [
+     "ai"
+    ],
+    "summary": "One of your AI evaluations (explainability)",
+    "operationId": "my_evaluation_api_ai_evaluations__evaluation_id__get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "evaluation_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Evaluation Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response My Evaluation Api Ai Evaluations  Evaluation Id  Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/stats": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Platform and assessment statistics",
+    "operationId": "stats_api_admin_stats_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AdminStats"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/users": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Users",
+    "operationId": "users_api_admin_users_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 100
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 25,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_AdminUserOut_"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/competencies": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Competencies",
+    "operationId": "competencies_api_admin_competencies_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/CompetencyOut"
+         },
+         "type": "array",
+         "title": "Response Competencies Api Admin Competencies Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/competencies/{competency_id}": {
+   "put": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Edit a competency",
+    "operationId": "update_competency_api_admin_competencies__competency_id__put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "competency_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Competency Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CompetencyUpdate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CompetencyOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/questions": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Question bank",
+    "operationId": "questions_api_admin_questions_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "assessment_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Assessment Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/QuestionAdminOut"
+         },
+         "title": "Response Questions Api Admin Questions Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Create Question",
+    "operationId": "create_question_api_admin_questions_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/QuestionIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QuestionAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/questions/{question_id}": {
+   "put": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Update Question",
+    "operationId": "update_question_api_admin_questions__question_id__put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "question_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Question Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/QuestionIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QuestionAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Deactivate (history is preserved)",
+    "operationId": "deactivate_question_api_admin_questions__question_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "question_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Question Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/assessments": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Assessments",
+    "operationId": "assessments_api_admin_assessments_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/AssessmentAdminOut"
+         },
+         "type": "array",
+         "title": "Response Assessments Api Admin Assessments Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Create Assessment",
+    "operationId": "create_assessment_api_admin_assessments_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AssessmentIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AssessmentAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/assessments/{assessment_id}": {
+   "put": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Update Assessment",
+    "operationId": "update_assessment_api_admin_assessments__assessment_id__put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "assessment_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Assessment Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AssessmentUpdate"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AssessmentAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/resources": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Resources",
+    "operationId": "resources_api_admin_resources_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ResourceAdminOut"
+         },
+         "type": "array",
+         "title": "Response Resources Api Admin Resources Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Create Resource",
+    "operationId": "create_resource_api_admin_resources_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ResourceIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourceAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/resources/{resource_id}": {
+   "put": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Update Resource",
+    "operationId": "update_resource_api_admin_resources__resource_id__put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resource_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Resource Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ResourceIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ResourceAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Unpublish a resource",
+    "operationId": "unpublish_resource_api_admin_resources__resource_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "resource_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Resource Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/tasks": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Tasks",
+    "operationId": "tasks_api_admin_tasks_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/TaskAdminOut"
+         },
+         "type": "array",
+         "title": "Response Tasks Api Admin Tasks Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Create Task",
+    "operationId": "create_task_api_admin_tasks_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TaskIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/tasks/{task_id}": {
+   "put": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Update Task",
+    "operationId": "update_task_api_admin_tasks__task_id__put",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "task_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Task Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TaskIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TaskAdminOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Unpublish a task",
+    "operationId": "unpublish_task_api_admin_tasks__task_id__delete",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "task_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Task Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Message"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/ai/evaluations": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "AI evaluation log",
+    "operationId": "ai_evaluations_api_admin_ai_evaluations_get",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/AIEvalStatus"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Status"
+      }
+     },
+     {
+      "name": "input_type",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/AIInputType"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Input Type"
+      }
+     },
+     {
+      "name": "page",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "default": 1,
+       "title": "Page"
+      }
+     },
+     {
+      "name": "page_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 100,
+       "minimum": 1,
+       "default": 25,
+       "title": "Page Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Page_AIEvaluationAdminOut_"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/ai/prompts": {
+   "get": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Prompt versions",
+    "operationId": "prompts_api_admin_ai_prompts_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/PromptOut"
+         },
+         "type": "array",
+         "title": "Response Prompts Api Admin Ai Prompts Get"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   },
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Create a new prompt version",
+    "operationId": "create_prompt_api_admin_ai_prompts_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PromptIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PromptOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/ai/prompts/{prompt_id}/activate": {
+   "post": {
+    "tags": [
+     "admin"
+    ],
+    "summary": "Activate a prompt version",
+    "operationId": "activate_prompt_api_admin_ai_prompts__prompt_id__activate_post",
+    "security": [
+     {
+      "HTTPBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "prompt_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Prompt Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PromptOut"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Not authenticated",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Forbidden",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Not found",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ErrorResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/health": {
+   "get": {
+    "tags": [
+     "progress"
+    ],
+    "summary": "Liveness and database check",
+    "operationId": "health_api_health_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "type": "object",
+         "title": "Response Health Api Health Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "AIEvalStatus": {
+    "type": "string",
+    "enum": [
+     "success",
+     "retried",
+     "fallback"
+    ],
+    "title": "AIEvalStatus"
+   },
+   "AIEvaluationAdminOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "user_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "User Id"
+     },
+     "input_type": {
+      "$ref": "#/components/schemas/AIInputType"
+     },
+     "provider": {
+      "type": "string",
+      "title": "Provider"
+     },
+     "model": {
+      "type": "string",
+      "title": "Model"
+     },
+     "status": {
+      "$ref": "#/components/schemas/AIEvalStatus"
+     },
+     "competency_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Competency Id"
+     },
+     "prompt_version_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Prompt Version Id"
+     },
+     "score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Score"
+     },
+     "level": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Level"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     },
+     "attempts": {
+      "type": "integer",
+      "title": "Attempts"
+     },
+     "latency_ms": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Latency Ms"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "input_excerpt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Input Excerpt"
+     },
+     "output": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Output"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "user_id",
+     "input_type",
+     "provider",
+     "model",
+     "status",
+     "competency_id",
+     "prompt_version_id",
+     "score",
+     "level",
+     "confidence",
+     "attempts",
+     "latency_ms",
+     "error",
+     "input_excerpt",
+     "output",
+     "created_at"
+    ],
+    "title": "AIEvaluationAdminOut"
+   },
+   "AIExplanationOut": {
+    "properties": {
+     "evaluation_id": {
+      "type": "integer",
+      "title": "Evaluation Id"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     },
+     "provider": {
+      "type": "string",
+      "title": "Provider"
+     },
+     "model": {
+      "type": "string",
+      "title": "Model"
+     },
+     "prompt_version": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Prompt Version"
+     },
+     "strengths": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Strengths"
+     },
+     "development_areas": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Development Areas"
+     },
+     "explanation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Explanation"
+     }
+    },
+    "type": "object",
+    "required": [
+     "evaluation_id",
+     "confidence",
+     "provider",
+     "model",
+     "prompt_version",
+     "strengths",
+     "development_areas",
+     "explanation"
+    ],
+    "title": "AIExplanationOut"
+   },
+   "AIInputType": {
+    "type": "string",
+    "enum": [
+     "open_answer",
+     "practical_answer",
+     "practice_submission",
+     "profile_insight"
+    ],
+    "title": "AIInputType"
+   },
+   "ActivityKind": {
+    "type": "string",
+    "enum": [
+     "learn",
+     "practice",
+     "reflect",
+     "reassess"
+    ],
+    "title": "ActivityKind"
+   },
+   "ActivityLogItem": {
+    "properties": {
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "competency": {
+      "type": "string",
+      "title": "Competency"
+     },
+     "type": {
+      "type": "string",
+      "title": "Type"
+     },
+     "date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Date"
+     }
+    },
+    "type": "object",
+    "required": [
+     "title",
+     "competency",
+     "type",
+     "date"
+    ],
+    "title": "ActivityLogItem"
+   },
+   "ActivityOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "kind": {
+      "$ref": "#/components/schemas/ActivityKind"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "status": {
+      "$ref": "#/components/schemas/ActivityStatus"
+     },
+     "locked": {
+      "type": "boolean",
+      "title": "Locked"
+     },
+     "resource_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Resource Id"
+     },
+     "task_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Task Id"
+     },
+     "prompt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Prompt"
+     },
+     "response_text": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Response Text"
+     },
+     "duration_minutes": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Duration Minutes"
+     },
+     "type": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Type"
+     },
+     "completed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Completed At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "kind",
+     "title",
+     "status",
+     "locked",
+     "resource_id",
+     "task_id",
+     "prompt",
+     "response_text",
+     "duration_minutes",
+     "type",
+     "completed_at"
+    ],
+    "title": "ActivityOut"
+   },
+   "ActivityStatus": {
+    "type": "string",
+    "enum": [
+     "todo",
+     "in_progress",
+     "done"
+    ],
+    "title": "ActivityStatus"
+   },
+   "AdminStats": {
+    "properties": {
+     "users": {
+      "type": "integer",
+      "title": "Users"
+     },
+     "onboarded_users": {
+      "type": "integer",
+      "title": "Onboarded Users"
+     },
+     "completed_attempts": {
+      "type": "integer",
+      "title": "Completed Attempts"
+     },
+     "in_progress_attempts": {
+      "type": "integer",
+      "title": "In Progress Attempts"
+     },
+     "average_overall": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Average Overall"
+     },
+     "ai_evaluations": {
+      "type": "integer",
+      "title": "Ai Evaluations"
+     },
+     "ai_fallbacks": {
+      "type": "integer",
+      "title": "Ai Fallbacks"
+     },
+     "resources_completed": {
+      "type": "integer",
+      "title": "Resources Completed"
+     },
+     "tasks_completed": {
+      "type": "integer",
+      "title": "Tasks Completed"
+     },
+     "competency_averages": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Competency Averages"
+     }
+    },
+    "type": "object",
+    "required": [
+     "users",
+     "onboarded_users",
+     "completed_attempts",
+     "in_progress_attempts",
+     "average_overall",
+     "ai_evaluations",
+     "ai_fallbacks",
+     "resources_completed",
+     "tasks_completed",
+     "competency_averages"
+    ],
+    "title": "AdminStats"
+   },
+   "AdminUserOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "email": {
+      "type": "string",
+      "title": "Email"
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     },
+     "role": {
+      "$ref": "#/components/schemas/UserRole"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+     },
+     "onboarding_completed": {
+      "type": "boolean",
+      "title": "Onboarding Completed"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     },
+     "last_login_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Login At"
+     },
+     "completed_attempts": {
+      "type": "integer",
+      "title": "Completed Attempts",
+      "default": 0
+     },
+     "latest_overall": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Latest Overall"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "email",
+     "full_name",
+     "role",
+     "is_active",
+     "onboarding_completed",
+     "created_at",
+     "last_login_at"
+    ],
+    "title": "AdminUserOut"
+   },
+   "AnswerIn": {
+    "properties": {
+     "option_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Option Id"
+     },
+     "text_response": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 4000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Text Response"
+     },
+     "position": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Position"
+     }
+    },
+    "type": "object",
+    "title": "AnswerIn"
+   },
+   "AnswerOut": {
+    "properties": {
+     "question_id": {
+      "type": "integer",
+      "title": "Question Id"
+     },
+     "option_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Option Id"
+     },
+     "text_response": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Text Response"
+     },
+     "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Updated At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "question_id",
+     "option_id",
+     "text_response",
+     "updated_at"
+    ],
+    "title": "AnswerOut"
+   },
+   "AreaOut": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "color_token": {
+      "type": "string",
+      "title": "Color Token"
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "name",
+     "color_token"
+    ],
+    "title": "AreaOut"
+   },
+   "AreaScore": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "color_token": {
+      "type": "string",
+      "title": "Color Token"
+     },
+     "score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Score"
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "name",
+     "color_token",
+     "score"
+    ],
+    "title": "AreaScore"
+   },
+   "AssessmentAdminOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "estimated_minutes": {
+      "type": "integer",
+      "title": "Estimated Minutes"
+     },
+     "version": {
+      "type": "integer",
+      "title": "Version"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+     },
+     "question_count": {
+      "type": "integer",
+      "title": "Question Count",
+      "default": 0
+     },
+     "attempt_count": {
+      "type": "integer",
+      "title": "Attempt Count",
+      "default": 0
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "code",
+     "title",
+     "description",
+     "estimated_minutes",
+     "version",
+     "is_active"
+    ],
+    "title": "AssessmentAdminOut"
+   },
+   "AssessmentIn": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "maxLength": 48,
+      "minLength": 2,
+      "pattern": "^[a-z0-9_-]+$",
+      "title": "Code"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 160,
+      "minLength": 3,
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "minLength": 10,
+      "title": "Description"
+     },
+     "estimated_minutes": {
+      "type": "integer",
+      "maximum": 240.0,
+      "minimum": 1.0,
+      "title": "Estimated Minutes"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active",
+      "default": true
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "title",
+     "description",
+     "estimated_minutes"
+    ],
+    "title": "AssessmentIn"
+   },
+   "AssessmentOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "estimated_minutes": {
+      "type": "integer",
+      "title": "Estimated Minutes"
+     },
+     "question_count": {
+      "type": "integer",
+      "title": "Question Count"
+     },
+     "sections": {
+      "items": {
+       "$ref": "#/components/schemas/SectionOut"
+      },
+      "type": "array",
+      "title": "Sections"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "title",
+     "description",
+     "estimated_minutes",
+     "question_count",
+     "sections"
+    ],
+    "title": "AssessmentOut"
+   },
+   "AssessmentOverview": {
+    "properties": {
+     "assessment": {
+      "$ref": "#/components/schemas/AssessmentOut"
+     },
+     "in_progress": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/AttemptSummary"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "completed": {
+      "items": {
+       "$ref": "#/components/schemas/AttemptSummary"
+      },
+      "type": "array",
+      "title": "Completed"
+     }
+    },
+    "type": "object",
+    "required": [
+     "assessment",
+     "in_progress",
+     "completed"
+    ],
+    "title": "AssessmentOverview"
+   },
+   "AssessmentUpdate": {
+    "properties": {
+     "title": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 160,
+        "minLength": 3
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 10
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "estimated_minutes": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 240.0,
+        "minimum": 1.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Estimated Minutes"
+     },
+     "is_active": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Is Active"
+     }
+    },
+    "type": "object",
+    "title": "AssessmentUpdate"
+   },
+   "AttemptResults": {
+    "properties": {
+     "attempt": {
+      "$ref": "#/components/schemas/AttemptSummary"
+     },
+     "profile": {
+      "$ref": "#/components/schemas/ProfileOverview"
+     },
+     "measured": {
+      "items": {
+       "$ref": "#/components/schemas/CompetencyScoreOut"
+      },
+      "type": "array",
+      "title": "Measured"
+     }
+    },
+    "type": "object",
+    "required": [
+     "attempt",
+     "profile",
+     "measured"
+    ],
+    "title": "AttemptResults"
+   },
+   "AttemptScope": {
+    "type": "string",
+    "enum": [
+     "full",
+     "competency"
+    ],
+    "title": "AttemptScope"
+   },
+   "AttemptState": {
+    "properties": {
+     "attempt": {
+      "$ref": "#/components/schemas/AttemptSummary"
+     },
+     "questions": {
+      "items": {
+       "$ref": "#/components/schemas/QuestionOut"
+      },
+      "type": "array",
+      "title": "Questions"
+     },
+     "answers": {
+      "items": {
+       "$ref": "#/components/schemas/AnswerOut"
+      },
+      "type": "array",
+      "title": "Answers"
+     }
+    },
+    "type": "object",
+    "required": [
+     "attempt",
+     "questions",
+     "answers"
+    ],
+    "title": "AttemptState"
+   },
+   "AttemptStatus": {
+    "type": "string",
+    "enum": [
+     "in_progress",
+     "completed",
+     "abandoned"
+    ],
+    "title": "AttemptStatus"
+   },
+   "AttemptSummary": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "scope": {
+      "$ref": "#/components/schemas/AttemptScope"
+     },
+     "competency": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CompetencyRef"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "status": {
+      "$ref": "#/components/schemas/AttemptStatus"
+     },
+     "current_index": {
+      "type": "integer",
+      "title": "Current Index"
+     },
+     "answered": {
+      "type": "integer",
+      "title": "Answered"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "sequence": {
+      "type": "integer",
+      "title": "Sequence"
+     },
+     "overall_score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Overall Score"
+     },
+     "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Started At"
+     },
+     "completed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Completed At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "scope",
+     "competency",
+     "status",
+     "current_index",
+     "answered",
+     "total",
+     "sequence",
+     "overall_score",
+     "started_at",
+     "completed_at"
+    ],
+    "title": "AttemptSummary"
+   },
+   "AuthOut": {
+    "properties": {
+     "user": {
+      "$ref": "#/components/schemas/UserOut"
+     },
+     "access_token": {
+      "type": "string",
+      "title": "Access Token"
+     },
+     "token_type": {
+      "type": "string",
+      "title": "Token Type",
+      "default": "bearer"
+     },
+     "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Expires At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "user",
+     "access_token",
+     "expires_at"
+    ],
+    "title": "AuthOut"
+   },
+   "ChangePasswordIn": {
+    "properties": {
+     "current_password": {
+      "type": "string",
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Current Password"
+     },
+     "new_password": {
+      "type": "string",
+      "maxLength": 128,
+      "minLength": 8,
+      "title": "New Password"
+     }
+    },
+    "type": "object",
+    "required": [
+     "current_password",
+     "new_password"
+    ],
+    "title": "ChangePasswordIn"
+   },
+   "CompetencyCatalog": {
+    "properties": {
+     "areas": {
+      "items": {
+       "$ref": "#/components/schemas/AreaOut"
+      },
+      "type": "array",
+      "title": "Areas"
+     },
+     "competencies": {
+      "items": {
+       "$ref": "#/components/schemas/CompetencyOut"
+      },
+      "type": "array",
+      "title": "Competencies"
+     },
+     "levels": {
+      "items": {
+       "$ref": "#/components/schemas/LevelOut"
+      },
+      "type": "array",
+      "title": "Levels"
+     }
+    },
+    "type": "object",
+    "required": [
+     "areas",
+     "competencies",
+     "levels"
+    ],
+    "title": "CompetencyCatalog"
+   },
+   "CompetencyDetail": {
+    "properties": {
+     "competency": {
+      "$ref": "#/components/schemas/CompetencyOut"
+     },
+     "current": {
+      "$ref": "#/components/schemas/CompetencyScoreOut"
+     },
+     "method_scores": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "type": "object",
+      "title": "Method Scores"
+     },
+     "explanation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Explanation"
+     },
+     "evidence": {
+      "items": {
+       "$ref": "#/components/schemas/EvidenceOut"
+      },
+      "type": "array",
+      "title": "Evidence"
+     },
+     "criteria": {
+      "items": {
+       "$ref": "#/components/schemas/CriterionOut"
+      },
+      "type": "array",
+      "title": "Criteria"
+     },
+     "ai": {
+      "items": {
+       "$ref": "#/components/schemas/AIExplanationOut"
+      },
+      "type": "array",
+      "title": "Ai"
+     },
+     "history": {
+      "items": {
+       "$ref": "#/components/schemas/HistoryPoint"
+      },
+      "type": "array",
+      "title": "History"
+     },
+     "resources": {
+      "items": {
+       "$ref": "#/components/schemas/RecommendedItem"
+      },
+      "type": "array",
+      "title": "Resources"
+     },
+     "tasks": {
+      "items": {
+       "$ref": "#/components/schemas/RecommendedItem"
+      },
+      "type": "array",
+      "title": "Tasks"
+     },
+     "recommendation_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Recommendation Id"
+     },
+     "reassess_question_count": {
+      "type": "integer",
+      "title": "Reassess Question Count"
+     }
+    },
+    "type": "object",
+    "required": [
+     "competency",
+     "current",
+     "method_scores",
+     "explanation",
+     "evidence",
+     "criteria",
+     "ai",
+     "history",
+     "resources",
+     "tasks",
+     "recommendation_id",
+     "reassess_question_count"
+    ],
+    "title": "CompetencyDetail"
+   },
+   "CompetencyLinkIn": {
+    "properties": {
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "weight": {
+      "type": "number",
+      "maximum": 1.0,
+      "exclusiveMinimum": 0.0,
+      "title": "Weight"
+     }
+    },
+    "type": "object",
+    "required": [
+     "competency_id",
+     "weight"
+    ],
+    "title": "CompetencyLinkIn"
+   },
+   "CompetencyOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "short_name": {
+      "type": "string",
+      "title": "Short Name"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "hint": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Hint"
+     },
+     "importance": {
+      "type": "number",
+      "title": "Importance"
+     },
+     "default_target": {
+      "type": "integer",
+      "title": "Default Target"
+     },
+     "area": {
+      "$ref": "#/components/schemas/AreaOut"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "code",
+     "name",
+     "short_name",
+     "description",
+     "importance",
+     "default_target",
+     "area"
+    ],
+    "title": "CompetencyOut"
+   },
+   "CompetencyRef": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "code",
+     "name"
+    ],
+    "title": "CompetencyRef"
+   },
+   "CompetencyScoreOut": {
+    "properties": {
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "short_name": {
+      "type": "string",
+      "title": "Short Name"
+     },
+     "area_code": {
+      "type": "string",
+      "title": "Area Code"
+     },
+     "area_name": {
+      "type": "string",
+      "title": "Area Name"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Score"
+     },
+     "level": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Level"
+     },
+     "target": {
+      "type": "integer",
+      "title": "Target"
+     },
+     "gap": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gap"
+     },
+     "gap_band": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GapBand"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "priority_label": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Priority Label"
+     },
+     "priority_rank": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Priority Rank"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     },
+     "explanation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Explanation"
+     },
+     "assessed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Assessed At"
+     },
+     "change": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Change"
+     }
+    },
+    "type": "object",
+    "required": [
+     "competency_id",
+     "code",
+     "name",
+     "short_name",
+     "area_code",
+     "area_name",
+     "description",
+     "score",
+     "level",
+     "target",
+     "gap",
+     "gap_band"
+    ],
+    "title": "CompetencyScoreOut",
+    "description": "A competency in the user's current profile (latest measurement)."
+   },
+   "CompetencyTrend": {
+    "properties": {
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "area_code": {
+      "type": "string",
+      "title": "Area Code"
+     },
+     "first": {
+      "type": "integer",
+      "title": "First"
+     },
+     "previous": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Previous"
+     },
+     "current": {
+      "type": "integer",
+      "title": "Current"
+     },
+     "change_since_previous": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Change Since Previous"
+     },
+     "change_since_first": {
+      "type": "integer",
+      "title": "Change Since First"
+     },
+     "points": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array",
+      "title": "Points"
+     }
+    },
+    "type": "object",
+    "required": [
+     "competency_id",
+     "code",
+     "name",
+     "area_code",
+     "first",
+     "previous",
+     "current",
+     "change_since_previous",
+     "change_since_first",
+     "points"
+    ],
+    "title": "CompetencyTrend"
+   },
+   "CompetencyUpdate": {
+    "properties": {
+     "name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120,
+        "minLength": 2
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "short_name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 40,
+        "minLength": 2
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Short Name"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "type": "string",
+        "minLength": 10
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "hint": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Hint"
+     },
+     "reflection_prompt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reflection Prompt"
+     },
+     "importance": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Importance"
+     },
+     "learning_priority": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 1.0,
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Learning Priority"
+     },
+     "default_target": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 100.0,
+        "minimum": 40.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default Target"
+     }
+    },
+    "type": "object",
+    "title": "CompetencyUpdate"
+   },
+   "CriterionOut": {
+    "properties": {
+     "criterion": {
+      "type": "string",
+      "title": "Criterion"
+     },
+     "score": {
+      "type": "integer",
+      "title": "Score"
+     }
+    },
+    "type": "object",
+    "required": [
+     "criterion",
+     "score"
+    ],
+    "title": "CriterionOut"
+   },
+   "DashboardOut": {
+    "properties": {
+     "user_name": {
+      "type": "string",
+      "title": "User Name"
+     },
+     "onboarding_completed": {
+      "type": "boolean",
+      "title": "Onboarding Completed"
+     },
+     "profile": {
+      "$ref": "#/components/schemas/ProfileOverview"
+     },
+     "plan_progress_pct": {
+      "type": "integer",
+      "title": "Plan Progress Pct"
+     },
+     "plan_done": {
+      "type": "integer",
+      "title": "Plan Done"
+     },
+     "plan_total": {
+      "type": "integer",
+      "title": "Plan Total"
+     },
+     "top_recommendation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RecommendationOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "in_progress_attempt_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "In Progress Attempt Id"
+     },
+     "next_reassessment": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Reassessment"
+     },
+     "insight": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/InsightOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "unread_notifications": {
+      "type": "integer",
+      "title": "Unread Notifications"
+     }
+    },
+    "type": "object",
+    "required": [
+     "user_name",
+     "onboarding_completed",
+     "profile",
+     "plan_progress_pct",
+     "plan_done",
+     "plan_total",
+     "top_recommendation",
+     "in_progress_attempt_id",
+     "next_reassessment",
+     "insight",
+     "unread_notifications"
+    ],
+    "title": "DashboardOut"
+   },
+   "Difficulty": {
+    "type": "string",
+    "enum": [
+     "beginner",
+     "intermediate",
+     "advanced"
+    ],
+    "title": "Difficulty"
+   },
+   "ErrorDetail": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     },
+     "details": {
+      "anyOf": [
+       {},
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Details"
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "message"
+    ],
+    "title": "ErrorDetail"
+   },
+   "ErrorResponse": {
+    "properties": {
+     "error": {
+      "$ref": "#/components/schemas/ErrorDetail"
+     }
+    },
+    "type": "object",
+    "required": [
+     "error"
+    ],
+    "title": "ErrorResponse"
+   },
+   "EvidenceOut": {
+    "properties": {
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "question": {
+      "type": "string",
+      "title": "Question"
+     },
+     "excerpt": {
+      "type": "string",
+      "title": "Excerpt"
+     },
+     "tag": {
+      "type": "string",
+      "title": "Tag"
+     },
+     "positive": {
+      "type": "boolean",
+      "title": "Positive"
+     }
+    },
+    "type": "object",
+    "required": [
+     "source",
+     "question",
+     "excerpt",
+     "tag",
+     "positive"
+    ],
+    "title": "EvidenceOut"
+   },
+   "ExperienceLevel": {
+    "type": "string",
+    "enum": [
+     "none",
+     "side_project",
+     "startup_team",
+     "running_business"
+    ],
+    "title": "ExperienceLevel"
+   },
+   "FeedbackOut": {
+    "properties": {
+     "evaluation_id": {
+      "type": "integer",
+      "title": "Evaluation Id"
+     },
+     "score": {
+      "type": "integer",
+      "title": "Score"
+     },
+     "level": {
+      "type": "string",
+      "title": "Level"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     },
+     "criteria": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Criteria"
+     },
+     "evidence": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Evidence"
+     },
+     "strengths": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Strengths"
+     },
+     "development_areas": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Development Areas"
+     },
+     "explanation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Explanation"
+     },
+     "provider": {
+      "type": "string",
+      "title": "Provider"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "evaluation_id",
+     "score",
+     "level",
+     "confidence",
+     "criteria",
+     "evidence",
+     "strengths",
+     "development_areas",
+     "explanation",
+     "provider",
+     "created_at"
+    ],
+    "title": "FeedbackOut"
+   },
+   "GapBand": {
+    "type": "string",
+    "enum": [
+     "high",
+     "medium",
+     "low"
+    ],
+    "title": "GapBand"
+   },
+   "GapOut": {
+    "properties": {
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "area_name": {
+      "type": "string",
+      "title": "Area Name"
+     },
+     "current": {
+      "type": "integer",
+      "title": "Current"
+     },
+     "target": {
+      "type": "integer",
+      "title": "Target"
+     },
+     "gap": {
+      "type": "integer",
+      "title": "Gap"
+     },
+     "band": {
+      "$ref": "#/components/schemas/GapBand"
+     },
+     "priority_rank": {
+      "type": "integer",
+      "title": "Priority Rank"
+     },
+     "priority_label": {
+      "type": "string",
+      "title": "Priority Label"
+     },
+     "priority_score": {
+      "type": "number",
+      "title": "Priority Score"
+     },
+     "goal_relevance": {
+      "type": "number",
+      "title": "Goal Relevance"
+     },
+     "importance": {
+      "type": "number",
+      "title": "Importance"
+     },
+     "learning_priority": {
+      "type": "number",
+      "title": "Learning Priority"
+     }
+    },
+    "type": "object",
+    "required": [
+     "competency_id",
+     "code",
+     "name",
+     "area_name",
+     "current",
+     "target",
+     "gap",
+     "band",
+     "priority_rank",
+     "priority_label",
+     "priority_score",
+     "goal_relevance",
+     "importance",
+     "learning_priority"
+    ],
+    "title": "GapOut"
+   },
+   "GoalOut": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "title"
+    ],
+    "title": "GoalOut"
+   },
+   "HistoryPoint": {
+    "properties": {
+     "attempt_id": {
+      "type": "integer",
+      "title": "Attempt Id"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Date"
+     },
+     "score": {
+      "type": "integer",
+      "title": "Score"
+     }
+    },
+    "type": "object",
+    "required": [
+     "attempt_id",
+     "label",
+     "date",
+     "score"
+    ],
+    "title": "HistoryPoint"
+   },
+   "InsightOut": {
+    "properties": {
+     "headline": {
+      "type": "string",
+      "title": "Headline"
+     },
+     "body": {
+      "type": "string",
+      "title": "Body"
+     },
+     "next_step": {
+      "type": "string",
+      "title": "Next Step"
+     },
+     "confidence": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Confidence"
+     },
+     "provider": {
+      "type": "string",
+      "title": "Provider"
+     },
+     "evaluation_id": {
+      "type": "integer",
+      "title": "Evaluation Id"
+     },
+     "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Generated At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "headline",
+     "body",
+     "next_step",
+     "confidence",
+     "provider",
+     "evaluation_id",
+     "generated_at"
+    ],
+    "title": "InsightOut"
+   },
+   "LearningFormat": {
+    "type": "string",
+    "enum": [
+     "article",
+     "video",
+     "course",
+     "mixed"
+    ],
+    "title": "LearningFormat"
+   },
+   "LevelOut": {
+    "properties": {
+     "rank": {
+      "type": "integer",
+      "title": "Rank"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "min_score": {
+      "type": "integer",
+      "title": "Min Score"
+     },
+     "max_score": {
+      "type": "integer",
+      "title": "Max Score"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     }
+    },
+    "type": "object",
+    "required": [
+     "rank",
+     "name",
+     "min_score",
+     "max_score",
+     "description"
+    ],
+    "title": "LevelOut"
+   },
+   "LoginIn": {
+    "properties": {
+     "email": {
+      "type": "string",
+      "maxLength": 255,
+      "minLength": 3,
+      "pattern": "^[^@\\s]+@[^@\\s]+$",
+      "title": "Email"
+     },
+     "password": {
+      "type": "string",
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Password"
+     }
+    },
+    "type": "object",
+    "required": [
+     "email",
+     "password"
+    ],
+    "title": "LoginIn"
+   },
+   "Message": {
+    "properties": {
+     "message": {
+      "type": "string",
+      "title": "Message"
+     }
+    },
+    "type": "object",
+    "required": [
+     "message"
+    ],
+    "title": "Message"
+   },
+   "NotificationOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "type": {
+      "type": "string",
+      "title": "Type"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "body": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Body"
+     },
+     "link": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Link"
+     },
+     "is_read": {
+      "type": "boolean",
+      "title": "Is Read"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "type",
+     "title",
+     "body",
+     "link",
+     "is_read",
+     "created_at"
+    ],
+    "title": "NotificationOut"
+   },
+   "OnboardingIn": {
+    "properties": {
+     "full_name": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Full Name"
+     },
+     "education": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Education"
+     },
+     "background": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 1000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Background"
+     },
+     "entrepreneurial_experience": {
+      "$ref": "#/components/schemas/ExperienceLevel"
+     },
+     "business_experience": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 1000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Business Experience"
+     },
+     "goal_codes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "maxItems": 6,
+      "minItems": 1,
+      "title": "Goal Codes"
+     },
+     "preferred_learning_format": {
+      "$ref": "#/components/schemas/LearningFormat"
+     },
+     "weekly_learning_minutes": {
+      "type": "integer",
+      "maximum": 600.0,
+      "minimum": 15.0,
+      "title": "Weekly Learning Minutes"
+     }
+    },
+    "type": "object",
+    "required": [
+     "full_name",
+     "education",
+     "entrepreneurial_experience",
+     "goal_codes",
+     "preferred_learning_format",
+     "weekly_learning_minutes"
+    ],
+    "title": "OnboardingIn"
+   },
+   "OptionIn": {
+    "properties": {
+     "label": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Label"
+     },
+     "score": {
+      "type": "integer",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Score"
+     },
+     "value": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Value"
+     }
+    },
+    "type": "object",
+    "required": [
+     "label",
+     "score"
+    ],
+    "title": "OptionIn"
+   },
+   "OptionOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "label"
+    ],
+    "title": "OptionOut"
+   },
+   "Page_AIEvaluationAdminOut_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/AIEvaluationAdminOut"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[AIEvaluationAdminOut]"
+   },
+   "Page_AdminUserOut_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/AdminUserOut"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[AdminUserOut]"
+   },
+   "Page_ResourceOut_": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/ResourceOut"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "page": {
+      "type": "integer",
+      "title": "Page"
+     },
+     "page_size": {
+      "type": "integer",
+      "title": "Page Size"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "total",
+     "page",
+     "page_size"
+    ],
+    "title": "Page[ResourceOut]"
+   },
+   "PlanOut": {
+    "properties": {
+     "recommendations": {
+      "items": {
+       "$ref": "#/components/schemas/RecommendationOut"
+      },
+      "type": "array",
+      "title": "Recommendations"
+     },
+     "completed": {
+      "items": {
+       "$ref": "#/components/schemas/RecommendationOut"
+      },
+      "type": "array",
+      "title": "Completed"
+     },
+     "done": {
+      "type": "integer",
+      "title": "Done"
+     },
+     "total": {
+      "type": "integer",
+      "title": "Total"
+     },
+     "progress_pct": {
+      "type": "integer",
+      "title": "Progress Pct"
+     }
+    },
+    "type": "object",
+    "required": [
+     "recommendations",
+     "completed",
+     "done",
+     "total",
+     "progress_pct"
+    ],
+    "title": "PlanOut"
+   },
+   "PositionIn": {
+    "properties": {
+     "position": {
+      "type": "integer",
+      "minimum": 0.0,
+      "title": "Position"
+     }
+    },
+    "type": "object",
+    "required": [
+     "position"
+    ],
+    "title": "PositionIn"
+   },
+   "PracticeStatus": {
+    "type": "string",
+    "enum": [
+     "started",
+     "submitted",
+     "completed"
+    ],
+    "title": "PracticeStatus"
+   },
+   "ProfileOut": {
+    "properties": {
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     },
+     "email": {
+      "type": "string",
+      "title": "Email"
+     },
+     "education": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Education"
+     },
+     "background": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Background"
+     },
+     "entrepreneurial_experience": {
+      "$ref": "#/components/schemas/ExperienceLevel"
+     },
+     "business_experience": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Business Experience"
+     },
+     "preferred_learning_format": {
+      "$ref": "#/components/schemas/LearningFormat"
+     },
+     "weekly_learning_minutes": {
+      "type": "integer",
+      "title": "Weekly Learning Minutes"
+     },
+     "language": {
+      "type": "string",
+      "title": "Language"
+     },
+     "notify_reassessment": {
+      "type": "boolean",
+      "title": "Notify Reassessment"
+     },
+     "notify_weekly_summary": {
+      "type": "boolean",
+      "title": "Notify Weekly Summary"
+     },
+     "goals": {
+      "items": {
+       "$ref": "#/components/schemas/GoalOut"
+      },
+      "type": "array",
+      "title": "Goals"
+     },
+     "onboarding_completed": {
+      "type": "boolean",
+      "title": "Onboarding Completed"
+     }
+    },
+    "type": "object",
+    "required": [
+     "full_name",
+     "email",
+     "education",
+     "background",
+     "entrepreneurial_experience",
+     "business_experience",
+     "preferred_learning_format",
+     "weekly_learning_minutes",
+     "language",
+     "notify_reassessment",
+     "notify_weekly_summary",
+     "goals",
+     "onboarding_completed"
+    ],
+    "title": "ProfileOut"
+   },
+   "ProfileOverview": {
+    "properties": {
+     "has_profile": {
+      "type": "boolean",
+      "title": "Has Profile"
+     },
+     "overall": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Overall"
+     },
+     "level": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Level"
+     },
+     "previous_overall": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Previous Overall"
+     },
+     "change": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Change"
+     },
+     "assessed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Assessed At"
+     },
+     "attempt_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Attempt Id"
+     },
+     "areas": {
+      "items": {
+       "$ref": "#/components/schemas/AreaScore"
+      },
+      "type": "array",
+      "title": "Areas"
+     },
+     "competencies": {
+      "items": {
+       "$ref": "#/components/schemas/CompetencyScoreOut"
+      },
+      "type": "array",
+      "title": "Competencies"
+     },
+     "strengths": {
+      "items": {
+       "$ref": "#/components/schemas/CompetencyScoreOut"
+      },
+      "type": "array",
+      "title": "Strengths"
+     },
+     "priority_gaps": {
+      "items": {
+       "$ref": "#/components/schemas/CompetencyScoreOut"
+      },
+      "type": "array",
+      "title": "Priority Gaps"
+     },
+     "insight": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/InsightOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object",
+    "required": [
+     "has_profile",
+     "overall",
+     "level",
+     "previous_overall",
+     "change",
+     "assessed_at",
+     "attempt_id",
+     "areas",
+     "competencies",
+     "strengths",
+     "priority_gaps",
+     "insight"
+    ],
+    "title": "ProfileOverview"
+   },
+   "ProfileUpdate": {
+    "properties": {
+     "full_name": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120,
+        "minLength": 2
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Full Name"
+     },
+     "education": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 120
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Education"
+     },
+     "background": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 1000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Background"
+     },
+     "entrepreneurial_experience": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ExperienceLevel"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "business_experience": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 1000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Business Experience"
+     },
+     "goal_codes": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array",
+        "maxItems": 6
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Goal Codes"
+     },
+     "preferred_learning_format": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/LearningFormat"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "weekly_learning_minutes": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "maximum": 600.0,
+        "minimum": 15.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Weekly Learning Minutes"
+     },
+     "language": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(en|ru|kk)$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Language"
+     },
+     "notify_reassessment": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Notify Reassessment"
+     },
+     "notify_weekly_summary": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Notify Weekly Summary"
+     }
+    },
+    "type": "object",
+    "title": "ProfileUpdate"
+   },
+   "ProgressIn": {
+    "properties": {
+     "progress_pct": {
+      "type": "integer",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Progress Pct"
+     }
+    },
+    "type": "object",
+    "required": [
+     "progress_pct"
+    ],
+    "title": "ProgressIn"
+   },
+   "ProgressOverview": {
+    "properties": {
+     "snapshots": {
+      "items": {
+       "$ref": "#/components/schemas/SnapshotOut"
+      },
+      "type": "array",
+      "title": "Snapshots"
+     },
+     "trends": {
+      "items": {
+       "$ref": "#/components/schemas/CompetencyTrend"
+      },
+      "type": "array",
+      "title": "Trends"
+     },
+     "overall_first": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Overall First"
+     },
+     "overall_previous": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Overall Previous"
+     },
+     "overall_current": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Overall Current"
+     },
+     "completed_resources": {
+      "type": "integer",
+      "title": "Completed Resources"
+     },
+     "completed_tasks": {
+      "type": "integer",
+      "title": "Completed Tasks"
+     },
+     "reflections": {
+      "type": "integer",
+      "title": "Reflections"
+     },
+     "reassessments": {
+      "type": "integer",
+      "title": "Reassessments"
+     },
+     "recent": {
+      "items": {
+       "$ref": "#/components/schemas/ActivityLogItem"
+      },
+      "type": "array",
+      "title": "Recent"
+     }
+    },
+    "type": "object",
+    "required": [
+     "snapshots",
+     "trends",
+     "overall_first",
+     "overall_previous",
+     "overall_current",
+     "completed_resources",
+     "completed_tasks",
+     "reflections",
+     "reassessments",
+     "recent"
+    ],
+    "title": "ProgressOverview"
+   },
+   "ProgressStatus": {
+    "type": "string",
+    "enum": [
+     "not_started",
+     "in_progress",
+     "completed"
+    ],
+    "title": "ProgressStatus"
+   },
+   "PromptIn": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "pattern": "^(answer_evaluation|profile_insight)$",
+      "title": "Key"
+     },
+     "system_prompt": {
+      "type": "string",
+      "minLength": 20,
+      "title": "System Prompt"
+     },
+     "user_template": {
+      "type": "string",
+      "minLength": 10,
+      "title": "User Template"
+     },
+     "notes": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Notes"
+     },
+     "activate": {
+      "type": "boolean",
+      "title": "Activate",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "key",
+     "system_prompt",
+     "user_template"
+    ],
+    "title": "PromptIn"
+   },
+   "PromptOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "version": {
+      "type": "integer",
+      "title": "Version"
+     },
+     "system_prompt": {
+      "type": "string",
+      "title": "System Prompt"
+     },
+     "user_template": {
+      "type": "string",
+      "title": "User Template"
+     },
+     "notes": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Notes"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "key",
+     "version",
+     "system_prompt",
+     "user_template",
+     "notes",
+     "is_active",
+     "created_at"
+    ],
+    "title": "PromptOut"
+   },
+   "QuestionAdminOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "assessment_id": {
+      "type": "integer",
+      "title": "Assessment Id"
+     },
+     "sort_order": {
+      "type": "integer",
+      "title": "Sort Order"
+     },
+     "type": {
+      "$ref": "#/components/schemas/QuestionType"
+     },
+     "section": {
+      "type": "string",
+      "title": "Section"
+     },
+     "text": {
+      "type": "string",
+      "title": "Text"
+     },
+     "help_text": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help Text"
+     },
+     "reverse_scored": {
+      "type": "boolean",
+      "title": "Reverse Scored"
+     },
+     "min_length": {
+      "type": "integer",
+      "title": "Min Length"
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active"
+     },
+     "options": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Options"
+     },
+     "competencies": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Competencies"
+     },
+     "rubric": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Rubric"
+     },
+     "answer_count": {
+      "type": "integer",
+      "title": "Answer Count"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "assessment_id",
+     "sort_order",
+     "type",
+     "section",
+     "text",
+     "help_text",
+     "reverse_scored",
+     "min_length",
+     "is_active",
+     "options",
+     "competencies",
+     "rubric",
+     "answer_count"
+    ],
+    "title": "QuestionAdminOut"
+   },
+   "QuestionIn": {
+    "properties": {
+     "assessment_id": {
+      "type": "integer",
+      "title": "Assessment Id"
+     },
+     "type": {
+      "$ref": "#/components/schemas/QuestionType"
+     },
+     "section": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 2,
+      "title": "Section"
+     },
+     "text": {
+      "type": "string",
+      "maxLength": 2000,
+      "minLength": 10,
+      "title": "Text"
+     },
+     "help_text": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 1000
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help Text"
+     },
+     "sort_order": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sort Order"
+     },
+     "reverse_scored": {
+      "type": "boolean",
+      "title": "Reverse Scored",
+      "default": false
+     },
+     "min_length": {
+      "type": "integer",
+      "maximum": 2000.0,
+      "minimum": 0.0,
+      "title": "Min Length",
+      "default": 0
+     },
+     "is_active": {
+      "type": "boolean",
+      "title": "Is Active",
+      "default": true
+     },
+     "options": {
+      "items": {
+       "$ref": "#/components/schemas/OptionIn"
+      },
+      "type": "array",
+      "title": "Options"
+     },
+     "competencies": {
+      "items": {
+       "$ref": "#/components/schemas/CompetencyLinkIn"
+      },
+      "type": "array",
+      "minItems": 1,
+      "title": "Competencies"
+     },
+     "rubric": {
+      "items": {
+       "$ref": "#/components/schemas/RubricIn"
+      },
+      "type": "array",
+      "title": "Rubric"
+     }
+    },
+    "type": "object",
+    "required": [
+     "assessment_id",
+     "type",
+     "section",
+     "text",
+     "competencies"
+    ],
+    "title": "QuestionIn"
+   },
+   "QuestionOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "index": {
+      "type": "integer",
+      "title": "Index"
+     },
+     "type": {
+      "$ref": "#/components/schemas/QuestionType"
+     },
+     "section": {
+      "type": "string",
+      "title": "Section"
+     },
+     "text": {
+      "type": "string",
+      "title": "Text"
+     },
+     "help_text": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help Text"
+     },
+     "min_length": {
+      "type": "integer",
+      "title": "Min Length"
+     },
+     "options": {
+      "items": {
+       "$ref": "#/components/schemas/OptionOut"
+      },
+      "type": "array",
+      "title": "Options"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "index",
+     "type",
+     "section",
+     "text",
+     "help_text",
+     "min_length",
+     "options"
+    ],
+    "title": "QuestionOut",
+    "description": "Question as shown to the learner. Never reveals which competency it measures (FR-14)."
+   },
+   "QuestionType": {
+    "type": "string",
+    "enum": [
+     "likert",
+     "situational",
+     "open",
+     "practical"
+    ],
+    "title": "QuestionType"
+   },
+   "RecommendationOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "priority": {
+      "type": "integer",
+      "title": "Priority"
+     },
+     "priority_score": {
+      "type": "number",
+      "title": "Priority Score"
+     },
+     "status": {
+      "$ref": "#/components/schemas/RecommendationStatus"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "competency_code": {
+      "type": "string",
+      "title": "Competency Code"
+     },
+     "competency_name": {
+      "type": "string",
+      "title": "Competency Name"
+     },
+     "current": {
+      "type": "integer",
+      "title": "Current"
+     },
+     "target": {
+      "type": "integer",
+      "title": "Target"
+     },
+     "gap": {
+      "type": "integer",
+      "title": "Gap"
+     },
+     "band": {
+      "$ref": "#/components/schemas/GapBand"
+     },
+     "reason": {
+      "type": "string",
+      "title": "Reason"
+     },
+     "goal": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Goal"
+     },
+     "resource": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Resource"
+     },
+     "task": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Task"
+     },
+     "activities": {
+      "items": {
+       "$ref": "#/components/schemas/ActivityOut"
+      },
+      "type": "array",
+      "title": "Activities"
+     },
+     "progress_pct": {
+      "type": "integer",
+      "title": "Progress Pct"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "priority",
+     "priority_score",
+     "status",
+     "competency_id",
+     "competency_code",
+     "competency_name",
+     "current",
+     "target",
+     "gap",
+     "band",
+     "reason",
+     "goal",
+     "resource",
+     "task",
+     "activities",
+     "progress_pct",
+     "created_at"
+    ],
+    "title": "RecommendationOut"
+   },
+   "RecommendationStatus": {
+    "type": "string",
+    "enum": [
+     "active",
+     "completed",
+     "superseded"
+    ],
+    "title": "RecommendationStatus"
+   },
+   "RecommendedItem": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "kind": {
+      "type": "string",
+      "title": "Kind"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "type": {
+      "type": "string",
+      "title": "Type"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "title": "Duration Minutes"
+     },
+     "difficulty": {
+      "type": "string",
+      "title": "Difficulty"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "kind",
+     "title",
+     "type",
+     "duration_minutes",
+     "difficulty"
+    ],
+    "title": "RecommendedItem"
+   },
+   "ReflectionIn": {
+    "properties": {
+     "text": {
+      "type": "string",
+      "maxLength": 2000,
+      "minLength": 10,
+      "title": "Text"
+     }
+    },
+    "type": "object",
+    "required": [
+     "text"
+    ],
+    "title": "ReflectionIn"
+   },
+   "RegisterIn": {
+    "properties": {
+     "email": {
+      "type": "string",
+      "format": "email",
+      "title": "Email"
+     },
+     "password": {
+      "type": "string",
+      "maxLength": 128,
+      "minLength": 8,
+      "title": "Password"
+     },
+     "full_name": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Full Name"
+     }
+    },
+    "type": "object",
+    "required": [
+     "email",
+     "password",
+     "full_name"
+    ],
+    "title": "RegisterIn"
+   },
+   "ResourceAdminOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "type": {
+      "$ref": "#/components/schemas/ResourceType"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "title": "Duration Minutes"
+     },
+     "content": {
+      "type": "string",
+      "title": "Content"
+     },
+     "url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Url"
+     },
+     "is_published": {
+      "type": "boolean",
+      "title": "Is Published"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "slug",
+     "competency_id",
+     "title",
+     "description",
+     "type",
+     "difficulty",
+     "duration_minutes",
+     "content",
+     "url",
+     "is_published"
+    ],
+    "title": "ResourceAdminOut"
+   },
+   "ResourceDetail": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "type": {
+      "$ref": "#/components/schemas/ResourceType"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "title": "Duration Minutes"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "competency_code": {
+      "type": "string",
+      "title": "Competency Code"
+     },
+     "competency_name": {
+      "type": "string",
+      "title": "Competency Name"
+     },
+     "status": {
+      "$ref": "#/components/schemas/ProgressStatus"
+     },
+     "progress_pct": {
+      "type": "integer",
+      "title": "Progress Pct"
+     },
+     "recommended": {
+      "type": "boolean",
+      "title": "Recommended"
+     },
+     "started_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Started At"
+     },
+     "completed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Completed At"
+     },
+     "content": {
+      "type": "string",
+      "title": "Content"
+     },
+     "url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Url"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "slug",
+     "title",
+     "description",
+     "type",
+     "difficulty",
+     "duration_minutes",
+     "competency_id",
+     "competency_code",
+     "competency_name",
+     "status",
+     "progress_pct",
+     "recommended",
+     "started_at",
+     "completed_at",
+     "content",
+     "url",
+     "reason"
+    ],
+    "title": "ResourceDetail"
+   },
+   "ResourceIn": {
+    "properties": {
+     "slug": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 2,
+      "pattern": "^[a-z0-9-]+$",
+      "title": "Slug"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 3,
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "minLength": 10,
+      "title": "Description"
+     },
+     "type": {
+      "$ref": "#/components/schemas/ResourceType"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "maximum": 600.0,
+      "minimum": 1.0,
+      "title": "Duration Minutes"
+     },
+     "content": {
+      "type": "string",
+      "minLength": 20,
+      "title": "Content"
+     },
+     "url": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 500,
+        "pattern": "^https?://"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Url"
+     },
+     "is_published": {
+      "type": "boolean",
+      "title": "Is Published",
+      "default": true
+     }
+    },
+    "type": "object",
+    "required": [
+     "slug",
+     "competency_id",
+     "title",
+     "description",
+     "type",
+     "difficulty",
+     "duration_minutes",
+     "content"
+    ],
+    "title": "ResourceIn"
+   },
+   "ResourceOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "type": {
+      "$ref": "#/components/schemas/ResourceType"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "title": "Duration Minutes"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "competency_code": {
+      "type": "string",
+      "title": "Competency Code"
+     },
+     "competency_name": {
+      "type": "string",
+      "title": "Competency Name"
+     },
+     "status": {
+      "$ref": "#/components/schemas/ProgressStatus"
+     },
+     "progress_pct": {
+      "type": "integer",
+      "title": "Progress Pct"
+     },
+     "recommended": {
+      "type": "boolean",
+      "title": "Recommended"
+     },
+     "started_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Started At"
+     },
+     "completed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Completed At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "slug",
+     "title",
+     "description",
+     "type",
+     "difficulty",
+     "duration_minutes",
+     "competency_id",
+     "competency_code",
+     "competency_name",
+     "status",
+     "progress_pct",
+     "recommended",
+     "started_at",
+     "completed_at"
+    ],
+    "title": "ResourceOut"
+   },
+   "ResourceType": {
+    "type": "string",
+    "enum": [
+     "article",
+     "video",
+     "course",
+     "exercise",
+     "case_study",
+     "template"
+    ],
+    "title": "ResourceType"
+   },
+   "RubricIn": {
+    "properties": {
+     "criterion": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Criterion"
+     },
+     "description": {
+      "type": "string",
+      "maxLength": 500,
+      "minLength": 2,
+      "title": "Description"
+     },
+     "competency": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Competency"
+     },
+     "keywords": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Keywords"
+     }
+    },
+    "type": "object",
+    "required": [
+     "criterion",
+     "description"
+    ],
+    "title": "RubricIn"
+   },
+   "SectionOut": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "count": {
+      "type": "integer",
+      "title": "Count"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "count"
+    ],
+    "title": "SectionOut"
+   },
+   "SnapshotOut": {
+    "properties": {
+     "attempt_id": {
+      "type": "integer",
+      "title": "Attempt Id"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "scope": {
+      "type": "string",
+      "title": "Scope"
+     },
+     "competency_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Competency Name"
+     },
+     "date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Date"
+     },
+     "overall": {
+      "type": "integer",
+      "title": "Overall"
+     },
+     "ideas": {
+      "type": "integer",
+      "title": "Ideas"
+     },
+     "resources": {
+      "type": "integer",
+      "title": "Resources"
+     },
+     "action": {
+      "type": "integer",
+      "title": "Action"
+     },
+     "level": {
+      "type": "string",
+      "title": "Level"
+     },
+     "completed_resources": {
+      "type": "integer",
+      "title": "Completed Resources"
+     },
+     "completed_tasks": {
+      "type": "integer",
+      "title": "Completed Tasks"
+     }
+    },
+    "type": "object",
+    "required": [
+     "attempt_id",
+     "label",
+     "scope",
+     "competency_name",
+     "date",
+     "overall",
+     "ideas",
+     "resources",
+     "action",
+     "level",
+     "completed_resources",
+     "completed_tasks"
+    ],
+    "title": "SnapshotOut"
+   },
+   "StartAttemptIn": {
+    "properties": {
+     "scope": {
+      "$ref": "#/components/schemas/AttemptScope",
+      "default": "full"
+     },
+     "competency_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Competency Id"
+     }
+    },
+    "type": "object",
+    "title": "StartAttemptIn"
+   },
+   "StartAttemptOut": {
+    "properties": {
+     "attempt": {
+      "$ref": "#/components/schemas/AttemptSummary"
+     },
+     "resumed": {
+      "type": "boolean",
+      "title": "Resumed"
+     }
+    },
+    "type": "object",
+    "required": [
+     "attempt",
+     "resumed"
+    ],
+    "title": "StartAttemptOut"
+   },
+   "SubmitIn": {
+    "properties": {
+     "response_text": {
+      "type": "string",
+      "maxLength": 6000,
+      "minLength": 1,
+      "title": "Response Text"
+     }
+    },
+    "type": "object",
+    "required": [
+     "response_text"
+    ],
+    "title": "SubmitIn"
+   },
+   "TaskAdminOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "instructions": {
+      "type": "string",
+      "title": "Instructions"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "title": "Duration Minutes"
+     },
+     "rubric": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Rubric"
+     },
+     "min_length": {
+      "type": "integer",
+      "title": "Min Length"
+     },
+     "is_published": {
+      "type": "boolean",
+      "title": "Is Published"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "slug",
+     "competency_id",
+     "title",
+     "description",
+     "instructions",
+     "difficulty",
+     "duration_minutes",
+     "rubric",
+     "min_length",
+     "is_published"
+    ],
+    "title": "TaskAdminOut"
+   },
+   "TaskDetail": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "title": "Duration Minutes"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "competency_code": {
+      "type": "string",
+      "title": "Competency Code"
+     },
+     "competency_name": {
+      "type": "string",
+      "title": "Competency Name"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PracticeStatus"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "recommended": {
+      "type": "boolean",
+      "title": "Recommended"
+     },
+     "feedback_score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feedback Score"
+     },
+     "instructions": {
+      "type": "string",
+      "title": "Instructions"
+     },
+     "rubric": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Rubric"
+     },
+     "min_length": {
+      "type": "integer",
+      "title": "Min Length"
+     },
+     "response_text": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Response Text"
+     },
+     "started_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Started At"
+     },
+     "submitted_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Submitted At"
+     },
+     "completed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Completed At"
+     },
+     "feedback": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/FeedbackOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "slug",
+     "title",
+     "description",
+     "difficulty",
+     "duration_minutes",
+     "competency_id",
+     "competency_code",
+     "competency_name",
+     "status",
+     "recommended",
+     "feedback_score",
+     "instructions",
+     "rubric",
+     "min_length",
+     "response_text",
+     "started_at",
+     "submitted_at",
+     "completed_at",
+     "feedback",
+     "reason"
+    ],
+    "title": "TaskDetail"
+   },
+   "TaskIn": {
+    "properties": {
+     "slug": {
+      "type": "string",
+      "maxLength": 120,
+      "minLength": 2,
+      "pattern": "^[a-z0-9-]+$",
+      "title": "Slug"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "title": {
+      "type": "string",
+      "maxLength": 200,
+      "minLength": 3,
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "minLength": 10,
+      "title": "Description"
+     },
+     "instructions": {
+      "type": "string",
+      "minLength": 10,
+      "title": "Instructions"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "maximum": 600.0,
+      "minimum": 1.0,
+      "title": "Duration Minutes"
+     },
+     "rubric": {
+      "items": {
+       "$ref": "#/components/schemas/RubricIn"
+      },
+      "type": "array",
+      "minItems": 1,
+      "title": "Rubric"
+     },
+     "min_length": {
+      "type": "integer",
+      "maximum": 2000.0,
+      "minimum": 0.0,
+      "title": "Min Length",
+      "default": 80
+     },
+     "is_published": {
+      "type": "boolean",
+      "title": "Is Published",
+      "default": true
+     }
+    },
+    "type": "object",
+    "required": [
+     "slug",
+     "competency_id",
+     "title",
+     "description",
+     "instructions",
+     "difficulty",
+     "duration_minutes",
+     "rubric"
+    ],
+    "title": "TaskIn"
+   },
+   "TaskOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "difficulty": {
+      "$ref": "#/components/schemas/Difficulty"
+     },
+     "duration_minutes": {
+      "type": "integer",
+      "title": "Duration Minutes"
+     },
+     "competency_id": {
+      "type": "integer",
+      "title": "Competency Id"
+     },
+     "competency_code": {
+      "type": "string",
+      "title": "Competency Code"
+     },
+     "competency_name": {
+      "type": "string",
+      "title": "Competency Name"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PracticeStatus"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "recommended": {
+      "type": "boolean",
+      "title": "Recommended"
+     },
+     "feedback_score": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Feedback Score"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "slug",
+     "title",
+     "description",
+     "difficulty",
+     "duration_minutes",
+     "competency_id",
+     "competency_code",
+     "competency_name",
+     "status",
+     "recommended",
+     "feedback_score"
+    ],
+    "title": "TaskOut"
+   },
+   "UserOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "email": {
+      "type": "string",
+      "title": "Email"
+     },
+     "full_name": {
+      "type": "string",
+      "title": "Full Name"
+     },
+     "role": {
+      "$ref": "#/components/schemas/UserRole"
+     },
+     "onboarding_completed": {
+      "type": "boolean",
+      "title": "Onboarding Completed"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "email",
+     "full_name",
+     "role",
+     "onboarding_completed",
+     "created_at"
+    ],
+    "title": "UserOut"
+   },
+   "UserRole": {
+    "type": "string",
+    "enum": [
+     "user",
+     "admin"
+    ],
+    "title": "UserRole"
+   }
+  },
+  "securitySchemes": {
+   "HTTPBearer": {
+    "type": "http",
+    "description": "JWT from /api/auth/login (or the session cookie)",
+    "scheme": "bearer"
+   }
+  }
+ },
+ "tags": [
+  {
+   "name": "auth",
+   "description": "Registration, login, logout, current user"
+  },
+  {
+   "name": "profile",
+   "description": "Onboarding, goals and learning preferences"
+  },
+  {
+   "name": "assessments",
+   "description": "Assessment engine: attempts, autosave, submission, results"
+  },
+  {
+   "name": "competencies",
+   "description": "EntreComp catalogue and per-competency explanations"
+  },
+  {
+   "name": "scores",
+   "description": "Competency profile"
+  },
+  {
+   "name": "gaps",
+   "description": "Gap analysis"
+  },
+  {
+   "name": "recommendations",
+   "description": "Recommendation engine"
+  },
+  {
+   "name": "plan",
+   "description": "Development plan (Learn \u2192 Practice \u2192 Reflect \u2192 Reassess)"
+  },
+  {
+   "name": "learning",
+   "description": "Learning resources and progress"
+  },
+  {
+   "name": "practice",
+   "description": "Practical tasks with AI feedback"
+  },
+  {
+   "name": "progress",
+   "description": "Dashboard and longitudinal progress"
+  },
+  {
+   "name": "ai",
+   "description": "AI subsystem status and explanations"
+  },
+  {
+   "name": "admin",
+   "description": "Content management, AI governance and statistics (admin only)"
+  }
+ ]
+}

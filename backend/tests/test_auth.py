@@ -83,3 +83,10 @@ def test_login_works_for_reserved_domain_accounts(client, db):
     db.commit()
     r = client.post("/api/auth/login", json={"email": "Demo@Isker.local", "password": "IskerDemo2026"})
     assert r.status_code == 200, r.text
+
+
+def test_cors_origins_parsed_from_comma_separated_env(monkeypatch):
+    from app.core.config import Settings
+
+    monkeypatch.setenv("CORS_ORIGINS", "http://localhost:8080, http://example.com")
+    assert Settings().cors_origins == ["http://localhost:8080", "http://example.com"]
