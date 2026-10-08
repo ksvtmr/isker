@@ -73,3 +73,13 @@ def test_admin_requires_admin_role(client):
     r = client.get("/api/admin/stats")
     assert r.status_code == 403
     assert r.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_login_works_for_reserved_domain_accounts(client, db):
+    from app.core.security import hash_password
+    from app.models import User
+
+    db.add(User(email="demo@isker.local", password_hash=hash_password("IskerDemo2026"), full_name="Demo"))
+    db.commit()
+    r = client.post("/api/auth/login", json={"email": "Demo@Isker.local", "password": "IskerDemo2026"})
+    assert r.status_code == 200, r.text

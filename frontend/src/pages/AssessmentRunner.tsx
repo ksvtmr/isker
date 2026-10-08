@@ -95,18 +95,25 @@ export function AssessmentRunner() {
     setIndex(Math.min(data.attempt.current_index, Math.max(0, data.questions.length - 1)));
   }, [data]);
 
-  const persist = useCallback(async (qid: number, body: Draft, position: number) => {
-    setSaveState("saving");
-    try {
-      await assessmentsApi.saveAnswer(id, qid, body.option_id != null ? { option_id: body.option_id, position } : { text_response: body.text ?? "", position });
-      if (pending.current?.qid === qid) pending.current = null;
-      setSaveState("saved");
-      setSaveError(null);
-    } catch (e) {
-      setSaveState("error");
-      setSaveError(errorMessage(e, "Your answer couldn't be saved."));
-      throw e;
-    }
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  // Saves run one at a time, in order, so a debounced save and a flush can never race each other.
+  const persist = useCallback((qid: number, body: Draft, position: number) => {
+    const run = async () => {
+      setSaveState("saving");
+      try {
+        await assessmentsApi.saveAnswer(id, qid, body.option_id != null ? { option_id: body.option_id, position } : { text_response: body.text ?? "", position });
+        if (pending.current?.qid === qid && JSON.stringify(pending.current.body) === JSON.stringify(body)) pending.current = null;
+        setSaveState("saved");
+        setSaveError(null);
+      } catch (e) {
+        setSaveState("error");
+        setSaveError(errorMessage(e, "Your answer couldn't be saved."));
+        throw e;
+      }
+    };
+    const next = queue.current.catch(() => {}).then(run);
+    queue.current = next;
+    return next;
   }, [id]);
 
   const flush = useCallback(async () => {

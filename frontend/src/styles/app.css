@@ -9,8 +9,6 @@
 
 @theme {
   --color-*: initial;
-  --font-*: initial;
-  --font-sans: var(--font-sans);
 }
 
 /* --- Layout grid (from the Isker UI kit) --- */
@@ -84,3 +82,4 @@
   .ik-landing-hero{padding:40px 16px 32px}.ik-landing-top{padding:16px}
   .ik-kv{grid-template-columns:1fr}
 }
+.ik-table-wrap{position:relative}

@@ -30,8 +30,8 @@ function ScoreHero({ d }: { d: Dashboard }) {
           </div>
         </div>
         {snaps.length > 1 && (
-          <div style={{ flex: "1 1 220px", maxWidth: 320 }}>
-            <LineChart height={130} labels={snaps.map((s) => shortMonth(s.date))} ticks={[25, 50, 75, 100]} min={Math.max(0, Math.min(...snaps.map((s) => s.overall)) - 15)}
+          <div style={{ flex: "1 1 320px", maxWidth: 560 }}>
+            <LineChart height={180} labels={snaps.map((s) => shortMonth(s.date))} ticks={[25, 50, 75, 100]} min={Math.max(0, Math.min(...snaps.map((s) => s.overall)) - 15)}
               series={[{ values: snaps.map((s) => s.overall), color: "var(--color-brand-600)" }]} ariaLabel="Overall score history" />
           </div>
         )}
@@ -113,7 +113,7 @@ export function DashboardPage() {
           <AIInsight
             context={strongest ? `${strongest.name} · ${strongest.score}` : undefined}
             confidence={confidenceLabel(d.insight.confidence)}
-            action={rec && <LinkButton to={`/development-plan?focus=${rec.competency_code}`} size="sm" variant="secondary">Open {rec.competency_name} plan</LinkButton>}
+            action={rec && <LinkButton to={`/development-plan?focus=${rec.competency_code}`} size="sm" variant="secondary">Open development plan</LinkButton>}
           >
             <b>{d.insight.headline}</b> {d.insight.body} <b>Recommended next step:</b> {d.insight.next_step}
           </AIInsight>
@@ -123,8 +123,8 @@ export function DashboardPage() {
       </div>
 
       <div className="ik-grid4" style={{ marginBottom: 32 }}>
-        <StatCard label="Strengths" value={`${strengths.length} ${strengths.length === 1 ? "competency" : "competencies"}`} description={strongest ? `Strongest: ${strongest.name} · ${strongest.score}` : "At or above target"} icon="trending-up" tone="growth" />
-        <StatCard label="Priority Gap" value={`${priorityGaps.length} ${priorityGaps.length === 1 ? "competency" : "competencies"}`} description={p.priority_gaps[0] ? `Top: ${p.priority_gaps[0].name} · ${p.priority_gaps[0].score} → ${p.priority_gaps[0].target}` : "None 10+ points below target"} icon="target" tone="warning" />
+        <StatCard label="Strengths" value={strengths.length} description={`${strengths.length === 1 ? "competency" : "competencies"} at or above target${strongest ? ` · strongest: ${strongest.name}` : ""}`} icon="trending-up" tone="growth" />
+        <StatCard label="Priority Gap" value={priorityGaps.length} description={`${priorityGaps.length === 1 ? "competency" : "competencies"} 10+ points below target${p.priority_gaps[0] ? ` · top: ${p.priority_gaps[0].name}` : ""}`} icon="target" tone="warning" />
         <StatCard label="Development Progress" value={`${d.plan_progress_pct}%`} description={`${d.plan_done} of ${d.plan_total} plan activities done`} icon="route" />
         <StatCard
           label="Next Assessment"

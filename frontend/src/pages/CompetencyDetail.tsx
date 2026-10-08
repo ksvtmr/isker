@@ -71,8 +71,9 @@ export function CompetencyDetailPage() {
     );
   }
 
-  const strengths = [...new Set(d.ai.flatMap((a) => a.strengths))].slice(0, 4);
-  const devAreas = [...new Set(d.ai.flatMap((a) => a.development_areas))].slice(0, 4);
+  // Only rubric criteria that evidence this competency (an open answer can cover several competencies).
+  const strengths = d.criteria.filter((k) => k.score >= 75).map((k) => k.criterion);
+  const devAreas = d.criteria.filter((k) => k.score <= 50).map((k) => k.criterion);
   const avgConf = d.ai.length ? d.ai.reduce((s, a) => s + (a.confidence ?? 0), 0) / d.ai.length : cur.confidence;
   const methods: [string, number | null][] = [["Self-assessment", d.method_scores.self], ["Situational judgement", d.method_scores.situational], ["Open answers & practical task", d.method_scores.open]];
   const first = d.history[0]?.score;

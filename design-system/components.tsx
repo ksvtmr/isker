@@ -41,7 +41,7 @@ export function gapFromScore(score: number, target = 70): Gap {
   return g >= 20 ? "High" : g >= 10 ? "Medium" : "Low";
 }
 
-const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(" ");
+const cx = (...c: Array<unknown>) => c.filter(Boolean).join(" ");
 
 /* ============================================================================================
  * Core

@@ -40,7 +40,8 @@ class RegisterIn(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
+    # Plain shape check: login must work for seeded accounts on reserved domains such as demo@isker.local.
+    email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+$")
     password: str = Field(min_length=1, max_length=128)
 
     @field_validator("email")

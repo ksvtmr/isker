@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.ai.service import generate_insight
@@ -150,9 +151,17 @@ def save_answer(
         raise NotFoundError("Question not found in this assessment", "QUESTION_NOT_FOUND")
     ans = next((a for a in attempt.answers if a.question_id == question_id), None)
     if ans is None:
-        ans = Answer(attempt_id=attempt.id, question_id=q.id)
-        db.add(ans)
-        attempt.answers.append(ans)
+        # Two autosaves for the same question can race; the unique constraint decides, the loser re-reads.
+        try:
+            with db.begin_nested():
+                ans = Answer(attempt_id=attempt.id, question_id=q.id)
+                db.add(ans)
+                db.flush()
+            attempt.answers.append(ans)
+        except IntegrityError:
+            ans = db.scalar(select(Answer).where(Answer.attempt_id == attempt.id, Answer.question_id == q.id))
+            if ans is None:  # pragma: no cover - defensive
+                raise
     if q.type in CHOICE_TYPES:
         opt = next((o for o in q.options if o.id == option_id), None)
         if opt is None:
