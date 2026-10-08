@@ -9,6 +9,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-isker}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    ports:
+      # Exposed for local development with hot reload (backend runs on the host). Change the left
+      # number (e.g. "5433:5432") if PostgreSQL is already installed on your machine.
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-isker} -d ${POSTGRES_DB:-isker}"]
       interval: 5s
