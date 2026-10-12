@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-import uuid
 from datetime import datetime, timedelta
 
 from sqlalchemy import select, update
@@ -16,6 +15,7 @@ from app.core.database import as_utc, utcnow
 from app.core.errors import ValidationError
 from app.models import EmailVerificationToken, PasswordResetToken, User, UserSession
 from app.services import email as email_service
+from app.services import email_templates
 
 
 def _hash(token: str) -> str:
@@ -25,18 +25,53 @@ def _hash(token: str) -> str:
 # --- Sessions -------------------------------------------------------------------------------------
 
 
-def create_session(db: Session, user: User) -> UserSession:
+def session_lifetime(remember: bool) -> timedelta:
     s = get_settings()
+    return timedelta(days=s.remember_me_days) if remember else timedelta(hours=s.session_hours)
+
+
+def create_session(db: Session, user: User, *, remember: bool = False, method: str = "password") -> UserSession:
     sess = UserSession(
-        id=uuid.uuid4().hex,
+        id=secrets.token_hex(32),
         user_id=user.id,
-        expires_at=utcnow() + timedelta(minutes=s.jwt_expires_minutes),
+        expires_at=utcnow() + session_lifetime(remember),
         user_agent=user_agent_var.get(),
         ip_address=client_ip_var.get(),
+        remember=remember,
+        token_version=0,
+        auth_method=method,
     )
     db.add(sess)
     db.flush()
     return sess
+
+
+ROTATION_GRACE_SECONDS = 60
+
+
+def check_token_version(db: Session, sess: UserSession, version: int) -> bool:
+    """True if the presented token version is acceptable.
+
+    The current version is always accepted; the previous one only for a short grace period after a rotation
+    (parallel requests in flight). Anything older means a superseded token was replayed: the session is revoked.
+    """
+    if version == sess.token_version:
+        return True
+    rotated = as_utc(sess.rotated_at) if sess.rotated_at else None
+    if version == sess.token_version - 1 and rotated and (utcnow() - rotated).total_seconds() < ROTATION_GRACE_SECONDS:
+        return True
+    revoke_session(db, sess, "token_reuse")
+    return False
+
+
+def needs_rotation(sess: UserSession, issued_at: datetime) -> bool:
+    age = utcnow() - as_utc(issued_at)
+    return age > timedelta(minutes=get_settings().token_rotate_minutes) and sess.revoked_at is None
+
+
+def rotate(sess: UserSession) -> None:
+    sess.token_version += 1
+    sess.rotated_at = utcnow()
 
 
 def session_is_valid(sess: UserSession | None) -> bool:
@@ -89,13 +124,9 @@ def start_email_verification(db: Session, user: User) -> email_service.DeliveryR
     )
     db.flush()
     link = f"{s.app_base_url.rstrip('/')}/verify-email?token={raw}"
-    return email_service.send(
-        user.email,
-        "Confirm your email for Isker",
-        f"Hi {user.full_name},\n\nConfirm your email address to secure your Isker account:\n{link}\n\n"
-        f"The link expires in {s.verification_token_hours} hours. If you didn't create an account, "
-        "ignore this message.",
-    )
+    subject, text = email_templates.render("verify_email", email_templates.email_language(user), name=user.full_name,
+                                           link=link, hours=s.verification_token_hours)
+    return email_service.send(user.email, subject, text)
 
 
 def verify_email(db: Session, raw: str) -> User:
@@ -131,13 +162,9 @@ def start_password_reset(db: Session, user: User, requested_by_id: int | None = 
     )
     db.flush()
     link = f"{s.app_base_url.rstrip('/')}/reset-password?token={raw}"
-    return email_service.send(
-        user.email,
-        "Reset your Isker password",
-        f"Hi {user.full_name},\n\nUse this link to choose a new password:\n{link}\n\n"
-        f"The link expires in {s.reset_token_minutes} minutes and works once. If you didn't ask "
-        "for this, you can ignore this message — your password stays the same.",
-    )
+    subject, text = email_templates.render("reset_password", email_templates.email_language(user), name=user.full_name,
+                                           link=link, minutes=s.reset_token_minutes)
+    return email_service.send(user.email, subject, text)
 
 
 def consume_reset_token(db: Session, raw: str) -> User:

@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.content_i18n import Translatable
 from app.core.database import Base, TimestampMixin, utcnow
 from app.models.enums import AccountStatus, ExperienceLevel, LearningFormat, db_enum
 
@@ -36,6 +37,7 @@ class User(TimestampMixin, Base):
     role_links = relationship(
         "UserRole", foreign_keys="UserRole.user_id", cascade="all, delete-orphan", back_populates="user"
     )
+    oauth_identities = relationship("OAuthIdentity", cascade="all, delete-orphan", lazy="selectin")
 
     @property
     def is_active(self) -> bool:
@@ -61,17 +63,19 @@ class UserProfile(TimestampMixin, Base):
         db_enum(LearningFormat, "learning_format"), default=LearningFormat.MIXED
     )
     weekly_learning_minutes: Mapped[int] = mapped_column(Integer, default=60)
-    language: Mapped[str] = mapped_column(String(8), default="en")
+    # Saved interface language (ru | kk | en). NULL = never chosen; the first sign-in stores the language in use.
+    language: Mapped[str | None] = mapped_column(String(8))
     notify_reassessment: Mapped[bool] = mapped_column(Boolean, default=True)
     notify_weekly_summary: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped[User] = relationship(back_populates="profile")
 
 
-class GoalDefinition(Base):
+class GoalDefinition(Translatable, Base):
     """Catalogue of entrepreneurial goals a user can pick. Goals change gap priorities."""
 
     __tablename__ = "goal_definitions"
+    __translatable__ = ("title", "description")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(48), unique=True)

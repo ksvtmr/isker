@@ -1,0 +1,377 @@
+{
+  "content": {
+    "status": "Status",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "published": "Published",
+    "unpublished": "Unpublished",
+    "unpublish": "Unpublish",
+    "unpublishTitle": "Unpublish “{{title}}”?",
+    "rubricInvalid": "Rubric must be valid JSON.",
+    "form": {
+      "title": "Title",
+      "description": "Description",
+      "competency": "Competency",
+      "difficulty": "Difficulty",
+      "duration": "Duration (minutes)",
+      "slug": "Slug",
+      "slugHint": "lowercase-with-dashes",
+      "rubric": "Rubric (JSON)"
+    },
+    "assessmentsPage": {
+      "title": "Assessments",
+      "subtitle": "Assessment versions and the question bank. Questions with answers can't change type; deactivate and replace them instead.",
+      "tabsLabel": "Assessment content",
+      "tabAssessments": "Assessments",
+      "tabQuestions": "Question bank"
+    },
+    "competenciesPage": {
+      "title": "Competencies",
+      "subtitle": "The 15 EntreComp competencies, their descriptions, priorities and default targets."
+    },
+    "learningPage": {
+      "title": "Learning content",
+      "subtitle": "Learning resources and practical tasks. Unpublishing keeps learners' history."
+    },
+    "aiPage": {
+      "title": "AI governance",
+      "subtitle": "Every AI evaluation is logged with its provider, prompt version, latency and fallback status."
+    }
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "subtitle": "All subscriptions, current and past. Open a user to grant, extend or cancel.",
+    "filtersLabel": "Filter subscriptions",
+    "searchLabel": "Search user",
+    "searchPlaceholder": "Name or email",
+    "allStatuses": "All statuses",
+    "allPlans": "All plans",
+    "allSources": "All sources",
+    "expiringLabel": "Expiring",
+    "expiringAny": "Any time",
+    "expiringWithin_one": "Within {{count}} day",
+    "expiringWithin_few": "Within {{count}} days",
+    "expiringWithin_many": "Within {{count}} days",
+    "expiringWithin_other": "Within {{count}} days",
+    "columns": {
+      "user": "User",
+      "plan": "Plan",
+      "status": "Status",
+      "source": "Source",
+      "started": "Started",
+      "ends": "Ends"
+    },
+    "userFallback": "User #{{id}}",
+    "endsAtPeriodEnd": "ends at period end",
+    "endedOn": "Ended {{date}}",
+    "noEndDate": "No end date",
+    "emptyTitle": "No subscriptions",
+    "emptyText": "Everyone matching these filters is on the free plan.",
+    "pagesLabel": "Subscription pages"
+  },
+  "plans": {
+    "title": "Plans",
+    "subtitle": "Prices and limits are enforced by the server for every request. Changing a plan affects all its subscribers immediately.",
+    "newPlan": "New plan",
+    "editPlan": "Edit plan",
+    "editTitle": "Edit {{name}}",
+    "createPlan": "Create plan",
+    "savePlan": "Save plan",
+    "created": "Plan created",
+    "saved": "Plan saved",
+    "badgeDefault": "Default",
+    "badgeInactive": "Inactive",
+    "free": "Free",
+    "pricePer": "{{amount}} / {{interval}}",
+    "perMonth": "month",
+    "perYear": "year",
+    "subscribers_one": "{{n}} user",
+    "subscribers_few": "{{n}} users",
+    "subscribers_many": "{{n}} users",
+    "subscribers_other": "{{n}} users",
+    "keyLabel": "key “{{key}}”",
+    "limitPer30Days": "{{limit}} / 30 days",
+    "features": {
+      "assessment_full": "Full assessments",
+      "assessment_reassessment": "Competency reassessment",
+      "plan_personalized": "Personalised development plan",
+      "learning_advanced_resources": "Advanced learning resources",
+      "practice_tasks": "Practical tasks",
+      "practice_ai_feedback": "AI feedback on practice",
+      "progress_history": "Full progress history",
+      "export_data": "Data export"
+    },
+    "form": {
+      "key": "Key",
+      "keyHint": "Lowercase letters, numbers, - and _. Can't be changed later.",
+      "name": "Name",
+      "description": "Description",
+      "price": "Price",
+      "priceInvalid": "Use a number like 9.00",
+      "priceDefaultHint": "The default plan stays free.",
+      "billing": "Billing",
+      "billingNone": "One-off / none",
+      "billingMonth": "Monthly",
+      "billingYear": "Yearly",
+      "available": "Available",
+      "availableHint": "Inactive plans can't be assigned.",
+      "availableDefaultHint": "The default plan can't be deactivated.",
+      "features": "Features",
+      "limitAria": "{{feature}}: limit per 30 days (empty = unlimited)",
+      "unlimited": "Unlimited"
+    }
+  },
+  "auditLogs": {
+    "title": "Audit log",
+    "subtitle": "Append-only record of security-relevant and administrative actions. Passwords, tokens and secrets are never logged.",
+    "filtersLabel": "Filter audit log",
+    "groups": {
+      "all": "All actions",
+      "auth": "Sign-in & account",
+      "admin": "Admin actions",
+      "accessDenied": "Access denied",
+      "loginFailed": "Failed sign-ins",
+      "subscription": "Payments",
+      "learning": "Learning",
+      "practice": "Practice",
+      "profile": "Profile"
+    },
+    "columns": {
+      "when": "When",
+      "action": "Action",
+      "actor": "Actor",
+      "target": "Target",
+      "outcome": "Outcome"
+    },
+    "userFallback": "User #{{id}}",
+    "systemActor": "System / anonymous",
+    "anyOutcome": "Any outcome",
+    "actorId": "Actor id",
+    "targetUserId": "Target user id",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "securityOnly": "Security events only",
+    "caption": "Audit log entries, newest first",
+    "emptyTitle": "No matching events",
+    "emptyText": "Try a wider date range or remove a filter.",
+    "eventTitle": "Event #{{id}}",
+    "reason": "Reason",
+    "requestId": "Request id",
+    "ipAddress": "IP address",
+    "noDetails": "No additional details.",
+    "pagesLabel": "Audit log pages"
+  },
+  "settings": {
+    "crumb": "Settings",
+    "title": "Platform settings",
+    "subtitle": "Read-only status. Settings are changed through environment variables and a restart; secrets are never shown.",
+    "environment": "Environment: {{env}}",
+    "notProduction": "This instance is not running in production mode.",
+    "on": "On",
+    "off": "Off",
+    "security": {
+      "title": "Security",
+      "secureCookies": "Secure cookies (HTTPS only)",
+      "csrf": "CSRF protection",
+      "rateLimiting": "Rate limiting",
+      "sessionLifetime": "Session lifetime",
+      "hours_one": "{{n}} hour",
+      "hours_few": "{{n}} hours",
+      "hours_many": "{{n}} hours",
+      "hours_other": "{{n}} hours",
+      "maxRequestSize": "Max request size",
+      "kb": "{{n}} KB",
+      "cors": "Allowed origins (CORS)",
+      "sameOrigin": "Same origin only"
+    },
+    "email": {
+      "title": "Email",
+      "delivery": "Delivery",
+      "console": "Development log (not delivered)",
+      "disabled": "Disabled",
+      "verificationRequired": "Verification required to sign in",
+      "appUrl": "Public app URL (used in links)",
+      "notDelivered": "Password reset and confirmation emails are not delivered. Configure SMTP_* variables and EMAIL_BACKEND=smtp."
+    },
+    "ai": {
+      "title": "AI",
+      "provider": "Provider",
+      "builtIn": "Built-in rule-based evaluator",
+      "model": "Model"
+    },
+    "payments": {
+      "title": "Payments",
+      "provider": "Provider",
+      "none": "None",
+      "webhooks": "Webhooks configured",
+      "checkout": "Online checkout",
+      "available": "Available",
+      "notAvailable": "Not available",
+      "termsVersion": "Terms version"
+    }
+  },
+  "assessments": {
+    "new": "New assessment",
+    "columns": {
+      "assessment": "Assessment",
+      "questions": "Questions",
+      "attempts": "Attempts",
+      "version": "Version"
+    },
+    "deactivateTitle": "Deactivate “{{title}}”?",
+    "deactivateText": "New attempts can't start with it. Completed attempts and scores are kept.",
+    "deactivated": "Assessment deactivated",
+    "activated": "Assessment activated",
+    "created": "Assessment created",
+    "hint": "Learners take the first active assessment. Manage its questions in the Question bank tab.",
+    "form": {
+      "code": "Code",
+      "codeHint": "Lowercase letters, numbers and dashes",
+      "minutes": "Estimated minutes"
+    }
+  },
+  "questions": {
+    "new": "New question",
+    "edit": "Edit question",
+    "saved": "Question saved",
+    "filterByType": "Filter by type",
+    "allTypes": "All types",
+    "types": {
+      "likert": "Likert scale",
+      "situational": "Situational",
+      "open": "Open answer",
+      "practical": "Practical"
+    },
+    "columns": {
+      "question": "Question",
+      "type": "Type",
+      "competencies": "Competencies",
+      "answers": "Answers"
+    },
+    "deactivateTitle": "Deactivate this question?",
+    "deactivateText": "It disappears from new attempts. Existing answers and scores are kept.",
+    "deactivated": "Question deactivated",
+    "errors": {
+      "optionLine": "Option line {{line}} must look like \"Label | 75\".",
+      "unknownCompetency": "Unknown competency code \"{{code}}\"."
+    },
+    "form": {
+      "section": "Section",
+      "text": "Question text",
+      "helpText": "Help text",
+      "options": "Options",
+      "optionsHint": "One per line: \"Label | score 0–100\"",
+      "minLength": "Minimum answer length",
+      "competencies": "Measured competencies",
+      "competenciesHint": "One per line: \"competency-code | weight (0–1)\"",
+      "reverseScored": "Reverse scored"
+    }
+  },
+  "resources": {
+    "tabsLabel": "Content type",
+    "tabResources": "Learning resources ({{n}})",
+    "tabTasks": "Practical tasks ({{n}})",
+    "new": "New resource",
+    "edit": "Edit resource",
+    "saved": "Resource saved",
+    "unpublishText": "Learners won't see it in the catalogue any more. Their progress is kept and you can publish it again.",
+    "unpublished": "Resource unpublished",
+    "columns": {
+      "type": "Type",
+      "minutes": "Minutes"
+    },
+    "form": {
+      "content": "Content (Markdown: ## headings, lists, **bold**)",
+      "url": "External URL (optional)"
+    }
+  },
+  "tasks": {
+    "new": "New task",
+    "edit": "Edit task",
+    "saved": "Task saved",
+    "unpublishText": "Learners won't be offered this task any more. Their submissions are kept.",
+    "unpublished": "Task unpublished",
+    "criteria_one": "{{count}} criterion",
+    "criteria_few": "{{count}} criteria",
+    "criteria_many": "{{count}} criteria",
+    "criteria_other": "{{count}} criteria",
+    "columns": {
+      "rubric": "Rubric"
+    },
+    "form": {
+      "instructions": "Instructions",
+      "minLength": "Minimum response length"
+    }
+  },
+  "competencies": {
+    "updated": "Competency updated",
+    "editTitle": "Edit {{name}}",
+    "columns": {
+      "competency": "Competency",
+      "area": "Area",
+      "importance": "Importance",
+      "defaultTarget": "Default target"
+    },
+    "form": {
+      "name": "Name",
+      "shortName": "Short name",
+      "importance": "Importance (0–1)"
+    }
+  },
+  "ai": {
+    "tabEvaluations": "Evaluation log",
+    "tabPrompts": "Prompt versions",
+    "filterByStatus": "Filter by status",
+    "allStatuses": "All statuses",
+    "statuses": {
+      "success": "Success",
+      "retried": "Retried",
+      "fallback": "Fallback"
+    },
+    "inputTypes": {
+      "open_answer": "Open answer",
+      "practical_answer": "Practical answer",
+      "practice_submission": "Practice submission",
+      "profile_insight": "Profile insight"
+    },
+    "columns": {
+      "input": "Input",
+      "provider": "Provider · model",
+      "score": "Score",
+      "confidence": "Confidence",
+      "latency": "Latency",
+      "date": "Date"
+    },
+    "latencyMs": "{{n}} ms",
+    "inspect": "Inspect",
+    "evaluationsCount_one": "{{n}} evaluation",
+    "evaluationsCount_few": "{{n}} evaluations",
+    "evaluationsCount_many": "{{n}} evaluations",
+    "evaluationsCount_other": "{{n}} evaluations",
+    "previous": "Previous",
+    "evaluationTitle": "Evaluation #{{id}}",
+    "promptVersionId": "Prompt version id",
+    "builtIn": "built-in",
+    "attempts": "Attempts",
+    "level": "Level",
+    "errors": "Errors",
+    "inputExcerpt": "Input excerpt",
+    "validatedOutput": "Validated output",
+    "promptActivated": "Prompt v{{version}} activated",
+    "newVersionFrom": "New version from this",
+    "showTemplate": "Show template",
+    "newVersionTitle": "New {{key}} version",
+    "versionCreated": "Prompt version created",
+    "form": {
+      "systemPrompt": "System prompt",
+      "userTemplate": "User template",
+      "placeholders": "Placeholders: {{list}}",
+      "placeholder": "Placeholder: {{list}}",
+      "notes": "Notes",
+      "activateNow": "Activate immediately"
+    }
+  }
+}

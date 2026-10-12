@@ -1,20 +1,22 @@
 import { Badge, Button, Card, Checkbox, ConfirmActionDialog, Input, Select, Textarea } from "@isker/design-system";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAdminMutation } from "../../api/admin";
 import { manageApi, useAdminPlans, type PlanAdmin, type PlanEntitlementInput } from "../../api/adminManage";
 import { can, useMe } from "../../api/auth";
-import { FEATURE_LABELS, formatPrice } from "../../api/billing";
 import { errorMessage } from "../../api/client";
 import { ErrorState, PageSkeleton } from "../../components/States";
 import { useToast } from "../../components/Toaster";
+import { formatCurrency, formatNumber } from "../../utils/format";
 import { AdminPageHeader, Muted } from "./common";
 
-const LIMIT_FEATURES = new Set(["assessment.full", "practice.tasks"]);
+const FEATURE_KEYS = ["assessment.full", "assessment.reassessment", "plan.personalized", "learning.advanced_resources", "practice.tasks", "practice.ai_feedback", "progress.history", "export.data"] as const;
+const LIMIT_FEATURES = new Set<string>(["assessment.full", "practice.tasks"]);
 type Form = { key: string; name: string; description: string; price: string; currency: string; billing_interval: "none" | "month" | "year"; trial_days: string; is_active: boolean; sort_order: string; ents: Record<string, { enabled: boolean; limit: string }> };
 
 function toForm(p?: PlanAdmin): Form {
   const ents: Form["ents"] = {};
-  for (const k of Object.keys(FEATURE_LABELS)) {
+  for (const k of FEATURE_KEYS) {
     const e = p?.entitlements.find((x) => x.feature_key === k);
     ents[k] = { enabled: e ? e.enabled : true, limit: e?.limit_value != null ? String(e.limit_value) : "" };
   }
@@ -23,6 +25,7 @@ function toForm(p?: PlanAdmin): Form {
 }
 
 export function AdminPlans() {
+  const { t } = useTranslation("adminContent");
   const { data: me } = useMe();
   const plans = useAdminPlans();
   const [editing, setEditing] = useState<PlanAdmin | "new" | null>(null);
@@ -36,13 +39,20 @@ export function AdminPlans() {
     return manageApi.updatePlan((editing as PlanAdmin).id, { ...base, reason: v.reason });
   });
   const canManage = can(me, "plans.manage");
-  const header = <AdminPageHeader crumbs={[{ label: "Plans" }]} title="Plans" subtitle="Prices and limits are enforced by the server for every request. Changing a plan affects all its subscribers immediately."
-    action={canManage ? <Button iconLeft="plus" onClick={() => { setForm(toForm()); setEditing("new"); save.reset(); }}>New plan</Button> : undefined} />;
+  const header = <AdminPageHeader crumbs={[{ label: t("plans.title") }]} title={t("plans.title")} subtitle={t("plans.subtitle")}
+    action={canManage ? <Button iconLeft="plus" onClick={() => { setForm(toForm()); setEditing("new"); save.reset(); }}>{t("plans.newPlan")}</Button> : undefined} />;
   if (plans.isLoading) return <>{header}<PageSkeleton cards={3} chart={false} /></>;
   if (plans.error || !plans.data) return <>{header}<ErrorState error={plans.error} onRetry={() => plans.refetch()} /></>;
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
   const isDefault = editing !== "new" && editing?.is_default;
   const priceValid = /^\d+(\.\d{1,2})?$/.test(form.price);
+  const featureLabel = (k: string) => t(`plans.features.${k.replace(/\./g, "_")}`);
+  const intervalLabel = (i: PlanAdmin["billing_interval"]) => (i === "month" ? t("plans.perMonth") : t("plans.perYear"));
+  const priceLabel = (p: PlanAdmin) => {
+    if (p.price_cents === 0) return t("plans.free");
+    const amount = formatCurrency(p.price_cents, p.currency);
+    return p.billing_interval === "none" ? amount : t("plans.pricePer", { amount, interval: intervalLabel(p.billing_interval) });
+  };
   return (
     <>
       {header}
@@ -51,41 +61,41 @@ export function AdminPlans() {
           <Card key={p.id} padding={24}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <h2 style={{ fontSize: "var(--text-lg)", fontWeight: 600 }}>{p.name}</h2>
-              <span style={{ display: "inline-flex", gap: 4 }}>{p.is_default && <Badge tone="brand">Default</Badge>}{!p.is_active && <Badge tone="neutral">Inactive</Badge>}</span>
+              <span style={{ display: "inline-flex", gap: 4 }}>{p.is_default && <Badge tone="brand">{t("plans.badgeDefault")}</Badge>}{!p.is_active && <Badge tone="neutral">{t("plans.badgeInactive")}</Badge>}</span>
             </div>
-            <p style={{ marginTop: 6, fontSize: 20, fontWeight: 600 }}>{formatPrice(p)}</p>
-            <p style={{ marginTop: 4 }}><Muted>{p.subscriber_count} user{p.subscriber_count === 1 ? "" : "s"} · key “{p.key}”</Muted></p>
+            <p style={{ marginTop: 6, fontSize: 20, fontWeight: 600 }}>{priceLabel(p)}</p>
+            <p style={{ marginTop: 4 }}><Muted>{t("plans.subscribers", { count: p.subscriber_count, n: formatNumber(p.subscriber_count) })} · {t("plans.keyLabel", { key: p.key })}</Muted></p>
             <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
-              {Object.entries(FEATURE_LABELS).map(([k, label]) => {
+              {FEATURE_KEYS.map((k) => {
                 const e = p.entitlements.find((x) => x.feature_key === k);
-                return <li key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>{label}</span><b style={{ fontWeight: 500 }}>{!e?.enabled ? "No" : e.limit_value != null ? `${e.limit_value} / 30 days` : "Yes"}</b></li>;
+                return <li key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>{featureLabel(k)}</span><b style={{ fontWeight: 500 }}>{!e?.enabled ? t("common:state.no") : e.limit_value != null ? t("plans.limitPer30Days", { limit: formatNumber(e.limit_value) }) : t("common:state.yes")}</b></li>;
               })}
             </ul>
-            {canManage && <div style={{ marginTop: 16 }}><Button size="sm" variant="secondary" iconLeft="pencil" onClick={() => { setForm(toForm(p)); setEditing(p); save.reset(); }}>Edit plan</Button></div>}
+            {canManage && <div style={{ marginTop: 16 }}><Button size="sm" variant="secondary" iconLeft="pencil" onClick={() => { setForm(toForm(p)); setEditing(p); save.reset(); }}>{t("plans.editPlan")}</Button></div>}
           </Card>
         ))}
       </div>
-      <ConfirmActionDialog open={!!editing} title={editing === "new" ? "New plan" : `Edit ${form.name}`} confirmLabel={editing === "new" ? "Create plan" : "Save plan"} tone="primary"
+      <ConfirmActionDialog open={!!editing} title={editing === "new" ? t("plans.newPlan") : t("plans.editTitle", { name: form.name })} confirmLabel={editing === "new" ? t("plans.createPlan") : t("plans.savePlan")} tone="primary"
         requireReason={editing !== "new"} busy={save.isPending} error={save.error ? errorMessage(save.error) : undefined} onCancel={() => setEditing(null)}
         confirmDisabled={form.name.trim().length < 2 || !priceValid || (editing === "new" && !/^[a-z0-9_-]{2,48}$/.test(form.key))}
-        onConfirm={(reason) => save.mutate({ reason }, { onSuccess: () => { toast({ title: editing === "new" ? "Plan created" : "Plan saved" }); setEditing(null); } })}>
+        onConfirm={(reason) => save.mutate({ reason }, { onSuccess: () => { toast({ title: editing === "new" ? t("plans.created") : t("plans.saved") }); setEditing(null); } })}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "55vh", overflowY: "auto", paddingRight: 4 }}>
-          {editing === "new" && <Input label="Key" hint="Lowercase letters, numbers, - and _. Can't be changed later." value={form.key} onChange={(e) => set("key", e.target.value)} />}
-          <Input label="Name" value={form.name} onChange={(e) => set("name", e.target.value)} />
-          <Textarea label="Description" rows={2} maxLength={1000} value={form.description} onChange={(e) => set("description", e.target.value)} />
+          {editing === "new" && <Input label={t("plans.form.key")} hint={t("plans.form.keyHint")} value={form.key} onChange={(e) => set("key", e.target.value)} />}
+          <Input label={t("plans.form.name")} value={form.name} onChange={(e) => set("name", e.target.value)} />
+          <Textarea label={t("plans.form.description")} rows={2} maxLength={1000} value={form.description} onChange={(e) => set("description", e.target.value)} />
           <div className="ik-form2">
-            <Input label="Price" inputMode="decimal" value={form.price} disabled={!!isDefault} error={priceValid ? undefined : "Use a number like 9.00"} onChange={(e) => set("price", e.target.value)} hint={isDefault ? "The default plan stays free." : undefined} />
-            <Select label="Billing" value={form.billing_interval} onChange={(e) => set("billing_interval", e.target.value as Form["billing_interval"])}
-              options={[{ value: "none", label: "One-off / none" }, { value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }]} />
+            <Input label={t("plans.form.price")} inputMode="decimal" value={form.price} disabled={!!isDefault} error={priceValid ? undefined : t("plans.form.priceInvalid")} onChange={(e) => set("price", e.target.value)} hint={isDefault ? t("plans.form.priceDefaultHint") : undefined} />
+            <Select label={t("plans.form.billing")} value={form.billing_interval} onChange={(e) => set("billing_interval", e.target.value as Form["billing_interval"])}
+              options={[{ value: "none", label: t("plans.form.billingNone") }, { value: "month", label: t("plans.form.billingMonth") }, { value: "year", label: t("plans.form.billingYear") }]} />
           </div>
-          <Checkbox label="Available" description={isDefault ? "The default plan can't be deactivated." : "Inactive plans can't be assigned."} disabled={!!isDefault} checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} />
+          <Checkbox label={t("plans.form.available")} description={isDefault ? t("plans.form.availableDefaultHint") : t("plans.form.availableHint")} disabled={!!isDefault} checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} />
           <fieldset style={{ border: 0, padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-            <legend style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Features</legend>
-            {Object.entries(FEATURE_LABELS).map(([k, label]) => (
+            <legend style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{t("plans.form.features")}</legend>
+            {FEATURE_KEYS.map((k) => (
               <div key={k} style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                <Checkbox label={label} checked={form.ents[k].enabled} onChange={(e) => set("ents", { ...form.ents, [k]: { ...form.ents[k], enabled: e.target.checked } })} />
+                <Checkbox label={featureLabel(k)} checked={form.ents[k].enabled} onChange={(e) => set("ents", { ...form.ents, [k]: { ...form.ents[k], enabled: e.target.checked } })} />
                 {LIMIT_FEATURES.has(k) && form.ents[k].enabled && (
-                  <div style={{ width: 170 }}><Input aria-label={`${label}: limit per 30 days (empty = unlimited)`} placeholder="Unlimited" type="number" min={0} value={form.ents[k].limit}
+                  <div style={{ width: 170 }}><Input aria-label={t("plans.form.limitAria", { feature: featureLabel(k) })} placeholder={t("plans.form.unlimited")} type="number" min={0} value={form.ents[k].limit}
                     onChange={(e) => set("ents", { ...form.ents, [k]: { ...form.ents[k], limit: e.target.value } })} /></div>
                 )}
               </div>

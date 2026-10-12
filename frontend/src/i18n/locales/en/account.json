@@ -1,0 +1,84 @@
+{
+  "onboarding": {
+    "stepOf": "Step {{current}} of {{total}}",
+    "steps": {
+      "about": "About you",
+      "experience": "Your experience",
+      "goals": "Goals and learning"
+    },
+    "intro": {
+      "about": "This helps us tailor examples and learning resources to you.",
+      "experience": "There are no wrong answers — this sets your starting point.",
+      "goals": "Your goals change which competencies are prioritised in your plan."
+    },
+    "fullName": "Full name",
+    "education": "Education",
+    "background": "Background (optional)",
+    "backgroundPlaceholder": "For example: information systems student, interested in edtech.",
+    "experience": "Entrepreneurial experience",
+    "businessExperience": "Business or startup experience (optional)",
+    "businessExperiencePlaceholder": "Projects, sales, competitions, internships…",
+    "goals": "Current goals",
+    "loadingGoals": "Loading goals…",
+    "format": "Preferred learning format",
+    "weekly": "Weekly time for learning",
+    "submit": "Continue to assessment"
+  },
+  "profile": {
+    "title": "My Profile",
+    "savedTitle": "Profile saved",
+    "savedDescription": "Your plan priorities were updated.",
+    "personal": "Personal information",
+    "fullName": "Full name",
+    "email": "Email",
+    "emailHint": "Email can't be changed.",
+    "education": "Education",
+    "experience": "Entrepreneurial experience",
+    "background": "Background",
+    "businessExperience": "Business or startup experience",
+    "goals": "Entrepreneurial goals",
+    "goalsDescription": "Goals change which competencies are prioritised in your plan.",
+    "goalsLegend": "Goals",
+    "learning": "Learning preferences",
+    "format": "Preferred format",
+    "weekly": "Weekly learning time",
+    "history": "Assessment history",
+    "historyAssessment": "Assessment",
+    "historyDate": "Date",
+    "historyScore": "Score",
+    "reassessmentOf": "Reassessment · {{name}}",
+    "assessmentNumber": "Assessment {{n}}",
+    "historyEmpty": "No completed assessments yet."
+  },
+  "options": {
+    "placeholder": "Choose…",
+    "education": {
+      "school": "School",
+      "bachelor1": "Bachelor, 1st year",
+      "bachelor2": "Bachelor, 2nd year",
+      "bachelor3": "Bachelor, 3rd year",
+      "bachelor4": "Bachelor, 4th year",
+      "master": "Master",
+      "phd": "PhD",
+      "graduate": "Graduate"
+    },
+    "experience": {
+      "none": "No experience yet",
+      "side_project": "Side project or small sales",
+      "startup_team": "Member of a startup team",
+      "running_business": "Running a business"
+    },
+    "format": {
+      "article": "Short articles and practical tasks",
+      "video": "Video lessons",
+      "course": "Longer courses",
+      "mixed": "A mix of everything"
+    },
+    "weekly": {
+      "30": "About 30 minutes",
+      "60": "About 1 hour",
+      "90": "About 1.5 hours",
+      "180": "3 hours or more"
+    }
+  }
+}

@@ -1,0 +1,377 @@
+{
+  "content": {
+    "status": "Күйі",
+    "actions": "Әрекеттер",
+    "active": "Белсенді",
+    "inactive": "Белсенді емес",
+    "activate": "Белсендіру",
+    "deactivate": "Өшіру",
+    "published": "Жарияланған",
+    "unpublished": "Жариялаудан алынған",
+    "unpublish": "Жариялаудан алу",
+    "unpublishTitle": "«{{title}}» жариялаудан алынсын ба?",
+    "rubricInvalid": "Рубрика дұрыс JSON болуы керек.",
+    "form": {
+      "title": "Атауы",
+      "description": "Сипаттамасы",
+      "competency": "Құзыреттілік",
+      "difficulty": "Күрделілігі",
+      "duration": "Ұзақтығы (минут)",
+      "slug": "Слаг",
+      "slugHint": "кіші-әріптер-сызықшамен",
+      "rubric": "Рубрика (JSON)"
+    },
+    "assessmentsPage": {
+      "title": "Бағалаулар",
+      "subtitle": "Бағалау нұсқалары мен сұрақтар банкі. Жауабы бар сұрақтың түрін өзгертуге болмайды — оны өшіріп, жаңасын жасаңыз.",
+      "tabsLabel": "Бағалау мазмұны",
+      "tabAssessments": "Бағалаулар",
+      "tabQuestions": "Сұрақтар банкі"
+    },
+    "competenciesPage": {
+      "title": "Құзыреттіліктер",
+      "subtitle": "EntreComp-тың 15 құзыреттілігі: сипаттамалары, басымдықтары және әдепкі мақсаттары."
+    },
+    "learningPage": {
+      "title": "Оқу материалдары",
+      "subtitle": "Оқу ресурстары мен практикалық тапсырмалар. Жариялаудан алғанда оқушылардың тарихы сақталады."
+    },
+    "aiPage": {
+      "title": "ЖИ басқаруы",
+      "subtitle": "Әр ЖИ бағалауы провайдерімен, промпт нұсқасымен, кідірісімен және резервтік режим белгісімен жазылады."
+    }
+  },
+  "subscriptions": {
+    "title": "Жазылымдар",
+    "subtitle": "Барлық жазылымдар — ағымдағы және бұрынғы. Беру, ұзарту немесе тоқтату үшін пайдаланушыны ашыңыз.",
+    "filtersLabel": "Жазылымдар сүзгісі",
+    "searchLabel": "Пайдаланушыны іздеу",
+    "searchPlaceholder": "Аты немесе email",
+    "allStatuses": "Барлық күйлер",
+    "allPlans": "Барлық тарифтер",
+    "allSources": "Барлық көздер",
+    "expiringLabel": "Мерзімі бітеді",
+    "expiringAny": "Кез келген уақыт",
+    "expiringWithin_one": "{{count}} күн ішінде",
+    "expiringWithin_few": "{{count}} күн ішінде",
+    "expiringWithin_many": "{{count}} күн ішінде",
+    "expiringWithin_other": "{{count}} күн ішінде",
+    "columns": {
+      "user": "Пайдаланушы",
+      "plan": "Тариф",
+      "status": "Күйі",
+      "source": "Көзі",
+      "started": "Басталуы",
+      "ends": "Аяқталуы"
+    },
+    "userFallback": "Пайдаланушы №{{id}}",
+    "endsAtPeriodEnd": "кезең соңында аяқталады",
+    "endedOn": "{{date}} аяқталды",
+    "noEndDate": "Аяқталу күні жоқ",
+    "emptyTitle": "Жазылымдар жоқ",
+    "emptyText": "Сүзгілерге сәйкес келетін барлық пайдаланушы тегін тарифте.",
+    "pagesLabel": "Жазылымдар беттері"
+  },
+  "plans": {
+    "title": "Тарифтер",
+    "subtitle": "Бағалар мен лимиттерді сервер әр сұраныс кезінде тексереді. Тарифті өзгерту оның барлық жазылушыларына бірден әсер етеді.",
+    "newPlan": "Жаңа тариф",
+    "editPlan": "Тарифті өзгерту",
+    "editTitle": "«{{name}}» өзгерту",
+    "createPlan": "Тариф жасау",
+    "savePlan": "Тарифті сақтау",
+    "created": "Тариф жасалды",
+    "saved": "Тариф сақталды",
+    "badgeDefault": "Әдепкі",
+    "badgeInactive": "Белсенді емес",
+    "free": "Тегін",
+    "pricePer": "{{amount}} / {{interval}}",
+    "perMonth": "ай",
+    "perYear": "жыл",
+    "subscribers_one": "{{n}} пайдаланушы",
+    "subscribers_few": "{{n}} пайдаланушы",
+    "subscribers_many": "{{n}} пайдаланушы",
+    "subscribers_other": "{{n}} пайдаланушы",
+    "keyLabel": "кілт «{{key}}»",
+    "limitPer30Days": "{{limit}} / 30 күн",
+    "features": {
+      "assessment_full": "Толық бағалаулар",
+      "assessment_reassessment": "Құзыреттілікті қайта бағалау",
+      "plan_personalized": "Жеке даму жоспары",
+      "learning_advanced_resources": "Кеңейтілген оқу материалдары",
+      "practice_tasks": "Практикалық тапсырмалар",
+      "practice_ai_feedback": "Практика бойынша ЖИ кері байланысы",
+      "progress_history": "Прогрестің толық тарихы",
+      "export_data": "Деректерді экспорттау"
+    },
+    "form": {
+      "key": "Кілт",
+      "keyHint": "Кіші латын әріптері, сандар, - және _. Кейін өзгертуге болмайды.",
+      "name": "Атауы",
+      "description": "Сипаттамасы",
+      "price": "Бағасы",
+      "priceInvalid": "Санды енгізіңіз, мысалы 9.00",
+      "priceDefaultHint": "Әдепкі тариф тегін болып қалады.",
+      "billing": "Төлем кезеңі",
+      "billingNone": "Бір реттік / жоқ",
+      "billingMonth": "Ай сайын",
+      "billingYear": "Жыл сайын",
+      "available": "Қолжетімді",
+      "availableHint": "Белсенді емес тарифтерді тағайындауға болмайды.",
+      "availableDefaultHint": "Әдепкі тарифті өшіруге болмайды.",
+      "features": "Функциялар",
+      "limitAria": "{{feature}}: 30 күндегі лимит (бос — шектеусіз)",
+      "unlimited": "Шектеусіз"
+    }
+  },
+  "auditLogs": {
+    "title": "Аудит журналы",
+    "subtitle": "Қауіпсіздік пен әкімшілікке қатысты әрекеттердің өзгертілмейтін жазбасы. Құпиясөздер, токендер мен құпиялар ешқашан жазылмайды.",
+    "filtersLabel": "Аудит журналының сүзгісі",
+    "groups": {
+      "all": "Барлық әрекеттер",
+      "auth": "Кіру және аккаунт",
+      "admin": "Әкімші әрекеттері",
+      "accessDenied": "Қолжетімділік жоқ",
+      "loginFailed": "Сәтсіз кірулер",
+      "subscription": "Төлемдер",
+      "learning": "Оқу",
+      "practice": "Практика",
+      "profile": "Профиль"
+    },
+    "columns": {
+      "when": "Қашан",
+      "action": "Әрекет",
+      "actor": "Орындаушы",
+      "target": "Нысан",
+      "outcome": "Нәтиже"
+    },
+    "userFallback": "Пайдаланушы №{{id}}",
+    "systemActor": "Жүйе / аноним",
+    "anyOutcome": "Кез келген нәтиже",
+    "actorId": "Орындаушы ID",
+    "targetUserId": "Нысан-пайдаланушы ID",
+    "dateFrom": "Бастап",
+    "dateTo": "Дейін",
+    "securityOnly": "Тек қауіпсіздік оқиғалары",
+    "caption": "Аудит журналының жазбалары, алдымен жаңалары",
+    "emptyTitle": "Сәйкес оқиғалар жоқ",
+    "emptyText": "Күн аралығын кеңейтіңіз немесе сүзгіні алып тастаңыз.",
+    "eventTitle": "Оқиға №{{id}}",
+    "reason": "Себебі",
+    "requestId": "Сұраныс ID",
+    "ipAddress": "IP мекенжайы",
+    "noDetails": "Қосымша мәлімет жоқ.",
+    "pagesLabel": "Аудит журналының беттері"
+  },
+  "settings": {
+    "crumb": "Баптаулар",
+    "title": "Платформа баптаулары",
+    "subtitle": "Тек көру. Баптаулар орта айнымалылары мен қайта іске қосу арқылы өзгертіледі; құпиялар көрсетілмейді.",
+    "environment": "Орта: {{env}}",
+    "notProduction": "Бұл дана жұмыс (production) режимінде іске қосылмаған.",
+    "on": "Қосулы",
+    "off": "Өшірулі",
+    "security": {
+      "title": "Қауіпсіздік",
+      "secureCookies": "Қорғалған cookie (тек HTTPS)",
+      "csrf": "CSRF-тен қорғау",
+      "rateLimiting": "Сұраныс жиілігін шектеу",
+      "sessionLifetime": "Сессия мерзімі",
+      "hours_one": "{{n}} сағат",
+      "hours_few": "{{n}} сағат",
+      "hours_many": "{{n}} сағат",
+      "hours_other": "{{n}} сағат",
+      "maxRequestSize": "Сұраныстың ең үлкен өлшемі",
+      "kb": "{{n}} КБ",
+      "cors": "Рұқсат етілген көздер (CORS)",
+      "sameOrigin": "Тек сол көз"
+    },
+    "email": {
+      "title": "Email",
+      "delivery": "Жеткізу",
+      "console": "Әзірлеу журналы (жеткізілмейді)",
+      "disabled": "Өшірулі",
+      "verificationRequired": "Кіру үшін email растау міндетті",
+      "appUrl": "Қосымшаның жария URL-і (сілтемелер үшін)",
+      "notDelivered": "Құпиясөзді қалпына келтіру және растау хаттары жеткізілмейді. SMTP_* айнымалыларын және EMAIL_BACKEND=smtp баптаңыз."
+    },
+    "ai": {
+      "title": "ЖИ",
+      "provider": "Провайдер",
+      "builtIn": "Ережеге негізделген кірістірілген бағалағыш",
+      "model": "Модель"
+    },
+    "payments": {
+      "title": "Төлемдер",
+      "provider": "Провайдер",
+      "none": "Жоқ",
+      "webhooks": "Вебхуктар бапталған",
+      "checkout": "Онлайн төлем",
+      "available": "Қолжетімді",
+      "notAvailable": "Қолжетімсіз",
+      "termsVersion": "Шарттар нұсқасы"
+    }
+  },
+  "assessments": {
+    "new": "Жаңа бағалау",
+    "columns": {
+      "assessment": "Бағалау",
+      "questions": "Сұрақтар",
+      "attempts": "Әрекеттер саны",
+      "version": "Нұсқа"
+    },
+    "deactivateTitle": "«{{title}}» өшірілсін бе?",
+    "deactivateText": "Онымен жаңа әрекет бастауға болмайды. Аяқталған әрекеттер мен ұпайлар сақталады.",
+    "deactivated": "Бағалау өшірілді",
+    "activated": "Бағалау белсендірілді",
+    "created": "Бағалау жасалды",
+    "hint": "Оқушылар бірінші белсенді бағалауды тапсырады. Оның сұрақтары «Сұрақтар банкі» қойындысында басқарылады.",
+    "form": {
+      "code": "Код",
+      "codeHint": "Кіші латын әріптері, сандар және сызықшалар",
+      "minutes": "Болжамды уақыт (минут)"
+    }
+  },
+  "questions": {
+    "new": "Жаңа сұрақ",
+    "edit": "Сұрақты өзгерту",
+    "saved": "Сұрақ сақталды",
+    "filterByType": "Түрі бойынша сүзу",
+    "allTypes": "Барлық түрлер",
+    "types": {
+      "likert": "Лайкерт шкаласы",
+      "situational": "Жағдаяттық",
+      "open": "Ашық жауап",
+      "practical": "Практикалық"
+    },
+    "columns": {
+      "question": "Сұрақ",
+      "type": "Түрі",
+      "competencies": "Құзыреттіліктер",
+      "answers": "Жауаптар"
+    },
+    "deactivateTitle": "Бұл сұрақ өшірілсін бе?",
+    "deactivateText": "Ол жаңа әрекеттерден жойылады. Бар жауаптар мен ұпайлар сақталады.",
+    "deactivated": "Сұрақ өшірілді",
+    "errors": {
+      "optionLine": "{{line}}-жолдағы нұсқа \"Мәтін | 75\" түрінде болуы керек.",
+      "unknownCompetency": "Белгісіз құзыреттілік коды: \"{{code}}\"."
+    },
+    "form": {
+      "section": "Бөлім",
+      "text": "Сұрақ мәтіні",
+      "helpText": "Көмекші мәтін",
+      "options": "Жауап нұсқалары",
+      "optionsHint": "Әр жолға біреуден: \"Мәтін | ұпай 0–100\"",
+      "minLength": "Жауаптың ең аз ұзындығы",
+      "competencies": "Өлшенетін құзыреттіліктер",
+      "competenciesHint": "Әр жолға біреуден: \"құзыреттілік-коды | салмақ (0–1)\"",
+      "reverseScored": "Кері шкала"
+    }
+  },
+  "resources": {
+    "tabsLabel": "Материал түрі",
+    "tabResources": "Оқу ресурстары ({{n}})",
+    "tabTasks": "Практикалық тапсырмалар ({{n}})",
+    "new": "Жаңа ресурс",
+    "edit": "Ресурсты өзгерту",
+    "saved": "Ресурс сақталды",
+    "unpublishText": "Оқушылар оны каталогта енді көрмейді. Олардың прогресі сақталады, ресурсты қайта жариялауға болады.",
+    "unpublished": "Ресурс жариялаудан алынды",
+    "columns": {
+      "type": "Түрі",
+      "minutes": "Минут"
+    },
+    "form": {
+      "content": "Мазмұны (Markdown: ## тақырыптар, тізімдер, **қалың**)",
+      "url": "Сыртқы сілтеме (міндетті емес)"
+    }
+  },
+  "tasks": {
+    "new": "Жаңа тапсырма",
+    "edit": "Тапсырманы өзгерту",
+    "saved": "Тапсырма сақталды",
+    "unpublishText": "Оқушыларға бұл тапсырма енді ұсынылмайды. Олардың жұмыстары сақталады.",
+    "unpublished": "Тапсырма жариялаудан алынды",
+    "criteria_one": "{{count}} критерий",
+    "criteria_few": "{{count}} критерий",
+    "criteria_many": "{{count}} критерий",
+    "criteria_other": "{{count}} критерий",
+    "columns": {
+      "rubric": "Рубрика"
+    },
+    "form": {
+      "instructions": "Нұсқаулық",
+      "minLength": "Жауаптың ең аз ұзындығы"
+    }
+  },
+  "competencies": {
+    "updated": "Құзыреттілік жаңартылды",
+    "editTitle": "«{{name}}» өзгерту",
+    "columns": {
+      "competency": "Құзыреттілік",
+      "area": "Сала",
+      "importance": "Маңыздылығы",
+      "defaultTarget": "Әдепкі мақсат"
+    },
+    "form": {
+      "name": "Атауы",
+      "shortName": "Қысқа атауы",
+      "importance": "Маңыздылығы (0–1)"
+    }
+  },
+  "ai": {
+    "tabEvaluations": "Бағалаулар журналы",
+    "tabPrompts": "Промпт нұсқалары",
+    "filterByStatus": "Күйі бойынша сүзу",
+    "allStatuses": "Барлық күйлер",
+    "statuses": {
+      "success": "Сәтті",
+      "retried": "Қайталанды",
+      "fallback": "Резервтік режим"
+    },
+    "inputTypes": {
+      "open_answer": "Ашық жауап",
+      "practical_answer": "Практикалық жауап",
+      "practice_submission": "Практикалық жұмыс",
+      "profile_insight": "Профиль бойынша қорытынды"
+    },
+    "columns": {
+      "input": "Кіріс",
+      "provider": "Провайдер · модель",
+      "score": "Ұпай",
+      "confidence": "Сенімділік",
+      "latency": "Кідіріс",
+      "date": "Күні"
+    },
+    "latencyMs": "{{n}} мс",
+    "inspect": "Қарау",
+    "evaluationsCount_one": "{{n}} бағалау",
+    "evaluationsCount_few": "{{n}} бағалау",
+    "evaluationsCount_many": "{{n}} бағалау",
+    "evaluationsCount_other": "{{n}} бағалау",
+    "previous": "Алдыңғы",
+    "evaluationTitle": "Бағалау №{{id}}",
+    "promptVersionId": "Промпт нұсқасының ID",
+    "builtIn": "кірістірілген",
+    "attempts": "Әрекеттер",
+    "level": "Деңгей",
+    "errors": "Қателер",
+    "inputExcerpt": "Кіріс деректерінің үзіндісі",
+    "validatedOutput": "Тексерілген нәтиже",
+    "promptActivated": "Промпт v{{version}} нұсқасы белсендірілді",
+    "newVersionFrom": "Осының негізінде жаңа нұсқа",
+    "showTemplate": "Үлгіні көрсету",
+    "newVersionTitle": "{{key}} промптының жаңа нұсқасы",
+    "versionCreated": "Промпт нұсқасы жасалды",
+    "form": {
+      "systemPrompt": "Жүйелік промпт",
+      "userTemplate": "Пайдаланушы үлгісі",
+      "placeholders": "Алмастырулар: {{list}}",
+      "placeholder": "Алмастыру: {{list}}",
+      "notes": "Ескертпелер",
+      "activateNow": "Бірден белсендіру"
+    }
+  }
+}

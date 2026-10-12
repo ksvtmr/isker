@@ -1,0 +1,109 @@
+{
+  "landing": {
+    "accountNav": "Account",
+    "openDashboard": "Open dashboard",
+    "createAccount": "Create account",
+    "eyebrow": "EntreComp · 15 competencies",
+    "title": "Measure and develop your entrepreneurial competencies",
+    "lead": "Isker assesses how you spot opportunities, use resources and turn ideas into action — then builds a personal plan and shows how you grow over time.",
+    "startAssessment": "Start assessment",
+    "haveAccount": "I have an account",
+    "loopAria": "How Isker works",
+    "loop": {
+      "assess": "Assess",
+      "profile": "Profile",
+      "gaps": "Identify gaps",
+      "recommend": "Recommend",
+      "learn": "Learn",
+      "practice": "Practice",
+      "reassess": "Reassess",
+      "track": "Track progress"
+    },
+    "featuresAria": "Features",
+    "features": {
+      "assessmentTitle": "Evidence-based assessment",
+      "assessmentText": "30 questions across self-assessment, situations, open answers and a practical task — mapped to the 15 EntreComp competencies.",
+      "gapsTitle": "Gaps you can act on",
+      "gapsText": "Every score is explained, compared with your target and ranked by how much it matters for your goals.",
+      "planTitle": "A plan, not a quiz",
+      "planText": "Each priority gap becomes a Learn → Practice → Reflect → Reassess plan, so you can measure real development."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "whatIsQ": "What is Isker and what is EntreComp?",
+      "whatIsA": "Isker is an educational platform for developing entrepreneurial competencies. It is built on EntreComp, the European Entrepreneurship Competence Framework: 15 competencies grouped into three areas — Ideas and opportunities, Resources, and Into action. You assess yourself, get a competency profile, follow a personal plan, learn, practise and reassess to see your growth.",
+      "freeQ": "Is it free?",
+      "freeA": "Yes. The Free plan covers the whole journey: assessment, results, a development plan, learning and practice. The Pro plan with extended limits is currently granted by administrators (for example, to programme or incubator participants); online payment is not available yet.",
+      "durationQ": "How long does the assessment take?",
+      "durationA": "About 25 minutes: 30 questions, including self-assessment, situations, open answers and a short practical task. Your answers are saved automatically, so you can stop and come back later.",
+      "privacyQ": "Is my data private?",
+      "privacyA": "Your results are visible only to you and to authorised staff whose role requires it; their access is logged. Your password is stored only as a salted hash, and nobody, including staff, can see it. You can download your data or close your account in Settings.",
+      "languagesQ": "Which languages are available?",
+      "languagesA": "The interface is available in Russian, Kazakh and English. You can switch the language at any time with the selector at the top of the page; signed-in users have their choice saved to their account."
+    },
+    "contact": {
+      "title": "Contact and support",
+      "text": "Questions, feedback or a request about your data? Write to us:",
+      "terms": "Terms of Use",
+      "privacy": "Privacy Policy",
+      "legalNav": "Legal information"
+    },
+    "footnote": "Diploma MVP · Astana IT University. <signInLink>Sign in</signInLink> with the demo account to explore a complete profile."
+  },
+  "legal": {
+    "lastUpdated": "Last updated: {{date}}",
+    "backHome": "Back to the Isker home page",
+    "contactTitle": "Contact",
+    "contactText": "If you have questions about this document, write to"
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "whatTitle": "What Isker is",
+    "whatText": "Isker is an educational platform that helps you assess and develop entrepreneurial competencies based on the EntreComp framework. Results are developmental guidance, not a professional, psychological or hiring evaluation.",
+    "accountTitle": "Your account",
+    "accountAccurate": "Give accurate information and keep your password private. You are responsible for activity in your account.",
+    "accountClose": "You can close your account at any time in Settings. Closed accounts can be restored by support; permanent deletion is done on request.",
+    "accountSuspend": "We may suspend accounts that abuse the service, attack it, or harm other people. We record the reason.",
+    "plansTitle": "Plans",
+    "plansText": "The Free plan includes the core journey: assessment, results, a development plan, learning and practice, with the limits shown on the <plansLink>plans page</plansLink>. Paid plans can currently be granted by an administrator; online payment is not yet available, and no payment provider is connected.",
+    "aiTitle": "AI feedback",
+    "aiText": "Some feedback is generated automatically. It can be wrong. Use it as one input among others.",
+    "useTitle": "Acceptable use",
+    "useText": "Don't try to access other people's data, disrupt the service, or submit unlawful content.",
+    "changesTitle": "Changes",
+    "changesText": "If these terms change in a meaningful way, we will ask you to accept the new version."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "storeTitle": "What we store",
+    "storeAccount": "Account data: name, email, a salted password hash (never the password itself), roles, account status and your interface language.",
+    "storeLearning": "Learning data: profile answers, goals, assessment answers and scores, plan, learning and practice progress.",
+    "storeSecurity": "Security data: sign-in sessions (device description and IP address) and an audit log of security-relevant actions.",
+    "whyTitle": "Why",
+    "whyText": "To run your assessment and development plan, keep your account secure, and understand how the platform is used in aggregate.",
+    "whoTitle": "Who can see it",
+    "whoText": "Only you and authorised staff with a specific role (for example support or administrators). Staff access is permission-based and logged. Staff can never see your password.",
+    "aiTitle": "AI processing",
+    "aiText": "When an AI provider is configured, the text of open answers and practice submissions is sent to it to generate feedback. When none is configured, feedback is produced by a built-in rule-based evaluator. Automatic feedback can be wrong.",
+    "choicesTitle": "Your choices",
+    "choicesExport": "Download your data from Settings (data export).",
+    "choicesClose": "Close your account from Settings, or ask support to delete it permanently.",
+    "cookiesTitle": "Cookies",
+    "cookiesText": "Isker uses two strictly necessary cookies: a sign-in session cookie and a security token that protects forms against cross-site requests. There are no advertising or tracking cookies. Your language choice is kept in your browser's local storage (only the language code) and, if you are signed in, in your account."
+  },
+  "notFound": {
+    "home": "Go to the home page"
+  },
+  "notices": {
+    "sentTitle": "Confirm your email",
+    "sentTo": "We've sent a confirmation link to {{email}}.",
+    "sentNoEmail": "We've sent a confirmation link to your email address.",
+    "devTitle": "Email is in development mode",
+    "devText": "No email server is configured, so the confirmation link was written to the server log instead of being emailed.",
+    "unavailable": "Email confirmation isn't available on this server yet. You can use Isker normally.",
+    "bannerTitle": "Please confirm your email address",
+    "bannerText": "Confirming {{email}} lets you recover your account if you forget your password.",
+    "resend": "Resend confirmation email",
+    "hide": "Hide for now"
+  }
+}

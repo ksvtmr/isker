@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.i18n import tr
 from app.models import (
     AssessmentAttempt,
     Competency,
@@ -96,19 +97,29 @@ def rank_tasks(tasks: list[PracticalTask], score: int, ctx: LearnerContext) -> l
     )
 
 
-def build_reason(gap: CompetencyGap, comp: Competency, rel: Relevance, stretch: bool = False) -> str:
+def _reason(current: int, target: int, gap: int, stretch: bool, goal: str | None, comp: Competency) -> str:
     if stretch:
-        text = (
-            f"Score {gap.current_score} meets your target of {gap.target_score}; "
-            "this is your lowest area, so it is a stretch goal"
-        )
+        text = tr("reason.stretch", score=current, target=target)
     else:
-        text = f"Score {gap.current_score} is {gap.gap} points below your target of {gap.target_score}"
-    if rel.goal is not None and rel.value >= GOAL_MENTION_THRESHOLD:
-        text += f", and it matters for your goal “{rel.goal.title}”"
+        text = tr("reason.gap", score=current, gap=gap, target=target)
+    if goal is not None:
+        text += tr("reason.goal", goal=goal)
     elif comp.importance >= 0.8:
-        text += f", and {comp.name} has a large effect on early-stage ventures"
+        text += tr("reason.importance", name=comp.name)
     return text + "."
+
+
+def build_reason(gap: CompetencyGap, comp: Competency, rel: Relevance, stretch: bool = False) -> str:
+    goal = rel.goal.title if rel.goal is not None and rel.value >= GOAL_MENTION_THRESHOLD else None
+    return _reason(gap.current_score, gap.target_score, gap.gap, stretch, goal, comp)
+
+
+def localized_reason(rec: Recommendation) -> str:
+    """The stored reason is written in the language of the request that created it; rebuild it for this one."""
+    g, comp = rec.gap, rec.competency
+    if g is None or comp is None:
+        return rec.reason
+    return _reason(g.current_score, g.target_score, g.gap, g.gap <= 0, rec.goal.title if rec.goal else None, comp)
 
 
 def learner_context(db: Session, user_id: int) -> LearnerContext:

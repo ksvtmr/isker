@@ -1,0 +1,377 @@
+{
+  "content": {
+    "status": "Статус",
+    "actions": "Действия",
+    "active": "Активно",
+    "inactive": "Неактивно",
+    "activate": "Активировать",
+    "deactivate": "Деактивировать",
+    "published": "Опубликовано",
+    "unpublished": "Снято с публикации",
+    "unpublish": "Снять с публикации",
+    "unpublishTitle": "Снять с публикации «{{title}}»?",
+    "rubricInvalid": "Рубрика должна быть корректным JSON.",
+    "form": {
+      "title": "Название",
+      "description": "Описание",
+      "competency": "Компетенция",
+      "difficulty": "Сложность",
+      "duration": "Длительность (минуты)",
+      "slug": "Слаг",
+      "slugHint": "строчные-буквы-через-дефис",
+      "rubric": "Рубрика (JSON)"
+    },
+    "assessmentsPage": {
+      "title": "Оценки",
+      "subtitle": "Версии оценки и банк вопросов. Тип вопроса, на который уже есть ответы, изменить нельзя — деактивируйте его и создайте новый.",
+      "tabsLabel": "Содержание оценки",
+      "tabAssessments": "Оценки",
+      "tabQuestions": "Банк вопросов"
+    },
+    "competenciesPage": {
+      "title": "Компетенции",
+      "subtitle": "15 компетенций EntreComp: описания, приоритеты и целевые значения по умолчанию."
+    },
+    "learningPage": {
+      "title": "Учебные материалы",
+      "subtitle": "Учебные ресурсы и практические задания. При снятии с публикации история обучающихся сохраняется."
+    },
+    "aiPage": {
+      "title": "Управление ИИ",
+      "subtitle": "Каждая оценка ИИ записывается с провайдером, версией промпта, задержкой и признаком резервного режима."
+    }
+  },
+  "subscriptions": {
+    "title": "Подписки",
+    "subtitle": "Все подписки — текущие и прошлые. Чтобы выдать, продлить или отменить подписку, откройте пользователя.",
+    "filtersLabel": "Фильтр подписок",
+    "searchLabel": "Поиск пользователя",
+    "searchPlaceholder": "Имя или email",
+    "allStatuses": "Все статусы",
+    "allPlans": "Все тарифы",
+    "allSources": "Все источники",
+    "expiringLabel": "Истекает",
+    "expiringAny": "В любое время",
+    "expiringWithin_one": "В течение {{count}} дня",
+    "expiringWithin_few": "В течение {{count}} дней",
+    "expiringWithin_many": "В течение {{count}} дней",
+    "expiringWithin_other": "В течение {{count}} дня",
+    "columns": {
+      "user": "Пользователь",
+      "plan": "Тариф",
+      "status": "Статус",
+      "source": "Источник",
+      "started": "Начало",
+      "ends": "Окончание"
+    },
+    "userFallback": "Пользователь №{{id}}",
+    "endsAtPeriodEnd": "завершится в конце периода",
+    "endedOn": "Завершена {{date}}",
+    "noEndDate": "Без даты окончания",
+    "emptyTitle": "Подписок нет",
+    "emptyText": "Все пользователи, подходящие под фильтры, на бесплатном тарифе.",
+    "pagesLabel": "Страницы подписок"
+  },
+  "plans": {
+    "title": "Тарифы",
+    "subtitle": "Цены и лимиты проверяются сервером при каждом запросе. Изменение тарифа сразу затрагивает всех его подписчиков.",
+    "newPlan": "Новый тариф",
+    "editPlan": "Изменить тариф",
+    "editTitle": "Изменить «{{name}}»",
+    "createPlan": "Создать тариф",
+    "savePlan": "Сохранить тариф",
+    "created": "Тариф создан",
+    "saved": "Тариф сохранён",
+    "badgeDefault": "По умолчанию",
+    "badgeInactive": "Неактивен",
+    "free": "Бесплатно",
+    "pricePer": "{{amount}} / {{interval}}",
+    "perMonth": "мес.",
+    "perYear": "год",
+    "subscribers_one": "{{n}} пользователь",
+    "subscribers_few": "{{n}} пользователя",
+    "subscribers_many": "{{n}} пользователей",
+    "subscribers_other": "{{n}} пользователя",
+    "keyLabel": "ключ «{{key}}»",
+    "limitPer30Days": "{{limit}} / 30 дней",
+    "features": {
+      "assessment_full": "Полные оценки",
+      "assessment_reassessment": "Повторная оценка компетенций",
+      "plan_personalized": "Персональный план развития",
+      "learning_advanced_resources": "Расширенные учебные материалы",
+      "practice_tasks": "Практические задания",
+      "practice_ai_feedback": "Обратная связь ИИ по практике",
+      "progress_history": "Полная история прогресса",
+      "export_data": "Экспорт данных"
+    },
+    "form": {
+      "key": "Ключ",
+      "keyHint": "Строчные латинские буквы, цифры, - и _. Изменить потом нельзя.",
+      "name": "Название",
+      "description": "Описание",
+      "price": "Цена",
+      "priceInvalid": "Введите число, например 9.00",
+      "priceDefaultHint": "Тариф по умолчанию остаётся бесплатным.",
+      "billing": "Период оплаты",
+      "billingNone": "Разово / нет",
+      "billingMonth": "Ежемесячно",
+      "billingYear": "Ежегодно",
+      "available": "Доступен",
+      "availableHint": "Неактивные тарифы нельзя назначить.",
+      "availableDefaultHint": "Тариф по умолчанию нельзя деактивировать.",
+      "features": "Функции",
+      "limitAria": "{{feature}}: лимит за 30 дней (пусто — без ограничений)",
+      "unlimited": "Без ограничений"
+    }
+  },
+  "auditLogs": {
+    "title": "Журнал аудита",
+    "subtitle": "Неизменяемая запись действий, связанных с безопасностью и администрированием. Пароли, токены и секреты никогда не записываются.",
+    "filtersLabel": "Фильтр журнала аудита",
+    "groups": {
+      "all": "Все действия",
+      "auth": "Вход и аккаунт",
+      "admin": "Действия администраторов",
+      "accessDenied": "Отказ в доступе",
+      "loginFailed": "Неудачные входы",
+      "subscription": "Платежи",
+      "learning": "Обучение",
+      "practice": "Практика",
+      "profile": "Профиль"
+    },
+    "columns": {
+      "when": "Когда",
+      "action": "Действие",
+      "actor": "Исполнитель",
+      "target": "Объект",
+      "outcome": "Результат"
+    },
+    "userFallback": "Пользователь №{{id}}",
+    "systemActor": "Система / аноним",
+    "anyOutcome": "Любой результат",
+    "actorId": "ID исполнителя",
+    "targetUserId": "ID пользователя-объекта",
+    "dateFrom": "С",
+    "dateTo": "По",
+    "securityOnly": "Только события безопасности",
+    "caption": "Записи журнала аудита, сначала новые",
+    "emptyTitle": "Подходящих событий нет",
+    "emptyText": "Расширьте диапазон дат или уберите фильтр.",
+    "eventTitle": "Событие №{{id}}",
+    "reason": "Причина",
+    "requestId": "ID запроса",
+    "ipAddress": "IP-адрес",
+    "noDetails": "Дополнительных сведений нет.",
+    "pagesLabel": "Страницы журнала аудита"
+  },
+  "settings": {
+    "crumb": "Настройки",
+    "title": "Настройки платформы",
+    "subtitle": "Только просмотр. Настройки меняются через переменные окружения и перезапуск; секреты не отображаются.",
+    "environment": "Окружение: {{env}}",
+    "notProduction": "Этот экземпляр работает не в рабочем (production) режиме.",
+    "on": "Вкл.",
+    "off": "Выкл.",
+    "security": {
+      "title": "Безопасность",
+      "secureCookies": "Защищённые cookie (только HTTPS)",
+      "csrf": "Защита от CSRF",
+      "rateLimiting": "Ограничение частоты запросов",
+      "sessionLifetime": "Время жизни сессии",
+      "hours_one": "{{n}} час",
+      "hours_few": "{{n}} часа",
+      "hours_many": "{{n}} часов",
+      "hours_other": "{{n}} часа",
+      "maxRequestSize": "Максимальный размер запроса",
+      "kb": "{{n}} КБ",
+      "cors": "Разрешённые источники (CORS)",
+      "sameOrigin": "Только тот же источник"
+    },
+    "email": {
+      "title": "Email",
+      "delivery": "Доставка",
+      "console": "Журнал разработки (не доставляется)",
+      "disabled": "Отключена",
+      "verificationRequired": "Подтверждение email обязательно для входа",
+      "appUrl": "Публичный URL приложения (для ссылок)",
+      "notDelivered": "Письма для сброса пароля и подтверждения не доставляются. Настройте переменные SMTP_* и EMAIL_BACKEND=smtp."
+    },
+    "ai": {
+      "title": "ИИ",
+      "provider": "Провайдер",
+      "builtIn": "Встроенный оценщик на правилах",
+      "model": "Модель"
+    },
+    "payments": {
+      "title": "Платежи",
+      "provider": "Провайдер",
+      "none": "Нет",
+      "webhooks": "Вебхуки настроены",
+      "checkout": "Онлайн-оплата",
+      "available": "Доступна",
+      "notAvailable": "Недоступна",
+      "termsVersion": "Версия условий"
+    }
+  },
+  "assessments": {
+    "new": "Новая оценка",
+    "columns": {
+      "assessment": "Оценка",
+      "questions": "Вопросы",
+      "attempts": "Попытки",
+      "version": "Версия"
+    },
+    "deactivateTitle": "Деактивировать «{{title}}»?",
+    "deactivateText": "Новые попытки по ней начать будет нельзя. Завершённые попытки и баллы сохранятся.",
+    "deactivated": "Оценка деактивирована",
+    "activated": "Оценка активирована",
+    "created": "Оценка создана",
+    "hint": "Обучающиеся проходят первую активную оценку. Её вопросы настраиваются на вкладке «Банк вопросов».",
+    "form": {
+      "code": "Код",
+      "codeHint": "Строчные латинские буквы, цифры и дефисы",
+      "minutes": "Примерное время (минуты)"
+    }
+  },
+  "questions": {
+    "new": "Новый вопрос",
+    "edit": "Изменить вопрос",
+    "saved": "Вопрос сохранён",
+    "filterByType": "Фильтр по типу",
+    "allTypes": "Все типы",
+    "types": {
+      "likert": "Шкала Лайкерта",
+      "situational": "Ситуационный",
+      "open": "Открытый ответ",
+      "practical": "Практический"
+    },
+    "columns": {
+      "question": "Вопрос",
+      "type": "Тип",
+      "competencies": "Компетенции",
+      "answers": "Ответы"
+    },
+    "deactivateTitle": "Деактивировать этот вопрос?",
+    "deactivateText": "Он исчезнет из новых попыток. Существующие ответы и баллы сохранятся.",
+    "deactivated": "Вопрос деактивирован",
+    "errors": {
+      "optionLine": "Строка варианта {{line}} должна иметь вид \"Текст | 75\".",
+      "unknownCompetency": "Неизвестный код компетенции \"{{code}}\"."
+    },
+    "form": {
+      "section": "Раздел",
+      "text": "Текст вопроса",
+      "helpText": "Подсказка",
+      "options": "Варианты ответа",
+      "optionsHint": "По одному в строке: \"Текст | балл 0–100\"",
+      "minLength": "Минимальная длина ответа",
+      "competencies": "Измеряемые компетенции",
+      "competenciesHint": "По одной в строке: \"код-компетенции | вес (0–1)\"",
+      "reverseScored": "Обратная шкала"
+    }
+  },
+  "resources": {
+    "tabsLabel": "Тип материалов",
+    "tabResources": "Учебные ресурсы ({{n}})",
+    "tabTasks": "Практические задания ({{n}})",
+    "new": "Новый ресурс",
+    "edit": "Изменить ресурс",
+    "saved": "Ресурс сохранён",
+    "unpublishText": "Обучающиеся больше не увидят его в каталоге. Их прогресс сохранится, ресурс можно опубликовать снова.",
+    "unpublished": "Ресурс снят с публикации",
+    "columns": {
+      "type": "Тип",
+      "minutes": "Минуты"
+    },
+    "form": {
+      "content": "Содержание (Markdown: ## заголовки, списки, **жирный**)",
+      "url": "Внешняя ссылка (необязательно)"
+    }
+  },
+  "tasks": {
+    "new": "Новое задание",
+    "edit": "Изменить задание",
+    "saved": "Задание сохранено",
+    "unpublishText": "Обучающимся больше не будет предлагаться это задание. Их работы сохранятся.",
+    "unpublished": "Задание снято с публикации",
+    "criteria_one": "{{count}} критерий",
+    "criteria_few": "{{count}} критерия",
+    "criteria_many": "{{count}} критериев",
+    "criteria_other": "{{count}} критерия",
+    "columns": {
+      "rubric": "Рубрика"
+    },
+    "form": {
+      "instructions": "Инструкции",
+      "minLength": "Минимальная длина ответа"
+    }
+  },
+  "competencies": {
+    "updated": "Компетенция обновлена",
+    "editTitle": "Изменить «{{name}}»",
+    "columns": {
+      "competency": "Компетенция",
+      "area": "Область",
+      "importance": "Важность",
+      "defaultTarget": "Цель по умолчанию"
+    },
+    "form": {
+      "name": "Название",
+      "shortName": "Краткое название",
+      "importance": "Важность (0–1)"
+    }
+  },
+  "ai": {
+    "tabEvaluations": "Журнал оценок",
+    "tabPrompts": "Версии промптов",
+    "filterByStatus": "Фильтр по статусу",
+    "allStatuses": "Все статусы",
+    "statuses": {
+      "success": "Успешно",
+      "retried": "Повтор",
+      "fallback": "Резервный режим"
+    },
+    "inputTypes": {
+      "open_answer": "Открытый ответ",
+      "practical_answer": "Практический ответ",
+      "practice_submission": "Практическая работа",
+      "profile_insight": "Вывод по профилю"
+    },
+    "columns": {
+      "input": "Вход",
+      "provider": "Провайдер · модель",
+      "score": "Балл",
+      "confidence": "Уверенность",
+      "latency": "Задержка",
+      "date": "Дата"
+    },
+    "latencyMs": "{{n}} мс",
+    "inspect": "Просмотр",
+    "evaluationsCount_one": "{{n}} оценка",
+    "evaluationsCount_few": "{{n}} оценки",
+    "evaluationsCount_many": "{{n}} оценок",
+    "evaluationsCount_other": "{{n}} оценки",
+    "previous": "Назад",
+    "evaluationTitle": "Оценка №{{id}}",
+    "promptVersionId": "ID версии промпта",
+    "builtIn": "встроенный",
+    "attempts": "Попытки",
+    "level": "Уровень",
+    "errors": "Ошибки",
+    "inputExcerpt": "Фрагмент входных данных",
+    "validatedOutput": "Проверенный результат",
+    "promptActivated": "Версия промпта v{{version}} активирована",
+    "newVersionFrom": "Новая версия на основе этой",
+    "showTemplate": "Показать шаблон",
+    "newVersionTitle": "Новая версия промпта {{key}}",
+    "versionCreated": "Версия промпта создана",
+    "form": {
+      "systemPrompt": "Системный промпт",
+      "userTemplate": "Шаблон пользователя",
+      "placeholders": "Подстановки: {{list}}",
+      "placeholder": "Подстановка: {{list}}",
+      "notes": "Заметки",
+      "activateNow": "Активировать сразу"
+    }
+  }
+}

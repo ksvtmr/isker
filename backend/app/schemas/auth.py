@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -19,6 +20,7 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     full_name: str = Field(min_length=2, max_length=120)
     accept_terms: bool = Field(description="Must be true: the user accepts the terms and the privacy notice")
+    language: Literal["ru", "kk", "en"] | None = Field(default=None, description="Interface language to save")
 
     @field_validator("accept_terms")
     @classmethod
@@ -50,6 +52,7 @@ class LoginIn(BaseModel):
     # Plain shape check: login must work for seeded accounts on reserved domains such as demo@isker.local.
     email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+$")
     password: str = Field(min_length=1, max_length=128)
+    remember_me: bool = False
 
     @field_validator("email")
     @classmethod
@@ -77,6 +80,9 @@ class UserOut(BaseModel):
     onboarding_completed: bool
     email_verified: bool
     created_at: datetime
+    language: str | None = None
+    has_password: bool = True
+    google_linked: bool = False
 
 
 class AuthOut(BaseModel):
@@ -111,7 +117,21 @@ class ResetPasswordIn(BaseModel):
 
 
 class PasswordConfirmIn(BaseModel):
-    password: str = Field(min_length=1, max_length=128)
+    # Empty for accounts without a password (Google-only): a recent sign-in is required instead.
+    password: str = Field(default="", max_length=128)
+
+
+class LanguageIn(BaseModel):
+    language: Literal["ru", "kk", "en"]
+
+
+class SetPasswordIn(BaseModel):
+    new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def _pw(cls, v: str) -> str:
+        return _strong(v)
 
 
 class SessionOut(BaseModel):

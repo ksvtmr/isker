@@ -1,0 +1,43 @@
+{
+  "plans": {
+    "title": "Plans",
+    "subtitle": "The Free plan covers the full journey: assess, understand your profile, plan, learn, practise and reassess.",
+    "yourPlan": "Your plan: {{name}}",
+    "ends": "Ends {{date}}",
+    "validUntil": "Valid until {{date}}",
+    "unlimited": "unlimited",
+    "usageLabel_one": "{{label}} (last {{count}} day)",
+    "usageLabel_few": "{{label}} (last {{count}} days)",
+    "usageLabel_many": "{{label}} (last {{count}} days)",
+    "usageLabel_other": "{{label}} (last {{count}} days)",
+    "usageAria": "{{label}}: {{used}} of {{limit}} used",
+    "currentPlan": "Current plan",
+    "notIncluded": "Not included:"
+  },
+  "features": {
+    "assessmentFull": "Full assessments",
+    "assessmentReassessment": "Competency reassessment",
+    "planPersonalized": "Personalised development plan",
+    "learningAdvancedResources": "Advanced learning resources",
+    "practiceTasks": "Practical tasks",
+    "practiceAiFeedback": "AI feedback on practice",
+    "progressHistory": "Full progress history",
+    "exportData": "Data export",
+    "unlimitedAssessments": "Unlimited full assessments",
+    "unlimitedTasks": "Unlimited practical tasks",
+    "limit_one": "{{label}}: {{count}} per 30 days",
+    "limit_few": "{{label}}: {{count}} per 30 days",
+    "limit_many": "{{label}}: {{count}} per 30 days",
+    "limit_other": "{{label}}: {{count}} per 30 days"
+  },
+  "upgrade": {
+    "title": "How to upgrade",
+    "text": "Online payment isn't available yet. If you're part of a programme or incubator, ask its administrator to grant you Pro access.",
+    "createAccount": "<registerLink>Create a free account</registerLink> to get started."
+  },
+  "price": {
+    "free": "Free",
+    "perMonth": "{{amount}} / month",
+    "perYear": "{{amount}} / year"
+  }
+}

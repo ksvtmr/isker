@@ -34,6 +34,8 @@ export class ApiError extends Error {
   }
 }
 
+import i18n, { currentLanguage } from "../i18n";
+
 const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -56,6 +58,8 @@ export async function request<T>(method: Method, path: string, body?: unknown, s
   let res: Response;
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
+  // Content (questions, competencies, emails) is localized by the API for the interface language.
+  headers["Accept-Language"] = currentLanguage();
   if (method !== "GET") {
     const token = csrfToken();
     if (token) headers["X-CSRF-Token"] = token;
@@ -84,7 +88,7 @@ export async function request<T>(method: Method, path: string, body?: unknown, s
   }
   if (!res.ok) {
     const err = (data as { error?: ApiErrorBody } | null)?.error ?? {
-      code: "HTTP_ERROR",
+      code: res.status >= 500 ? "INTERNAL_ERROR" : "HTTP_ERROR",
       message: res.status >= 500 ? "Something went wrong on our side. Please try again." : "The request could not be completed.",
     };
     const apiErr = new ApiError(res.status, err);
@@ -109,10 +113,22 @@ export function qs(params: Record<string, string | number | boolean | null | und
   return s ? `?${s}` : "";
 }
 
-/** Human-readable message for any thrown value. Never exposes stack traces. */
-export function errorMessage(e: unknown, fallback = "Something went wrong. Please try again."): string {
-  if (e instanceof ApiError) return e.message;
-  return fallback;
+/**
+ * Human-readable message for any thrown value, in the interface language. Stable error codes from the API are
+ * translated by the "errors" namespace; the server message is only a fallback for codes we don't know yet.
+ * Never exposes stack traces.
+ */
+export function errorMessage(e: unknown, fallback?: string): string {
+  if (e instanceof ApiError) {
+    const details = e.details && typeof e.details === "object" && !Array.isArray(e.details) ? (e.details as Record<string, unknown>) : {};
+    const retry = Number(details.retry_after_seconds);
+    return i18n.t(`errors:${e.code}`, {
+      ...details,
+      minutes: Number.isFinite(retry) ? Math.max(1, Math.ceil(retry / 60)) : 1,
+      defaultValue: e.message,
+    });
+  }
+  return fallback ?? i18n.t("errors:INTERNAL_ERROR");
 }
 
 /** True when the server refused because the user's plan doesn't include a feature (403 UPGRADE_REQUIRED). */

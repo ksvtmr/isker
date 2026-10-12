@@ -4,7 +4,7 @@
  * but are bundled locally instead of fetched from a CDN at runtime.
  */
 import {
-  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, Ban, ChartColumn, CreditCard, Download, KeyRound, Layers, Mail,
+  ArrowDown, EyeOff, Globe, Languages, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, Ban, ChartColumn, CreditCard, Download, KeyRound, Layers, Mail,
   MonitorSmartphone, ScrollText, ShieldCheck, Undo2, UserCog, UserX, Award, Bell, BookOpen, Bot, Briefcase, CalendarClock, Check, ChevronDown, ChevronLeft,
   ChevronRight, ChevronUp, CircleAlert, CircleCheck, CircleDot, CirclePlay, ClipboardCheck, ClipboardList, Clock,
   CloudOff, Database, Dumbbell, ExternalLink, Eye, FileStack, FileText, Flag, GraduationCap, Info, LayoutDashboard,
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 export const ICONS: Record<string, LucideIcon> = {
-  "arrow-down": ArrowDown, "arrow-up": ArrowUp, "arrow-up-down": ArrowUpDown, ban: Ban, "chart-column": ChartColumn,
+  "arrow-down": ArrowDown, "eye-off": EyeOff, globe: Globe, languages: Languages, "arrow-up": ArrowUp, "arrow-up-down": ArrowUpDown, ban: Ban, "chart-column": ChartColumn,
   "credit-card": CreditCard, download: Download, "key-round": KeyRound, layers: Layers, mail: Mail,
   "monitor-smartphone": MonitorSmartphone, "scroll-text": ScrollText, "shield-check": ShieldCheck, "undo-2": Undo2,
   "user-cog": UserCog, "user-x": UserX,

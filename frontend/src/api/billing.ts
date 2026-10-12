@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Entitlement, MySubscription, BillingPlan } from "../types/api";
+import i18n from "../i18n";
+import { formatCurrency } from "../utils/format";
 import { api } from "./client";
 
 export const billingApi = {
@@ -26,19 +28,35 @@ export async function downloadExport(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+/** Localized price: "Free", "4 990 ₸ / мес", "$9.00 / month"… (Intl currency in the interface language). */
 export function formatPrice(plan: Pick<BillingPlan, "price_cents" | "currency" | "billing_interval">): string {
-  if (plan.price_cents === 0) return "Free";
-  const amount = new Intl.NumberFormat("en", { style: "currency", currency: plan.currency }).format(plan.price_cents / 100);
-  return plan.billing_interval === "none" ? amount : `${amount} / ${plan.billing_interval}`;
+  if (plan.price_cents === 0) return i18n.t("subscriptions:price.free");
+  const amount = formatCurrency(plan.price_cents, plan.currency);
+  if (plan.billing_interval === "month") return i18n.t("subscriptions:price.perMonth", { amount });
+  if (plan.billing_interval === "year") return i18n.t("subscriptions:price.perYear", { amount });
+  return amount;
 }
 
-export const FEATURE_LABELS: Record<string, string> = {
-  "assessment.full": "Full assessments",
-  "assessment.reassessment": "Competency reassessment",
-  "plan.personalized": "Personalised development plan",
-  "learning.advanced_resources": "Advanced learning resources",
-  "practice.tasks": "Practical tasks",
-  "practice.ai_feedback": "AI feedback on practice",
-  "progress.history": "Full progress history",
-  "export.data": "Data export",
+/** Feature key (API value, never translated) -> translation key of its display label. */
+const FEATURE_LABEL_KEYS: Record<string, string> = {
+  "assessment.full": "subscriptions:features.assessmentFull",
+  "assessment.reassessment": "subscriptions:features.assessmentReassessment",
+  "plan.personalized": "subscriptions:features.planPersonalized",
+  "learning.advanced_resources": "subscriptions:features.learningAdvancedResources",
+  "practice.tasks": "subscriptions:features.practiceTasks",
+  "practice.ai_feedback": "subscriptions:features.practiceAiFeedback",
+  "progress.history": "subscriptions:features.progressHistory",
+  "export.data": "subscriptions:features.exportData",
 };
+
+/** Display label of a feature in the current interface language (unknown keys are shown as they are). */
+export function featureLabel(key: string): string {
+  const k = FEATURE_LABEL_KEYS[key];
+  return k ? i18n.t(k) : key;
+}
+
+/** Feature labels keyed by feature key. Values are getters, so they are read in the current language. */
+export const FEATURE_LABELS: Record<string, string> = Object.defineProperties(
+  {},
+  Object.fromEntries(Object.keys(FEATURE_LABEL_KEYS).map((k) => [k, { enumerable: true, get: () => featureLabel(k) }])),
+);

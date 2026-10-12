@@ -1,0 +1,251 @@
+{
+  "app": {
+    "name": "Isker",
+    "home": "Главная Isker"
+  },
+  "language": {
+    "label": "Язык",
+    "choose": "Язык интерфейса",
+    "saveFailed": "Не удалось сохранить язык в профиле. Он применён только на этом устройстве."
+  },
+  "actions": {
+    "save": "Сохранить",
+    "saveChanges": "Сохранить изменения",
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "back": "Назад",
+    "next": "Далее",
+    "continue": "Продолжить",
+    "tryAgain": "Повторить",
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "search": "Поиск",
+    "clearFilters": "Сбросить фильтры",
+    "confirm": "Подтвердить",
+    "signOut": "Выйти",
+    "signIn": "Войти",
+    "open": "Открыть",
+    "start": "Начать",
+    "viewAll": "Смотреть все",
+    "details": "Подробнее",
+    "hide": "Скрыть",
+    "download": "Скачать",
+    "create": "Создать",
+    "seePlans": "Посмотреть тарифы",
+    "goToDashboard": "На главную",
+    "menu": "Меню",
+    "openMenu": "Открыть меню"
+  },
+  "state": {
+    "loading": "Загрузка…",
+    "saving": "Сохранение…",
+    "errorTitle": "Что-то пошло не так",
+    "errorLoad": "Не удалось загрузить страницу. Попробуйте ещё раз.",
+    "notIncluded": "Не входит в ваш тариф",
+    "noAccessTitle": "Нет доступа к этому разделу",
+    "noAccessText": "В вашей роли нет этого права. Обратитесь к супер-администратору, если оно нужно.",
+    "notFoundTitle": "Страница не найдена",
+    "notFoundText": "Такой страницы нет или она была перемещена.",
+    "adminNotFoundText": "Такого раздела админ-панели нет.",
+    "adminDashboard": "Панель администратора",
+    "never": "Никогда",
+    "none": "—",
+    "yes": "Да",
+    "no": "Нет"
+  },
+  "nav": {
+    "dashboard": "Главная",
+    "assessment": "Оценка",
+    "competencies": "Компетенции",
+    "development-plan": "План развития",
+    "learning": "Обучение",
+    "practice": "Практика",
+    "progress": "Прогресс",
+    "profile": "Профиль",
+    "settings": "Настройки",
+    "plans": "Тарифы",
+    "admin": "Админ-панель",
+    "allSections": "Все разделы",
+    "myProfile": "Мой профиль"
+  },
+  "bottomNav": {
+    "dashboard": "Главная",
+    "assessment": "Оценка",
+    "competencies": "Профиль",
+    "development-plan": "Развитие",
+    "progress": "Прогресс"
+  },
+  "ds": {
+    "close": "Закрыть",
+    "dismiss": "Скрыть",
+    "loading": "Загрузка",
+    "notAssessed": "Не оценено",
+    "notMeasured": "не измерено",
+    "target": "Цель {{n}}",
+    "scoreAria": "{{name}}: балл",
+    "outOf": "{{label}}: {{value}} из {{max}}",
+    "questionOf": "Вопрос {{current}} из {{total}}",
+    "aiInsight": "Вывод ИИ",
+    "confidence": "Уверенность: {{value}}",
+    "gapSuffix": "разрыв",
+    "prioritySuffix": "приоритет",
+    "targetSuffix": "цель",
+    "recommendedFor": "Рекомендовано для: {{competency}}",
+    "practice": "Практика",
+    "learn": "Изучить",
+    "startActivity": "Начать",
+    "mainNavigation": "Основная навигация",
+    "primaryNavigation": "Разделы",
+    "breadcrumb": "Навигационная цепочка",
+    "pagination": "Страницы",
+    "noResults": "Ничего не найдено.",
+    "previous": "Назад",
+    "next": "Вперёд",
+    "pageOf": "Страница {{page}} из {{pages}}",
+    "range": "{{from}}–{{to}} из {{total}}",
+    "sortedAsc": ", сортировка: {{column}} по возрастанию",
+    "sortedDesc": ", сортировка: {{column}} по убыванию",
+    "cancel": "Отмена",
+    "reasonLabel": "Причина (сохраняется в журнале аудита)",
+    "reasonHint": "Не менее 3 символов.",
+    "reasonTooShort": "Кратко укажите причину.",
+    "typeToConfirm": "Введите {{text}} для подтверждения",
+    "progress": "Прогресс",
+    "skipToContent": "Перейти к содержимому",
+    "admin": "Админ",
+    "adminNavigation": "Навигация админ-панели",
+    "administration": "Администрирование",
+    "before": "До",
+    "after": "После",
+    "scoreHistoryChart": "График истории баллов",
+    "radarChart": "Лепестковая диаграмма компетенций",
+    "charCount": "{{count}} / {{max}}",
+    "planSteps": {
+      "gap": "Ваш разрыв",
+      "learn": "Изучить",
+      "practice": "Практика",
+      "reflect": "Рефлексия",
+      "reassess": "Переоценка"
+    },
+    "stepStatus": {
+      "done": "Выполнено",
+      "current": "Текущий шаг",
+      "todo": "Не начато",
+      "locked": "Заблокировано"
+    }
+  },
+  "levels": {
+    "Foundation": "Начальный",
+    "Developing": "Развивающийся",
+    "Intermediate": "Средний",
+    "Advanced": "Продвинутый",
+    "Proficient": "Профессиональный"
+  },
+  "gaps": {
+    "High": "Высокий",
+    "Medium": "Средний",
+    "Low": "Низкий"
+  },
+  "confidence": {
+    "high": "Высокая",
+    "medium": "Средняя",
+    "low": "Низкая"
+  },
+  "resourceTypes": {
+    "article": "Статья",
+    "video": "Видео",
+    "course": "Курс",
+    "exercise": "Упражнение",
+    "case_study": "Кейс",
+    "template": "Шаблон"
+  },
+  "difficulty": {
+    "beginner": "Начальный",
+    "intermediate": "Средний",
+    "advanced": "Продвинутый"
+  },
+  "roles": {
+    "user": "Слушатель",
+    "content_manager": "Контент-менеджер",
+    "support": "Поддержка",
+    "admin": "Администратор",
+    "super_admin": "Супер-администратор"
+  },
+  "accountStatus": {
+    "active": "Активен",
+    "suspended": "Заблокирован",
+    "deactivated": "Деактивирован"
+  },
+  "subscriptionStatus": {
+    "trialing": "Пробный период",
+    "active": "Активна",
+    "past_due": "Просрочена оплата",
+    "canceled": "Отменена",
+    "expired": "Истекла",
+    "incomplete": "Не завершена"
+  },
+  "subscriptionSource": {
+    "system": "Система",
+    "admin": "Выдана администратором",
+    "payment": "Оплата",
+    "trial": "Пробный период"
+  },
+  "outcome": {
+    "success": "Успешно",
+    "failure": "Ошибка",
+    "denied": "Отказано"
+  },
+  "attemptStatus": {
+    "in_progress": "В процессе",
+    "completed": "Завершена",
+    "abandoned": "Прервана"
+  },
+  "progressStatus": {
+    "not_started": "Не начато",
+    "in_progress": "В процессе",
+    "completed": "Завершено"
+  },
+  "validation": {
+    "required": "Заполните это поле",
+    "emailRequired": "Введите электронную почту",
+    "emailInvalid": "Введите корректный адрес почты",
+    "passwordRequired": "Введите пароль",
+    "currentPasswordRequired": "Введите текущий пароль",
+    "passwordMin": "Не менее 8 символов",
+    "passwordMax": "Не более 128 символов",
+    "passwordLetter": "Добавьте хотя бы одну букву",
+    "passwordNumber": "Добавьте хотя бы одну цифру",
+    "passwordsMismatch": "Пароли не совпадают",
+    "nameRequired": "Введите имя",
+    "nameMax": "Не более 120 символов",
+    "termsRequired": "Чтобы создать аккаунт, примите Условия использования и Политику конфиденциальности",
+    "chooseEducation": "Выберите уровень образования",
+    "chooseExperience": "Выберите опыт",
+    "chooseGoal": "Выберите хотя бы одну цель",
+    "chooseFormat": "Выберите формат",
+    "minMinutes": "Не менее 15 минут",
+    "tooLong": "Слишком длинный текст"
+  },
+  "greeting": {
+    "morning": "Доброе утро",
+    "afternoon": "Добрый день",
+    "evening": "Добрый вечер"
+  },
+  "time": {
+    "minutes_one": "{{count}} мин",
+    "minutes_few": "{{count}} мин",
+    "minutes_many": "{{count}} мин",
+    "minutes_other": "{{count}} мин",
+    "days_one": "{{count}} день",
+    "days_few": "{{count}} дня",
+    "days_many": "{{count}} дней",
+    "days_other": "{{count}} дня",
+    "inDays_one": "Через {{count}} день",
+    "inDays_few": "Через {{count}} дня",
+    "inDays_many": "Через {{count}} дней",
+    "inDays_other": "Через {{count}} дня"
+  },
+  "toast": {
+    "saved": "Сохранено"
+  }
+}

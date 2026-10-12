@@ -53,7 +53,9 @@ def test_register_reports_honest_verification_state(client, outbox):
 def test_tokens_and_hashes_never_returned(client):
     data = register(client)
     text = str(data)
-    assert "password" not in text and "$2" not in text
+    # `has_password` is a boolean flag; no password, hash or hash-like value may appear.
+    assert "Secret123" not in text and "$2" not in text and "password_hash" not in text
+    assert set(data["user"]) & {"password", "password_hash"} == set()
 
 
 # --- CSRF ---------------------------------------------------------------------------------------------

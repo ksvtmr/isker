@@ -363,7 +363,9 @@ def settings_status(_: SettingsViewer) -> dict:
             "csrf_protection": True,
             "rate_limiting": s.rate_limit_enabled,
             "max_request_bytes": s.max_request_bytes,
-            "session_hours": round(s.jwt_expires_minutes / 60, 1),
+            "session_hours": s.session_hours,
+            "remember_me_days": s.remember_me_days,
+            "google_sign_in": s.google_enabled,
         },
         "email": {
             "backend": email_service.backend_name(),

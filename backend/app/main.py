@@ -21,6 +21,7 @@ from app.api.routes import (
     billing,
     competencies,
     learning,
+    oauth,
     plan,
     practice,
     profile,
@@ -95,7 +96,7 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestContextMiddleware)
     install_error_handlers(app)
-    for r in (auth, profile, assessments, competencies, plan, learning, practice, progress, billing, admin,
+    for r in (auth, oauth, profile, assessments, competencies, plan, learning, practice, progress, billing, admin,
               admin_users, admin_billing, admin_system):
         app.include_router(r.router)
 

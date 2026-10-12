@@ -301,4 +301,12 @@ def insight_for_attempt(db: Session, user_id: int, attempt: AssessmentAttempt, p
         ),
         "top_resource": top_res,
     }
-    generate_insight(db, user_id=user_id, facts=facts, attempt_id=attempt.id)
+    refs = {
+        "strongest": best.competency_id,
+        "strongest_score": best.score,
+        "top_gap": top_gap.competency_id if top_gap else None,
+        "gap_score": top_gap.current_score if top_gap else None,
+        "gap_target": top_gap.target_score if top_gap else None,
+        "top_resource": recs[0].resource_id if recs and recs[0].resource_id else None,
+    }
+    generate_insight(db, user_id=user_id, facts=facts, attempt_id=attempt.id, refs=refs)

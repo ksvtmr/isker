@@ -22,7 +22,17 @@ class Settings(BaseSettings):
 
     jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
-    jwt_expires_minutes: int = 60 * 24
+    # Sessions (see docs/authentication.md). Without "Remember me" the cookie lasts until the browser closes and the
+    # session expires after SESSION_HOURS; with it the cookie and session last REMEMBER_ME_DAYS.
+    session_hours: int = 12
+    remember_me_days: int = 30
+    # The session token is re-issued (rotated) after this many minutes of use; replaying an older token is detected.
+    token_rotate_minutes: int = 60
+    # Google OpenID Connect (all three required to enable "Continue with Google").
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    # Exact URI registered in Google Cloud. Empty = {APP_BASE_URL}/api/auth/google/callback.
+    google_redirect_uri: str = ""
     auth_cookie_name: str = "isker_session"
     csrf_cookie_name: str = "isker_csrf"
     # None = automatic: Secure cookies in production, plain cookies in development (http://localhost).
@@ -104,6 +114,14 @@ class Settings(BaseSettings):
         if "app_base_url" not in self.model_fields_set and os.environ.get("RENDER_EXTERNAL_URL"):
             self.app_base_url = os.environ["RENDER_EXTERNAL_URL"].rstrip("/")
         return self
+
+    @property
+    def google_enabled(self) -> bool:
+        return bool(self.google_client_id and self.google_client_secret)
+
+    @property
+    def google_callback_url(self) -> str:
+        return self.google_redirect_uri or f"{self.app_base_url.rstrip('/')}/api/auth/google/callback"
 
     @property
     def secure_cookies(self) -> bool:

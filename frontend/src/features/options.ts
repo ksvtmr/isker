@@ -1,24 +1,51 @@
-export const EDUCATION_OPTIONS = [
-  "School", "Bachelor, 1st year", "Bachelor, 2nd year", "Bachelor, 3rd year", "Bachelor, 4th year", "Master", "PhD", "Graduate",
+/**
+ * Option lists for the onboarding and profile forms. Values are sent to the API untranslated;
+ * labels are translated with the current interface language — call these functions at render time.
+ */
+import i18n from "../i18n";
+
+export interface Option { value: string; label: string }
+
+/** Education values are stored as-is by the API (historical English values); only the labels are translated. */
+const EDUCATION: [string, string][] = [
+  ["School", "account:options.education.school"],
+  ["Bachelor, 1st year", "account:options.education.bachelor1"],
+  ["Bachelor, 2nd year", "account:options.education.bachelor2"],
+  ["Bachelor, 3rd year", "account:options.education.bachelor3"],
+  ["Bachelor, 4th year", "account:options.education.bachelor4"],
+  ["Master", "account:options.education.master"],
+  ["PhD", "account:options.education.phd"],
+  ["Graduate", "account:options.education.graduate"],
 ];
 
-export const EXPERIENCE_OPTIONS = [
-  { value: "none", label: "No experience yet" },
-  { value: "side_project", label: "Side project or small sales" },
-  { value: "startup_team", label: "Member of a startup team" },
-  { value: "running_business", label: "Running a business" },
+const EXPERIENCE: [string, string][] = [
+  ["none", "account:options.experience.none"],
+  ["side_project", "account:options.experience.side_project"],
+  ["startup_team", "account:options.experience.startup_team"],
+  ["running_business", "account:options.experience.running_business"],
 ];
 
-export const FORMAT_OPTIONS = [
-  { value: "article", label: "Short articles and practical tasks" },
-  { value: "video", label: "Video lessons" },
-  { value: "course", label: "Longer courses" },
-  { value: "mixed", label: "A mix of everything" },
+const FORMAT: [string, string][] = [
+  ["article", "account:options.format.article"],
+  ["video", "account:options.format.video"],
+  ["course", "account:options.format.course"],
+  ["mixed", "account:options.format.mixed"],
 ];
 
-export const WEEKLY_OPTIONS = [
-  { value: "30", label: "About 30 minutes" },
-  { value: "60", label: "About 1 hour" },
-  { value: "90", label: "About 1.5 hours" },
-  { value: "180", label: "3 hours or more" },
+const WEEKLY: [string, string][] = [
+  ["30", "account:options.weekly.30"],
+  ["60", "account:options.weekly.60"],
+  ["90", "account:options.weekly.90"],
+  ["180", "account:options.weekly.180"],
 ];
+
+const build = (list: [string, string][]): Option[] => list.map(([value, key]) => ({ value, label: i18n.t(key) }));
+
+/** Raw values (untranslated), e.g. for validation or comparisons. */
+export const EDUCATION_VALUES = EDUCATION.map(([v]) => v);
+export const WEEKLY_VALUES = WEEKLY.map(([v]) => v);
+
+export const educationOptions = (): Option[] => build(EDUCATION);
+export const experienceOptions = (): Option[] => build(EXPERIENCE);
+export const formatOptions = (): Option[] => build(FORMAT);
+export const weeklyOptions = (): Option[] => build(WEEKLY);

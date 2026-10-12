@@ -1,5 +1,6 @@
 import { AnswerOption, AssessmentProgress, Button, Card, EmptyState, Icon, InlineAlert, Modal, Skeleton, Textarea } from "@isker/design-system";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { assessmentsApi, useAttempt, useSubmitAttempt } from "../api/assessments";
 import { ApiError, errorMessage } from "../api/client";
@@ -49,15 +50,16 @@ function ChoiceGroup({ q, value, onChange }: { q: Question; value: number | null
 }
 
 function Analyzing() {
+  const { t } = useTranslation("assessment");
   return (
     <div style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }} role="status" aria-live="polite">
       <Card padding={32}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--color-brand-700)" }}>
           <Icon name="sparkles" size={18} />
-          <span style={{ fontWeight: 600, fontSize: 15 }}>Scoring your answers</span>
+          <span style={{ fontWeight: 600, fontSize: 15 }}>{t("runner.analyzingTitle")}</span>
         </div>
         <p style={{ marginTop: 8, fontSize: 14, color: "var(--color-neutral-500)" }}>
-          Open answers are scored against EntreComp rubrics. Every score comes with evidence from your own words.
+          {t("runner.analyzingText")}
         </p>
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
           <Skeleton height={10} width="80%" /><Skeleton height={10} width="65%" /><Skeleton height={10} width="72%" />
@@ -68,6 +70,7 @@ function Analyzing() {
 }
 
 export function AssessmentRunner() {
+  const { t } = useTranslation("assessment");
   const { id: idParam } = useParams();
   const id = Number(idParam);
   const navigate = useNavigate();
@@ -107,14 +110,14 @@ export function AssessmentRunner() {
         setSaveError(null);
       } catch (e) {
         setSaveState("error");
-        setSaveError(errorMessage(e, "Your answer couldn't be saved."));
+        setSaveError(errorMessage(e, t("runner.saveFailed")));
         throw e;
       }
     };
     const next = queue.current.catch(() => {}).then(run);
     queue.current = next;
     return next;
-  }, [id]);
+  }, [id, t]);
 
   const flush = useCallback(async () => {
     clearTimeout(timer.current);
@@ -146,14 +149,14 @@ export function AssessmentRunner() {
     return (
       <div style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }}>
         {notFound
-          ? <EmptyState icon="search-x" title="Assessment not found" description="This assessment doesn't exist or belongs to another account." action={<LinkButton to="/assessment">Back to assessment</LinkButton>} />
+          ? <EmptyState icon="search-x" title={t("runner.notFoundTitle")} description={t("runner.notFoundText")} action={<LinkButton to="/assessment">{t("runner.backToAssessment")}</LinkButton>} />
           : <ErrorState error={error} onRetry={() => refetch()} />}
       </div>
     );
   }
   if (data.attempt.status === "completed") return <Navigate to={`/results?attempt=${id}`} replace />;
   if (data.attempt.status === "abandoned") {
-    return <div style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }}><EmptyState icon="clipboard-list" title="This attempt was closed" description="Start a new assessment to continue." action={<LinkButton to="/assessment">Go to assessment</LinkButton>} /></div>;
+    return <div style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }}><EmptyState icon="clipboard-list" title={t("runner.closedTitle")} description={t("runner.closedText")} action={<LinkButton to="/assessment">{t("runner.goToAssessment")}</LinkButton>} /></div>;
   }
 
   const questions = data.questions;
@@ -162,7 +165,7 @@ export function AssessmentRunner() {
   const answered = isAnswered(q, draft);
   const unanswered = questions.filter((x) => !isAnswered(x, drafts[x.id])).length;
   const isLast = index === questions.length - 1;
-  const title = data.attempt.scope === "competency" ? `Reassessment · ${data.attempt.competency?.name}` : "Assessment";
+  const title = data.attempt.scope === "competency" ? t("runner.titleReassessment", { name: data.attempt.competency?.name ?? "" }) : t("runner.title");
 
   const choose = (optionId: number) => {
     setDrafts((d) => ({ ...d, [q.id]: { option_id: optionId } }));
@@ -195,12 +198,12 @@ export function AssessmentRunner() {
   };
 
   const textLen = (draft?.text ?? "").trim().length;
-  const status = saveState === "saving" ? "Saving…" : saveState === "error" ? "Not saved" : "Saved automatically";
+  const status = saveState === "saving" ? t("common:state.saving") : saveState === "error" ? t("runner.notSaved") : t("runner.savedAutomatically");
 
   return (
     <div className="ik-assess">
       <div className="ik-assess__top">
-        <button type="button" className="ik-back" onClick={saveAndExit}><Icon name="x" size={16} />Save &amp; exit</button>
+        <button type="button" className="ik-back" onClick={saveAndExit}><Icon name="x" size={16} />{t("runner.saveAndExit")}</button>
         <span style={{ fontSize: 13, fontWeight: 500, color: "var(--color-neutral-700)" }} className="hidden md:inline">{title}</span>
         <span role="status" aria-live="polite" style={{ fontSize: 13, color: saveState === "error" ? "var(--color-error)" : "var(--color-neutral-500)", display: "flex", alignItems: "center", gap: 6 }}>
           <Icon name={saveState === "error" ? "circle-alert" : "circle-check"} size={14} />{status}
@@ -210,17 +213,17 @@ export function AssessmentRunner() {
         <AssessmentProgress current={index + 1} total={questions.length} section={q.section} />
         {saveError && (
           <div style={{ marginTop: 16 }}>
-            <InlineAlert title="Your last answer wasn't saved">
+            <InlineAlert title={t("runner.lastAnswerNotSaved")}>
               {saveError}{" "}
-              <button type="button" className="ik-link" style={{ textDecoration: "underline" }} onClick={() => flush().catch(() => {})}>Try again</button>
+              <button type="button" className="ik-link" style={{ textDecoration: "underline" }} onClick={() => flush().catch(() => {})}>{t("common:actions.tryAgain")}</button>
             </InlineAlert>
           </div>
         )}
         {submit.error && (
           <div style={{ marginTop: 16 }}>
-            <InlineAlert title="We couldn't finish the assessment">
+            <InlineAlert title={t("runner.submitFailed")}>
               {errorMessage(submit.error)}
-              {submit.error instanceof ApiError && submit.error.code === "ASSESSMENT_INCOMPLETE" && " Unanswered questions are marked in the overview below."}
+              {submit.error instanceof ApiError && submit.error.code === "ASSESSMENT_INCOMPLETE" && <>{" "}{t("runner.incompleteHint")}</>}
             </InlineAlert>
           </div>
         )}
@@ -234,34 +237,34 @@ export function AssessmentRunner() {
           ) : (
             <div style={{ marginTop: 24 }}>
               <Textarea
-                label="Your answer"
+                label={t("runner.yourAnswer")}
                 rows={q.type === "practical" ? 8 : 6}
                 maxLength={4000}
                 value={draft?.text ?? ""}
                 onChange={(e) => type(e.target.value)}
                 onBlur={() => flush().catch(() => {})}
-                hint={textLen < q.min_length ? `Describe what you would do and why. ${q.min_length - textLen} more characters needed.` : "Thanks — you can keep adding detail."}
-                placeholder={q.type === "practical" ? "The problem I noticed is…" : "I would start by…"}
+                hint={textLen < q.min_length ? t("runner.hintMore", { count: q.min_length - textLen }) : t("runner.hintDone")}
+                placeholder={q.type === "practical" ? t("runner.placeholderPractical") : t("runner.placeholderOpen")}
               />
             </div>
           )}
         </Card>
         <div className="ik-assess__nav">
-          <Button variant="secondary" size="lg" iconLeft="arrow-left" disabled={index === 0} onClick={() => goTo(index - 1)}>Back</Button>
+          <Button variant="secondary" size="lg" iconLeft="arrow-left" disabled={index === 0} onClick={() => goTo(index - 1)}>{t("common:actions.back")}</Button>
           {isLast ? (
-            <Button size="lg" iconRight="arrow-right" disabled={!answered} onClick={() => setFinishOpen(true)}>Finish</Button>
+            <Button size="lg" iconRight="arrow-right" disabled={!answered} onClick={() => setFinishOpen(true)}>{t("runner.finish")}</Button>
           ) : (
-            <Button size="lg" iconRight="arrow-right" disabled={!answered} onClick={() => goTo(index + 1)}>Continue</Button>
+            <Button size="lg" iconRight="arrow-right" disabled={!answered} onClick={() => goTo(index + 1)}>{t("common:actions.continue")}</Button>
           )}
         </div>
         {unanswered > 0 && (
           <details style={{ marginTop: 24, fontSize: 13, color: "var(--color-neutral-500)" }}>
-            <summary style={{ cursor: "pointer" }}>{questions.length - unanswered} of {questions.length} answered · jump to a question</summary>
+            <summary style={{ cursor: "pointer" }}>{t("runner.answeredSummary", { answered: questions.length - unanswered, total: questions.length })}</summary>
             <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
               {questions.map((x, i) => {
                 const ok = isAnswered(x, drafts[x.id]);
                 return (
-                  <button key={x.id} type="button" onClick={() => goTo(i)} aria-label={`Question ${i + 1}${ok ? ", answered" : ", not answered"}`}
+                  <button key={x.id} type="button" onClick={() => goTo(i)} aria-label={ok ? t("runner.questionAnswered", { n: i + 1 }) : t("runner.questionNotAnswered", { n: i + 1 })}
                     aria-current={i === index ? "step" : undefined}
                     style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${i === index ? "var(--color-brand-600)" : "var(--color-neutral-200)"}`, background: ok ? "var(--color-brand-50)" : "#fff", color: ok ? "var(--color-brand-700)" : "var(--color-neutral-500)", fontSize: 12, fontWeight: 500 }}>
                     {i + 1}
@@ -273,17 +276,17 @@ export function AssessmentRunner() {
         )}
       </div>
 
-      <Modal open={finishOpen} onClose={() => setFinishOpen(false)} title="Finish assessment?"
-        description={unanswered ? `${unanswered} question${unanswered === 1 ? " is" : "s are"} still unanswered. Answer every question before finishing.` : "Your answers will be scored and your competency profile, gaps and development plan will be generated."}
+      <Modal open={finishOpen} onClose={() => setFinishOpen(false)} title={t("runner.finishTitle")}
+        description={unanswered ? t("runner.finishUnanswered", { count: unanswered }) : t("runner.finishText")}
         footer={<>
-          <Button variant="secondary" onClick={() => setFinishOpen(false)}>Keep answering</Button>
-          <Button disabled={unanswered > 0} onClick={finish}>See my results</Button>
+          <Button variant="secondary" onClick={() => setFinishOpen(false)}>{t("runner.keepAnswering")}</Button>
+          <Button disabled={unanswered > 0} onClick={finish}>{t("runner.seeResults")}</Button>
         </>} />
-      <Modal open={exitOpen} onClose={() => setExitOpen(false)} title="Your last answer isn't saved"
-        description="If you leave now, your most recent change will be lost."
+      <Modal open={exitOpen} onClose={() => setExitOpen(false)} title={t("runner.exitTitle")}
+        description={t("runner.exitText")}
         footer={<>
-          <Button variant="secondary" onClick={() => setExitOpen(false)}>Stay</Button>
-          <Button variant="danger" onClick={() => { pending.current = null; navigate("/assessment"); }}>Leave without saving</Button>
+          <Button variant="secondary" onClick={() => setExitOpen(false)}>{t("runner.stay")}</Button>
+          <Button variant="danger" onClick={() => { pending.current = null; navigate("/assessment"); }}>{t("runner.leaveWithoutSaving")}</Button>
         </>} />
     </div>
   );

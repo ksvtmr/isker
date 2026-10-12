@@ -1,0 +1,43 @@
+{
+  "plans": {
+    "title": "Тарифтер",
+    "subtitle": "Free тарифі бүкіл жолды қамтиды: бағалау, профиліңізді түсіну, жоспар, оқу, тәжірибе және қайта бағалау.",
+    "yourPlan": "Сіздің тарифіңіз: {{name}}",
+    "ends": "Аяқталу күні: {{date}}",
+    "validUntil": "{{date}} дейін жарамды",
+    "unlimited": "шектеусіз",
+    "usageLabel_one": "{{label}} (соңғы {{count}} күн)",
+    "usageLabel_few": "{{label}} (соңғы {{count}} күн)",
+    "usageLabel_many": "{{label}} (соңғы {{count}} күн)",
+    "usageLabel_other": "{{label}} (соңғы {{count}} күн)",
+    "usageAria": "{{label}}: {{limit}} ішінен {{used}} пайдаланылды",
+    "currentPlan": "Ағымдағы тариф",
+    "notIncluded": "Кірмейді:"
+  },
+  "features": {
+    "assessmentFull": "Толық бағалаулар",
+    "assessmentReassessment": "Құзыреттерді қайта бағалау",
+    "planPersonalized": "Жеке даму жоспары",
+    "learningAdvancedResources": "Кеңейтілген оқу материалдары",
+    "practiceTasks": "Практикалық тапсырмалар",
+    "practiceAiFeedback": "Тәжірибе бойынша ЖИ пікірі",
+    "progressHistory": "Прогрестің толық тарихы",
+    "exportData": "Деректерді экспорттау",
+    "unlimitedAssessments": "Шектеусіз толық бағалаулар",
+    "unlimitedTasks": "Шектеусіз практикалық тапсырмалар",
+    "limit_one": "{{label}}: 30 күнде {{count}}",
+    "limit_few": "{{label}}: 30 күнде {{count}}",
+    "limit_many": "{{label}}: 30 күнде {{count}}",
+    "limit_other": "{{label}}: 30 күнде {{count}}"
+  },
+  "upgrade": {
+    "title": "Тарифті қалай ауыстыруға болады",
+    "text": "Онлайн төлем әзірге қолжетімсіз. Егер Сіз бағдарламаға немесе инкубаторға қатысатын болсаңыз, оның әкімшісінен Pro қолжетімділігін беруді сұраңыз.",
+    "createAccount": "Бастау үшін <registerLink>тегін аккаунт құрыңыз</registerLink>."
+  },
+  "price": {
+    "free": "Тегін",
+    "perMonth": "{{amount}} / ай",
+    "perYear": "{{amount}} / жыл"
+  }
+}

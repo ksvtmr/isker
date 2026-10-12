@@ -1,14 +1,27 @@
 import { BottomNav, ISKER_NAV, ISKER_NAV_FOOTER, Modal, NavItem, Sidebar, Wordmark, Icon } from "@isker/design-system";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { hasAdminAccess, roleLabel, useLogout, useMe } from "../api/auth";
+import { hasAdminAccess, useLogout, useMe } from "../api/auth";
 import { EmailVerificationBanner } from "../components/AccountNotices";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { useLanguageSync } from "../i18n/useLanguage";
+import type { User } from "../types/api";
 import { initials } from "../utils/format";
 import { NAV_PATHS, navIdForPath } from "./nav";
 
+const ROLE_PRIORITY = ["super_admin", "admin", "support", "content_manager"] as const;
+
+/** The most senior role, used for the role caption under the user's name. */
+function primaryRole(user: User): string {
+  return ROLE_PRIORITY.find((r) => user.roles.includes(r)) ?? "user";
+}
+
 /** Desktop: sidebar + content. Tablet: collapsed sidebar. Mobile: top bar + bottom nav + menu sheet. */
 export function AppShell() {
+  const { t } = useTranslation("public");
   const { data: user } = useMe();
+  useLanguageSync(user);
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useLogout();
@@ -30,31 +43,33 @@ export function AppShell() {
   const isAdmin = hasAdminAccess(user);
   const footer = (
     <>
-      <NavItem icon="award" label="Plans" href="/plans" active={location.pathname === "/plans"} onClick={() => navigate("/plans")} />
-      {isAdmin && <NavItem icon="shield" label="Admin" href="/admin" onClick={() => navigate("/admin")} />}
-      <NavItem icon="log-out" label="Sign out" onClick={doLogout} />
+      <div style={{ padding: "4px 12px 8px" }}><LanguageSwitcher /></div>
+      <NavItem icon="award" label={t("common:nav.plans")} href="/plans" active={location.pathname === "/plans"} onClick={() => navigate("/plans")} />
+      {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href="/admin" onClick={() => navigate("/admin")} />}
+      <NavItem icon="log-out" label={t("common:actions.signOut")} onClick={doLogout} />
     </>
   );
 
   return (
     <div className="ik-app">
-      <a href="#main" className="isk-skip-link">Skip to content</a>
+      <a href="#main" className="isk-skip-link">{t("common:ds.skipToContent")}</a>
       <div className="ik-side">
         <Sidebar
           active={active}
           onNavigate={go}
           hrefFor={hrefFor}
           footer={footer}
-          user={user ? { name: user.full_name, role: roleLabel(user), initials: initials(user.full_name) } : undefined}
+          user={user ? { name: user.full_name, role: t(`common:roles.${primaryRole(user)}`), initials: initials(user.full_name) } : undefined}
         />
       </div>
       <header className="ik-mobile-top">
-        <Link to="/dashboard" aria-label="Isker home" style={{ textDecoration: "none" }}><Wordmark size={18} /></Link>
+        <Link to="/dashboard" aria-label={t("common:app.home")} style={{ textDecoration: "none" }}><Wordmark size={18} /></Link>
         <div className="ik-mobile-actions">
-          <Link to="/profile" aria-label="My profile" className="ik-avatar" style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>
+          <LanguageSwitcher />
+          <Link to="/profile" aria-label={t("common:nav.myProfile")} className="ik-avatar" style={{ display: "grid", placeItems: "center", textDecoration: "none" }}>
             {user ? initials(user.full_name) : ""}
           </Link>
-          <button type="button" className="ik-icon-btn" aria-label="Open menu" aria-expanded={menu} onClick={() => setMenu(true)}>
+          <button type="button" className="ik-icon-btn" aria-label={t("common:actions.openMenu")} aria-expanded={menu} onClick={() => setMenu(true)}>
             <Icon name="menu" size={20} />
           </button>
         </div>
@@ -66,15 +81,18 @@ export function AppShell() {
         </div>
       </main>
       <div className="ik-bottom"><BottomNav active={active} onNavigate={go} hrefFor={hrefFor} /></div>
-      <Modal open={menu} onClose={() => setMenu(false)} title="Menu">
-        <nav aria-label="All sections" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Modal open={menu} onClose={() => setMenu(false)} title={t("common:actions.menu")}>
+        <nav aria-label={t("common:nav.allSections")} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {[...ISKER_NAV, ...ISKER_NAV_FOOTER].map((it) => (
-            <NavItem key={it.id} icon={it.icon} label={it.label} active={active === it.id} href={hrefFor(it.id)} onClick={() => go(it.id)} />
+            <NavItem key={it.id} icon={it.icon} label={t(`common:nav.${it.id}`, { defaultValue: it.label })} active={active === it.id} href={hrefFor(it.id)} onClick={() => go(it.id)} />
           ))}
-          <NavItem icon="award" label="Plans" href="/plans" onClick={() => { setMenu(false); navigate("/plans"); }} />
-          {isAdmin && <NavItem icon="shield" label="Admin" href="/admin" onClick={() => { setMenu(false); navigate("/admin"); }} />}
-          <NavItem icon="log-out" label="Sign out" onClick={doLogout} />
+          <NavItem icon="award" label={t("common:nav.plans")} href="/plans" onClick={() => { setMenu(false); navigate("/plans"); }} />
+          {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href="/admin" onClick={() => { setMenu(false); navigate("/admin"); }} />}
+          <NavItem icon="log-out" label={t("common:actions.signOut")} onClick={doLogout} />
         </nav>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-neutral-200)" }}>
+          <LanguageSwitcher compact={false} />
+        </div>
       </Modal>
     </div>
   );

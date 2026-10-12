@@ -23,6 +23,9 @@ class ErrorResponse(BaseModel):
 
 class Message(BaseModel):
     message: str
+    # Stable code the frontend translates (the English `message` is a fallback); optional count for plurals.
+    code: str | None = None
+    count: int | None = None
 
 
 class Page(BaseModel, Generic[T]):

@@ -188,13 +188,18 @@ export const useAuditLogs = (f: AuditFilters, enabled = true) =>
   useQuery({ queryKey: keys.admin("audit", f), queryFn: () => manageApi.auditLogs(f), placeholderData: keepPreviousData, enabled });
 export const useSettingsStatus = () => useQuery({ queryKey: keys.admin("settings"), queryFn: manageApi.settings });
 
-export const ROLE_LABELS: Record<string, string> = {
-  user: "Learner", content_manager: "Content manager", support: "Support", admin: "Administrator", super_admin: "Super administrator",
-};
+/** Role keys in display order. Labels come from `common:roles.<key>`; the keys themselves are never translated. */
+export const ROLE_KEYS: RoleKey[] = ["user", "content_manager", "support", "admin", "super_admin"];
+
+export const ACCOUNT_STATUSES = ["active", "suspended", "deactivated"] as const;
+export const SUBSCRIPTION_STATUSES = ["trialing", "active", "past_due", "canceled", "expired", "incomplete"] as const;
+export const OUTCOMES = ["success", "failure", "denied"] as const;
 
 export const STATUS_TONE: Record<string, "success" | "warning" | "error" | "neutral" | "info" | "brand"> = {
   active: "success", suspended: "warning", deactivated: "neutral", trialing: "info", past_due: "warning", canceled: "neutral",
   expired: "neutral", incomplete: "warning", success: "success", failure: "error", denied: "error",
+  in_progress: "info", completed: "success", abandoned: "neutral",
 };
 
+/** Fallback label for a code with no translation ("auth.login_failed" → "Auth login failed"). */
 export const humanize = (s: string) => s.replace(/[._]/g, " ").replace(/^\w/, (c) => c.toUpperCase());

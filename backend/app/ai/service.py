@@ -29,6 +29,7 @@ from app.ai.providers import (
 )
 from app.ai.schemas import EvaluationOutput, InsightOutput
 from app.core.config import get_settings
+from app.core.i18n import tr
 from app.models import AIEvaluation, AIPromptVersion
 from app.models.enums import AIEvalStatus, AIInputType
 from app.services.levels import level_name_for
@@ -91,7 +92,7 @@ def evaluate_text(
     user_prompt = user_tpl.format(
         competency=competency_name, question=question, rubric=_format_rubric(rubric), answer=answer
     )
-    req = EvaluationRequest(competency_name, question, answer, rubric, system, user_prompt)
+    req = EvaluationRequest(competency_name, question, answer, rubric, _with_language(system), user_prompt)
 
     started = time.monotonic()
     output: EvaluationOutput | None = None
@@ -158,12 +159,23 @@ def evaluate_text(
     return EvaluationResult(output=output, score=score, record=record)
 
 
+def _with_language(system: str) -> str:
+    """The admin-editable prompt stays as written; the response language is added per request."""
+    return f"{system}\n\n{tr('ai.language_instruction')}"
+
+
 def generate_insight(
-    db: Session, *, user_id: int, facts: dict, attempt_id: int | None = None, provider: AIProvider | None = None
+    db: Session,
+    *,
+    user_id: int,
+    facts: dict,
+    attempt_id: int | None = None,
+    provider: AIProvider | None = None,
+    refs: dict | None = None,
 ) -> AIEvaluation:
     provider = provider or get_provider()
     pv, system, user_tpl = active_prompt(db, INSIGHT_KEY)
-    req = InsightRequest(facts, system, user_tpl.format(facts=json.dumps(facts, ensure_ascii=False)))
+    req = InsightRequest(facts, _with_language(system), user_tpl.format(facts=json.dumps(facts, ensure_ascii=False)))
     started = time.monotonic()
     err = None
     try:
@@ -182,7 +194,8 @@ def generate_insight(
         model=model,
         status=status,
         input_excerpt=json.dumps(facts, ensure_ascii=False)[:500],
-        output=out.model_dump(),
+        # `refs` (ids, no text) let rule-based insights be re-rendered in another interface language later.
+        output={**out.model_dump(), **({"refs": refs} if refs else {})},
         confidence=out.confidence,
         explanation=out.body,
         error=err,

@@ -27,10 +27,13 @@ def verify_password(password: str, password_hash: str | None) -> bool:
         return False
 
 
-def create_access_token(user_id: int, session_id: str, expires_at: datetime) -> str:
+def create_access_token(user_id: int, session_id: str, expires_at: datetime, version: int = 0) -> str:
+    """Session token. `jti` = server-side session id, `ver` = rotation counter (see services/accounts.py)."""
     s = get_settings()
-    return jwt.encode({"sub": str(user_id), "jti": session_id, "exp": expires_at, "iat": datetime.now(UTC)},
-                      s.jwt_secret, algorithm=s.jwt_algorithm)
+    return jwt.encode(
+        {"sub": str(user_id), "jti": session_id, "ver": version, "exp": expires_at, "iat": datetime.now(UTC)},
+        s.jwt_secret, algorithm=s.jwt_algorithm,
+    )
 
 
 def decode_token(token: str) -> dict:

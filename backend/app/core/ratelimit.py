@@ -54,6 +54,7 @@ RULES = {
     "verify_ip": (30, 3600),
     "resend_user": (3, 3600),
     "password_change_user": (10, 3600),
+    "oauth_ip": (30, 600),
 }
 
 

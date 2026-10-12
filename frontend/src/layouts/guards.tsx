@@ -2,11 +2,13 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { can, hasAdminAccess, useMe } from "../api/auth";
 import { ErrorState } from "../components/States";
 import { EmptyState, SkeletonCard } from "@isker/design-system";
+import { useTranslation } from "react-i18next";
 
 function FullPageLoading() {
+  const { t } = useTranslation();
   return (
     <div style={{ maxWidth: 560, margin: "15vh auto 0", padding: 16 }} aria-busy="true">
-      <span className="isk-sr-only">Loading…</span>
+      <span className="isk-sr-only">{t("state.loading")}</span>
       <SkeletonCard lines={4} />
     </div>
   );
@@ -35,11 +37,12 @@ export function RequireAdmin() {
 
 /** Inside the admin area: shows an explanation (not a blank page) when a section needs a permission the user lacks. */
 export function RequirePermission({ permission }: { permission: string }) {
+  const { t } = useTranslation();
   const { data: user } = useMe();
   if (!can(user, permission)) {
     return (
-      <EmptyState icon="lock" title="You don't have access to this section"
-        description="Your role doesn't include this permission. Ask a super administrator if you need it." />
+      <EmptyState icon="lock" title={t("state.noAccessTitle")}
+        description={t("state.noAccessText")} />
     );
   }
   return <Outlet />;

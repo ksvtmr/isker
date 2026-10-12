@@ -16,12 +16,14 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.content_i18n import Translatable
 from app.core.database import Base, TimestampMixin, utcnow
 from app.models.enums import AssessmentKind, AttemptScope, AttemptStatus, QuestionType, db_enum
 
 
-class Assessment(TimestampMixin, Base):
+class Assessment(Translatable, TimestampMixin, Base):
     __tablename__ = "assessments"
+    __translatable__ = ("title", "description")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(48), unique=True)
@@ -37,8 +39,10 @@ class Assessment(TimestampMixin, Base):
     )
 
 
-class Question(TimestampMixin, Base):
+class Question(Translatable, TimestampMixin, Base):
     __tablename__ = "questions"
+    __translatable__ = ("section", "text", "help_text")
+    __translatable_rubric__ = True
 
     id: Mapped[int] = mapped_column(primary_key=True)
     assessment_id: Mapped[int] = mapped_column(ForeignKey("assessments.id", ondelete="CASCADE"), index=True)
@@ -62,8 +66,9 @@ class Question(TimestampMixin, Base):
     )
 
 
-class QuestionOption(Base):
+class QuestionOption(Translatable, Base):
     __tablename__ = "question_options"
+    __translatable__ = ("label",)
     __table_args__ = (CheckConstraint("score >= 0 AND score <= 100", name="score_range"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)

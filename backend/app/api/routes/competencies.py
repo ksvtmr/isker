@@ -6,8 +6,10 @@ from fastapi import APIRouter
 from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload, selectinload
 
+from app.ai.providers import heuristic_evaluation
 from app.api.deps import DB, CurrentUser
 from app.core.errors import NotFoundError
+from app.core.i18n import tr
 from app.models import (
     AIEvaluation,
     Answer,
@@ -38,18 +40,18 @@ from app.schemas.competency import (
 )
 from app.schemas.results import GapOut, ProfileOverview
 from app.services import gaps as gap_service
-from app.services import views
+from app.services import scoring, views
 from app.services.profile import history
 
 router = APIRouter(tags=["competencies"], responses=ERROR_RESPONSES)
 
-SECTION_LABEL = {
-    QuestionType.LIKERT: "Self-assessment",
-    QuestionType.SITUATIONAL: "Situational",
-    QuestionType.OPEN: "Open answer",
-    QuestionType.PRACTICAL: "Practical task",
-}
-LIKERT_WORD = {1: "Strongly disagree", 2: "Disagree", 3: "Neutral", 4: "Agree", 5: "Strongly agree"}
+
+def section_label(qtype: QuestionType) -> str:
+    return tr(f"section.{qtype.value}")
+
+
+def likert_word(value: int) -> str:
+    return tr(f"likert.{value}")
 
 
 @router.get("/api/competencies", response_model=CompetencyCatalog, summary="EntreComp catalogue")
@@ -90,7 +92,7 @@ def gaps(user: CurrentUser, db: DB) -> list[GapOut]:
             gap=g.gap,
             band=g.band,
             priority_rank=g.priority_rank,
-            priority_label=g.priority_label,
+            priority_label=tr(f"priority.{g.priority_label}"),
             priority_score=g.priority_score,
             goal_relevance=g.goal_relevance,
             importance=g.importance,
@@ -138,7 +140,7 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
             .order_by(Question.sort_order)
         ).all()
         for ans, q in rows:
-            src = f"Q{q.sort_order} · {SECTION_LABEL[q.type]}"
+            src = f"Q{q.sort_order} · {section_label(q.type)}"
             if q.type in (QuestionType.OPEN, QuestionType.PRACTICAL):
                 ev = db.scalar(
                     select(AIEvaluation)
@@ -148,16 +150,24 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
                 )
                 if ev is None:
                     continue
-                own = {r["criterion"] for r in (q.rubric or []) if r.get("competency") in (None, c.code)}
-                for cr in (ev.output or {}).get("criteria", []):
-                    if cr["criterion"] in own:
-                        criteria_acc[cr["criterion"]].append(int(cr["rating"]) * 25)
+                out = ev.output or {}
+                if ev.provider in views.RULE_BASED and q.rubric:
+                    # Deterministic: re-rate with the rubric in the current language so the texts follow it.
+                    out = heuristic_evaluation(c.name, ans.text_response or "", q.rubric)
+                rubric = q.rubric or []
+                stored = out.get("criteria", [])
+                for i, r in enumerate(rubric):
+                    # Ratings are matched by position: names depend on the language the evaluation was made in.
+                    if r.get("competency") in (None, c.code) and i < len(stored):
+                        criteria_acc[r["criterion"]].append(int(stored[i]["rating"]) * 25)
                 excerpt = (ans.text_response or "")[:280]
                 positive = (ev.score or 0) >= 60
                 tag = (
-                    (ev.strengths or ["Clear reasoning"])[0]
+                    (out.get("strengths") or [tr("evidence.clear_reasoning")])[0]
                     if positive
-                    else f"Needs more: {(ev.development_areas or ['detail'])[0].lower()}"
+                    else tr(
+                        "evidence.needs_more", what=(out.get("development_areas") or [tr("evidence.detail")])[0].lower()
+                    )
                 )
                 evidence.append(
                     EvidenceOut(source=src, question=q.text, excerpt=f"“{excerpt}”", tag=tag, positive=positive)
@@ -169,24 +179,25 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
                         provider=ev.provider,
                         model=ev.model,
                         prompt_version=ev.prompt_version.version if ev.prompt_version else None,
-                        strengths=ev.strengths or [],
-                        development_areas=ev.development_areas or [],
-                        explanation=ev.explanation,
+                        strengths=out.get("strengths") or ev.strengths or [],
+                        development_areas=out.get("development_areas") or ev.development_areas or [],
+                        explanation=out.get("explanation") or ev.explanation,
                     )
                 )
             elif ans.option is not None:
                 s = ans.option.score if not q.reverse_scored else 100 - ans.option.score
                 if q.type == QuestionType.LIKERT:
-                    text = f"{q.text} — you answered “{LIKERT_WORD.get(ans.option.value or 0, ans.option.label)}”."
-                    tag = "Self-rating"
+                    word = likert_word(ans.option.value) if ans.option.value in range(1, 6) else ans.option.label
+                    text = tr("evidence.you_answered", question=q.text, answer=word)
+                    tag = tr("evidence.self_rating")
                 else:
-                    text = f"You chose: {ans.option.label}"
-                    tag = (
-                        "Effective approach"
+                    text = tr("evidence.you_chose", answer=ans.option.label)
+                    tag = tr(
+                        "evidence.effective"
                         if s >= 70
-                        else "Partly effective approach"
+                        else "evidence.partly_effective"
                         if s >= 40
-                        else "Less effective approach"
+                        else "evidence.less_effective"
                     )
                 evidence.append(EvidenceOut(source=src, question=q.text, excerpt=text, tag=tag, positive=s >= 60))
 
@@ -218,7 +229,7 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
                 id=r.id,
                 kind="resource",
                 title=r.title,
-                type=views.TYPE_LABEL[r.type.value],
+                type=views.type_label(r.type.value),
                 duration_minutes=r.duration_minutes,
                 difficulty=r.difficulty.value,
                 status=progress[r.id].status.value if r.id in progress else "not_started",
@@ -233,7 +244,7 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
                 id=t.id,
                 kind="task",
                 title=t.title,
-                type="Practical task",
+                type=views.type_label("task"),
                 duration_minutes=t.duration_minutes,
                 difficulty=t.difficulty.value,
                 status=subs[t.id].status.value if t.id in subs else "not_started",
@@ -259,12 +270,12 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
             "situational": latest.situational_score if latest else None,
             "open": latest.open_score if latest else None,
         },
-        explanation=latest.explanation if latest else None,
+        explanation=scoring.explain_stored(latest) if latest else None,
         evidence=evidence,
         criteria=[CriterionOut(criterion=k, score=round(sum(v) / len(v))) for k, v in criteria_acc.items()],
         ai=ai_out,
         history=[
-            HistoryPoint(attempt_id=a.id, label=f"Assessment {a.sequence}", date=a.completed_at, score=s.score)
+            HistoryPoint(attempt_id=a.id, label=tr("assessment_n", n=a.sequence), date=a.completed_at, score=s.score)
             for s, a in hist
         ],
         resources=resources,

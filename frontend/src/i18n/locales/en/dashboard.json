@@ -1,0 +1,145 @@
+{
+  "dashboard": {
+    "greeting": "{{greeting}}, {{name}}",
+    "subtitle": "Continue developing your entrepreneurial competencies.",
+    "continueDevelopment": "Continue development",
+    "loadError": "We couldn't load your dashboard",
+    "empty": {
+      "startTitle": "Complete your first assessment",
+      "finishTitle": "Finish your first assessment",
+      "description": "Your competency profile, gaps and development plan will appear here after you complete the assessment.",
+      "startButton": "Start Assessment",
+      "continueButton": "Continue Assessment"
+    },
+    "score": {
+      "title": "Entrepreneurial Score",
+      "label": "Entrepreneurial score",
+      "change": "{{change}} points since your last assessment",
+      "chartAria": "Overall score history"
+    },
+    "openPlan": "Open development plan",
+    "nextStep": "Recommended next step:",
+    "insightEmpty": "Your AI insight will appear after your next assessment.",
+    "stats": {
+      "strengths": "Strengths",
+      "strengthsDescription_one": "competency at or above target",
+      "strengthsDescription_few": "competencies at or above target",
+      "strengthsDescription_many": "competencies at or above target",
+      "strengthsDescription_other": "competencies at or above target",
+      "strongest": "strongest: {{name}}",
+      "priorityGaps": "Priority Gap",
+      "priorityGapsDescription_one": "competency 10+ points below target",
+      "priorityGapsDescription_few": "competencies 10+ points below target",
+      "priorityGapsDescription_many": "competencies 10+ points below target",
+      "priorityGapsDescription_other": "competencies 10+ points below target",
+      "top": "top: {{name}}",
+      "progress": "Development Progress",
+      "progressDescription_one": "{{done}} of {{count}} plan activity done",
+      "progressDescription_few": "{{done}} of {{count}} plan activities done",
+      "progressDescription_many": "{{done}} of {{count}} plan activities done",
+      "progressDescription_other": "{{done}} of {{count}} plan activities done",
+      "nextAssessment": "Next Assessment",
+      "reassessCompetency": "Reassess {{name}}",
+      "fullReassessment": "Full reassessment"
+    },
+    "profile": {
+      "title": "Your Competency Profile",
+      "description": "15 EntreComp competencies grouped by area. The marker shows your target.",
+      "viewAll": "View full profile"
+    },
+    "areaScoreAria": "Area score {{score}}",
+    "competencyBarAria": "{{name}}: {{score}} of 100, target {{target}}",
+    "gaps": {
+      "title": "Priority Gaps",
+      "description": "Start with the gap that matters most for your goals.",
+      "analysis": "Gap analysis",
+      "continuePlan": "Continue plan",
+      "startDevelopment": "Start development",
+      "alsoBelow": "Also below target",
+      "noOther": "No other competency is 10+ points below target.",
+      "emptyTitle": "No open priority gaps",
+      "emptyDescription": "All competencies meet your targets. Reassess to keep track of your development.",
+      "reassess": "Reassess"
+    },
+    "strongest": "Strongest competencies"
+  },
+  "journey": {
+    "label": "Your development journey",
+    "assess": "Assess",
+    "assessDone": "Profile measured",
+    "assessInProgress": "In progress",
+    "assessDuration": "About 25 minutes",
+    "review": "Review your profile",
+    "reviewDescription": "Strengths and gaps",
+    "learn": "Learn & practise",
+    "activities_one": "{{done}} of {{count}} activity",
+    "activities_few": "{{done}} of {{count}} activities",
+    "activities_many": "{{done}} of {{count}} activities",
+    "activities_other": "{{done}} of {{count}} activities",
+    "personalPlan": "Personal plan",
+    "reassess": "Reassess",
+    "availableNow": "Available now",
+    "afterPlan": "After your plan"
+  },
+  "progress": {
+    "title": "Your Progress",
+    "subtitle_one": "How your competencies changed across {{count}} measurement.",
+    "subtitle_few": "How your competencies changed across {{count}} measurements.",
+    "subtitle_many": "How your competencies changed across {{count}} measurements.",
+    "subtitle_other": "How your competencies changed across {{count}} measurements.",
+    "empty": {
+      "title": "No progress data yet",
+      "description": "Complete your first assessment to start tracking your development.",
+      "button": "Start Assessment"
+    },
+    "locked": {
+      "title": "Showing your latest two measurements",
+      "text": "Your plan includes the current and previous measurement.",
+      "link": "See plans with full history"
+    },
+    "filterAria": "Filter by area",
+    "allCompetencies": "All competencies",
+    "areas": {
+      "ideas": "Ideas & Opportunities",
+      "resources": "Resources",
+      "action": "Into Action"
+    },
+    "currentScore": "Current score",
+    "previous": "Previous",
+    "change": "Change",
+    "sinceFirst": "Since first",
+    "history": {
+      "title": "Score history",
+      "overall": "Overall",
+      "summary": "Score moved from {{first}} to {{last}} ({{change}}).",
+      "single": "Reassess to see how your scores change.",
+      "chartAria": "Score history by area"
+    },
+    "stats": {
+      "learning": "Completed learning",
+      "learningDescription": "Articles, videos, courses",
+      "practice": "Completed practice",
+      "practiceDescription": "Practical tasks with feedback",
+      "reflections": "Reflections",
+      "reflectionsDescription": "Plan reflection steps",
+      "reassessments": "Reassessments",
+      "reassessmentsDescription_one": "{{count}} measurement in total",
+      "reassessmentsDescription_few": "{{count}} measurements in total",
+      "reassessmentsDescription_many": "{{count}} measurements in total",
+      "reassessmentsDescription_other": "{{count}} measurements in total"
+    },
+    "growth": {
+      "title": "Competency growth",
+      "description": "First measurement → latest, largest changes first",
+      "summary": "Largest change: {{name}} ({{change}}).",
+      "empty": "Growth appears after your second measurement.",
+      "first": "First",
+      "latest": "Latest",
+      "none": "No competency has been measured twice yet."
+    },
+    "recent": {
+      "title": "Recent activities",
+      "empty": "Complete learning or practice activities to see them here."
+    }
+  }
+}

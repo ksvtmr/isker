@@ -16,6 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.content_i18n import Translatable
 from app.core.database import Base, TimestampMixin, utcnow
 from app.models.enums import (
     ActivityKind,
@@ -29,8 +30,9 @@ from app.models.enums import (
 )
 
 
-class LearningResource(TimestampMixin, Base):
+class LearningResource(Translatable, TimestampMixin, Base):
     __tablename__ = "learning_resources"
+    __translatable__ = ("title", "description", "content")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     slug: Mapped[str] = mapped_column(String(120), unique=True)
@@ -47,8 +49,10 @@ class LearningResource(TimestampMixin, Base):
     competency = relationship("Competency")
 
 
-class PracticalTask(TimestampMixin, Base):
+class PracticalTask(Translatable, TimestampMixin, Base):
     __tablename__ = "practical_tasks"
+    __translatable__ = ("title", "description", "instructions")
+    __translatable_rubric__ = True
 
     id: Mapped[int] = mapped_column(primary_key=True)
     slug: Mapped[str] = mapped_column(String(120), unique=True)

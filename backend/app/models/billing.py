@@ -11,12 +11,14 @@ from datetime import datetime
 from sqlalchemy import JSON, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.content_i18n import Translatable
 from app.core.database import Base, TimestampMixin, utcnow
 from app.models.enums import BillingInterval, SubscriptionSource, SubscriptionStatus, db_enum
 
 
-class SubscriptionPlan(TimestampMixin, Base):
+class SubscriptionPlan(Translatable, TimestampMixin, Base):
     __tablename__ = "subscription_plans"
+    __translatable__ = ("name", "description")
     __table_args__ = (CheckConstraint("price_cents >= 0", name="price_non_negative"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)

@@ -18,6 +18,7 @@ from dataclasses import dataclass
 import httpx
 
 from app.core.config import get_settings
+from app.core.i18n import tr
 
 
 @dataclass
@@ -81,7 +82,7 @@ def heuristic_evaluation(competency_name: str, answer: str, rubric: list[dict]) 
         if rating >= 3:
             strengths.append(c["criterion"])
             if ev:
-                evidence.append(f"“{ev}” — shows {c['criterion'].lower()}")
+                evidence.append(tr("ai.shows", quote=ev, criterion=c["criterion"].lower()))
         elif rating <= 1:
             dev.append(c["criterion"])
     if not evidence and sents:
@@ -98,9 +99,9 @@ def heuristic_evaluation(competency_name: str, answer: str, rubric: list[dict]) 
         "strengths": strengths[:4],
         "development_areas": dev[:4],
         "explanation": (
-            f"Rated against {len(criteria)} rubric criteria. "
-            + (f"Strongest: {', '.join(strengths[:2])}. " if strengths else "")
-            + (f"Needs more detail on: {', '.join(dev[:2])}." if dev else "")
+            tr("ai.rated", n=len(criteria))
+            + (tr("ai.strongest", names=", ".join(strengths[:2])) if strengths else "")
+            + (tr("ai.needs_detail", names=", ".join(dev[:2])) if dev else "")
         ).strip(),
     }
 
@@ -109,21 +110,24 @@ def heuristic_insight(facts: dict) -> dict:
     strongest = facts.get("strongest") or {}
     gap = facts.get("top_gap") or {}
     resource = facts.get("top_resource")
-    headline = f"Your strongest area is {strongest.get('name', 'not yet measured')}."
+    headline = tr("insight.headline", name=strongest.get("name") or tr("insight.not_measured"))
     if gap:
-        body = (
-            f"Your responses show the most confidence in {strongest.get('name')} "
-            f"({strongest.get('score')} / 100). Your biggest development opportunity is "
-            f"{gap['name']} ({gap['score']} / 100, target {gap['target']})."
+        body = tr(
+            "insight.body",
+            name=strongest.get("name"),
+            score=strongest.get("score"),
+            gap=gap["name"],
+            gap_score=gap["score"],
+            target=gap["target"],
         )
         next_step = (
-            f"Start with “{resource}” to work on {gap['name']}."
+            tr("insight.next_resource", resource=resource, gap=gap["name"])
             if resource
-            else f"Open your development plan for {gap['name']}."
+            else tr("insight.next_plan", gap=gap["name"])
         )
     else:
-        body = "All measured competencies meet your target. Keep practising to move up a level."
-        next_step = "Pick a stretch goal in your lowest competency."
+        body = tr("insight.all_met")
+        next_step = tr("insight.stretch")
     return {"headline": headline, "body": body, "next_step": next_step, "confidence": 0.8}
 
 

@@ -1,0 +1,251 @@
+{
+  "app": {
+    "name": "Isker",
+    "home": "Isker home"
+  },
+  "language": {
+    "label": "Language",
+    "choose": "Interface language",
+    "saveFailed": "Couldn't save the language to your profile. It applies on this device only."
+  },
+  "actions": {
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "continue": "Continue",
+    "tryAgain": "Try again",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "clearFilters": "Clear filters",
+    "confirm": "Confirm",
+    "signOut": "Sign out",
+    "signIn": "Sign in",
+    "open": "Open",
+    "start": "Start",
+    "viewAll": "View all",
+    "details": "Details",
+    "hide": "Hide",
+    "download": "Download",
+    "create": "Create",
+    "seePlans": "See plans",
+    "goToDashboard": "Go to dashboard",
+    "menu": "Menu",
+    "openMenu": "Open menu"
+  },
+  "state": {
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "errorTitle": "Something went wrong",
+    "errorLoad": "We couldn't load this page. Please try again.",
+    "notIncluded": "Not included in your plan",
+    "noAccessTitle": "You don't have access to this section",
+    "noAccessText": "Your role doesn't include this permission. Ask a super administrator if you need it.",
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The page you are looking for doesn't exist or has moved.",
+    "adminNotFoundText": "This admin page doesn't exist.",
+    "adminDashboard": "Admin dashboard",
+    "never": "Never",
+    "none": "—",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "assessment": "Assessment",
+    "competencies": "Competencies",
+    "development-plan": "Development Plan",
+    "learning": "Learning",
+    "practice": "Practice",
+    "progress": "Progress",
+    "profile": "Profile",
+    "settings": "Settings",
+    "plans": "Plans",
+    "admin": "Admin",
+    "allSections": "All sections",
+    "myProfile": "My profile"
+  },
+  "bottomNav": {
+    "dashboard": "Home",
+    "assessment": "Assess",
+    "competencies": "Profile",
+    "development-plan": "Develop",
+    "progress": "Progress"
+  },
+  "ds": {
+    "close": "Close",
+    "dismiss": "Dismiss",
+    "loading": "Loading",
+    "notAssessed": "Not assessed",
+    "notMeasured": "not measured",
+    "target": "Target {{n}}",
+    "scoreAria": "{{name}} score",
+    "outOf": "{{label}}: {{value}} out of {{max}}",
+    "questionOf": "Question {{current}} of {{total}}",
+    "aiInsight": "AI insight",
+    "confidence": "Confidence: {{value}}",
+    "gapSuffix": "gap",
+    "prioritySuffix": "priority",
+    "targetSuffix": "target",
+    "recommendedFor": "Recommended for {{competency}}",
+    "practice": "Practice",
+    "learn": "Learn",
+    "startActivity": "Start activity",
+    "mainNavigation": "Main navigation",
+    "primaryNavigation": "Primary",
+    "breadcrumb": "Breadcrumb",
+    "pagination": "Pagination",
+    "noResults": "No results.",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{pages}}",
+    "range": "{{from}}–{{to}} of {{total}}",
+    "sortedAsc": ", sorted by {{column}} ascending",
+    "sortedDesc": ", sorted by {{column}} descending",
+    "cancel": "Cancel",
+    "reasonLabel": "Reason (saved in the audit log)",
+    "reasonHint": "At least 3 characters.",
+    "reasonTooShort": "Please give a short reason.",
+    "typeToConfirm": "Type {{text}} to confirm",
+    "progress": "Progress",
+    "skipToContent": "Skip to content",
+    "admin": "Admin",
+    "adminNavigation": "Administration navigation",
+    "administration": "Administration",
+    "before": "Before",
+    "after": "After",
+    "scoreHistoryChart": "Score history chart",
+    "radarChart": "Competency radar chart",
+    "charCount": "{{count}} / {{max}}",
+    "planSteps": {
+      "gap": "Your gap",
+      "learn": "Learn",
+      "practice": "Practice",
+      "reflect": "Reflect",
+      "reassess": "Reassess"
+    },
+    "stepStatus": {
+      "done": "Completed",
+      "current": "Current step",
+      "todo": "Not started",
+      "locked": "Locked"
+    }
+  },
+  "levels": {
+    "Foundation": "Foundation",
+    "Developing": "Developing",
+    "Intermediate": "Intermediate",
+    "Advanced": "Advanced",
+    "Proficient": "Proficient"
+  },
+  "gaps": {
+    "High": "High",
+    "Medium": "Medium",
+    "Low": "Low"
+  },
+  "confidence": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "resourceTypes": {
+    "article": "Article",
+    "video": "Video",
+    "course": "Course",
+    "exercise": "Exercise",
+    "case_study": "Case study",
+    "template": "Template"
+  },
+  "difficulty": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  },
+  "roles": {
+    "user": "Learner",
+    "content_manager": "Content manager",
+    "support": "Support",
+    "admin": "Administrator",
+    "super_admin": "Super administrator"
+  },
+  "accountStatus": {
+    "active": "Active",
+    "suspended": "Suspended",
+    "deactivated": "Deactivated"
+  },
+  "subscriptionStatus": {
+    "trialing": "Trialing",
+    "active": "Active",
+    "past_due": "Past due",
+    "canceled": "Canceled",
+    "expired": "Expired",
+    "incomplete": "Incomplete"
+  },
+  "subscriptionSource": {
+    "system": "System",
+    "admin": "Admin grant",
+    "payment": "Payment",
+    "trial": "Trial"
+  },
+  "outcome": {
+    "success": "Success",
+    "failure": "Failure",
+    "denied": "Denied"
+  },
+  "attemptStatus": {
+    "in_progress": "In progress",
+    "completed": "Completed",
+    "abandoned": "Abandoned"
+  },
+  "progressStatus": {
+    "not_started": "Not started",
+    "in_progress": "In progress",
+    "completed": "Completed"
+  },
+  "validation": {
+    "required": "This field is required",
+    "emailRequired": "Enter your email",
+    "emailInvalid": "Enter a valid email address",
+    "passwordRequired": "Enter your password",
+    "currentPasswordRequired": "Enter your current password",
+    "passwordMin": "Use at least 8 characters",
+    "passwordMax": "Use at most 128 characters",
+    "passwordLetter": "Include at least one letter",
+    "passwordNumber": "Include at least one number",
+    "passwordsMismatch": "Passwords do not match",
+    "nameRequired": "Enter your name",
+    "nameMax": "Use at most 120 characters",
+    "termsRequired": "You need to accept the Terms of Use and Privacy Policy to create an account",
+    "chooseEducation": "Choose your education",
+    "chooseExperience": "Choose your experience",
+    "chooseGoal": "Choose at least one goal",
+    "chooseFormat": "Choose a format",
+    "minMinutes": "At least 15 minutes",
+    "tooLong": "This text is too long"
+  },
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening"
+  },
+  "time": {
+    "minutes_one": "{{count}} min",
+    "minutes_few": "{{count}} min",
+    "minutes_many": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "days_one": "{{count}} day",
+    "days_few": "{{count}} days",
+    "days_many": "{{count}} days",
+    "days_other": "{{count}} days",
+    "inDays_one": "In {{count}} day",
+    "inDays_few": "In {{count}} days",
+    "inDays_many": "In {{count}} days",
+    "inDays_other": "In {{count}} days"
+  },
+  "toast": {
+    "saved": "Saved"
+  }
+}

@@ -27,6 +27,10 @@ export interface User {
   onboarding_completed: boolean;
   email_verified: boolean;
   created_at: string;
+  /** Saved interface language; null until the user (or first sign-in) sets one. */
+  language: "ru" | "kk" | "en" | null;
+  has_password: boolean;
+  google_linked: boolean;
 }
 
 /** What the API says happened with the confirmation email. "logged" = dev mode: written to the server log, not sent. */

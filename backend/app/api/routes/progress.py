@@ -9,6 +9,7 @@ from sqlalchemy.orm import joinedload
 from app.api.deps import DB, CurrentUser
 from app.core.database import as_utc, utcnow
 from app.core.errors import NotFoundError
+from app.core.i18n import tr
 from app.models import (
     AIEvaluation,
     AssessmentAttempt,
@@ -49,8 +50,8 @@ REASSESS_AFTER_DAYS = 30
 
 def _label(att: AssessmentAttempt) -> str:
     if att.scope == AttemptScope.COMPETENCY and att.scope_competency:
-        return f"Reassessment {att.sequence} · {att.scope_competency.short_name}"
-    return f"Assessment {att.sequence}"
+        return tr("reassessment_n", n=att.sequence, name=att.scope_competency.short_name)
+    return tr("assessment_n", n=att.sequence)
 
 
 def _counts(db, user_id: int) -> tuple[int, int, int, int]:
@@ -152,7 +153,7 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
     ).all():
         recent.append(
             ActivityLogItem(
-                title=r.title, competency=r.competency.name, type=views.TYPE_LABEL[r.type.value], date=p.completed_at
+                title=r.title, competency=r.competency.name, type=views.type_label(r.type.value), date=p.completed_at
             )
         )
     for s, t in db.execute(
@@ -162,7 +163,9 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
         .where(PracticeSubmission.user_id == user.id, PracticeSubmission.status == PracticeStatus.COMPLETED)
     ).all():
         recent.append(
-            ActivityLogItem(title=t.title, competency=t.competency.name, type="Practical task", date=s.completed_at)
+            ActivityLogItem(
+                title=t.title, competency=t.competency.name, type=views.type_label("task"), date=s.completed_at
+            )
         )
     for a in db.scalars(
         select(LearningActivity).where(
@@ -174,7 +177,10 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
         comp = comps[a.recommendation.competency_id]
         recent.append(
             ActivityLogItem(
-                title=f"Reflection: {comp.short_name}", competency=comp.name, type="Reflection", date=a.completed_at
+                title=tr("reflection_on", name=comp.short_name),
+                competency=comp.name,
+                type=views.type_label("reflection"),
+                date=a.completed_at,
             )
         )
     recent = sorted([r for r in recent if r.date], key=lambda r: r.date, reverse=True)[:8]

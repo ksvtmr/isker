@@ -153,6 +153,13 @@ def seed_reference(db: Session) -> None:
                 )
             )
     db.flush()
+    try:
+        from app.seed.apply_translations import apply_content_translations
+    except ImportError:  # translations file not present yet
+        log.warning("Content translations are missing; content stays in English only.")
+    else:
+        log.info("Content translations applied to %d rows", apply_content_translations(db))
+        db.flush()
 
 
 def seed_assessment(db: Session, comps: dict[str, Competency]) -> None:

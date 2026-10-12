@@ -1,19 +1,26 @@
 import { Card, ChartCard, InlineAlert, CompareBars, EmptyState, Icon, LineChart, PageHeader, ScoreValue, StatCard, Tabs } from "@isker/design-system";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useProgress } from "../api/progress";
 import { LinkButton } from "../components/RouterLink";
 import { ErrorState, PageSkeleton } from "../components/States";
 import { AREA_COLOR, formatDate, shortMonth, signed } from "../utils/format";
 
-const AREAS = [{ value: "ideas", label: "Ideas & Opportunities" }, { value: "resources", label: "Resources" }, { value: "action", label: "Into Action" }] as const;
+type AreaCode = "ideas" | "resources" | "action";
 
 export function ProgressPage() {
   const { data: p, isLoading, error, refetch } = useProgress();
   const [area, setArea] = useState("all");
+  const { t } = useTranslation("dashboard");
+  const AREAS: { value: AreaCode; label: string }[] = [
+    { value: "ideas", label: t("progress.areas.ideas") },
+    { value: "resources", label: t("progress.areas.resources") },
+    { value: "action", label: t("progress.areas.action") },
+  ];
   if (isLoading) return <PageSkeleton />;
-  if (error || !p) return <><PageHeader title="Your Progress" /><ErrorState error={error} onRetry={() => refetch()} /></>;
+  if (error || !p) return <><PageHeader title={t("progress.title")} /><ErrorState error={error} onRetry={() => refetch()} /></>;
   if (!p.snapshots.length) {
-    return <><PageHeader title="Your Progress" /><EmptyState icon="trending-up" title="No progress data yet" description="Complete your first assessment to start tracking your development." action={<LinkButton to="/assessment">Start Assessment</LinkButton>} /></>;
+    return <><PageHeader title={t("progress.title")} /><EmptyState icon="trending-up" title={t("progress.empty.title")} description={t("progress.empty.description")} action={<LinkButton to="/assessment">{t("progress.empty.button")}</LinkButton>} /></>;
   }
 
   const snaps = p.snapshots;
@@ -30,25 +37,25 @@ export function ProgressPage() {
 
   return (
     <>
-      <PageHeader title="Your Progress" subtitle={`How your competencies changed across ${snaps.length} measurement${snaps.length === 1 ? "" : "s"}.`} />
+      <PageHeader title={t("progress.title")} subtitle={t("progress.subtitle", { count: snaps.length })} />
       {p.locked_features?.includes("progress.history") && (
         <div style={{ marginBottom: 20 }}>
-          <InlineAlert tone="info" title="Showing your latest two measurements">
-            Your plan includes the current and previous measurement. <LinkButton to="/plans" size="sm" variant="ghost">See plans with full history</LinkButton>
+          <InlineAlert tone="info" title={t("progress.locked.title")}>
+            {t("progress.locked.text")} <LinkButton to="/plans" size="sm" variant="ghost">{t("progress.locked.link")}</LinkButton>
           </InlineAlert>
         </div>
       )}
       <div style={{ marginBottom: 24, overflowX: "auto" }}>
-        <Tabs ariaLabel="Filter by area" value={area} onChange={setArea} tabs={[{ value: "all", label: "All competencies" }, ...AREAS]} />
+        <Tabs ariaLabel={t("progress.filterAria")} value={area} onChange={setArea} tabs={[{ value: "all", label: t("progress.allCompetencies") }, ...AREAS]} />
       </div>
       <div className="ik-grid3" style={{ marginBottom: 24 }}>
         <Card padding={24}>
-          <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{area === "all" ? "Entrepreneurial Score" : AREAS.find((a) => a.value === area)?.label}</p>
-          <div style={{ marginTop: 8 }}><ScoreValue value={last} label="Current score" /></div>
+          <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{area === "all" ? t("dashboard.score.title") : AREAS.find((a) => a.value === area)?.label}</p>
+          <div style={{ marginTop: 8 }}><ScoreValue value={last} label={t("progress.currentScore")} /></div>
           <dl className="ik-kv" style={{ marginTop: 16 }}>
-            {prev !== null && <><dt>Previous</dt><dd>{prev}</dd></>}
-            <dt>Change</dt><dd style={{ fontWeight: 600, color: last - (prev ?? last) >= 0 ? "var(--color-growth-700)" : "var(--color-error)" }}>{prev !== null ? signed(last - prev) : "—"}</dd>
-            <dt>Since first</dt><dd>{signed(last - first) || "0"}</dd>
+            {prev !== null && <><dt>{t("progress.previous")}</dt><dd>{prev}</dd></>}
+            <dt>{t("progress.change")}</dt><dd style={{ fontWeight: 600, color: last - (prev ?? last) >= 0 ? "var(--color-growth-700)" : "var(--color-error)" }}>{prev !== null ? signed(last - prev) : "—"}</dd>
+            <dt>{t("progress.sinceFirst")}</dt><dd>{signed(last - first) || "0"}</dd>
           </dl>
           <ul style={{ marginTop: 16, listStyle: "none", padding: 0 }}>
             {[...snaps].reverse().map((s) => (
@@ -60,27 +67,27 @@ export function ProgressPage() {
           </ul>
         </Card>
         <div className="ik-span2">
-          <ChartCard title="Score history" description={labels.join(" → ")}
-            legend={area === "all" ? [{ label: "Overall", color: "var(--color-brand-600)" }, ...AREAS.map((a) => ({ label: a.label, color: AREA_COLOR[a.value] }))] : undefined}
-            summary={snaps.length > 1 ? `Score moved from ${first} to ${last} (${signed(last - first)}).` : "Reassess to see how your scores change."}>
-            <LineChart height={240} labels={labels} min={min} ticks={[min, Math.round((min + 100) / 2), 100]} series={series} ariaLabel="Score history by area" />
+          <ChartCard title={t("progress.history.title")} description={labels.join(" → ")}
+            legend={area === "all" ? [{ label: t("progress.history.overall"), color: "var(--color-brand-600)" }, ...AREAS.map((a) => ({ label: a.label, color: AREA_COLOR[a.value] }))] : undefined}
+            summary={snaps.length > 1 ? t("progress.history.summary", { first, last, change: signed(last - first) || "0" }) : t("progress.history.single")}>
+            <LineChart height={240} labels={labels} min={min} ticks={[min, Math.round((min + 100) / 2), 100]} series={series} ariaLabel={t("progress.history.chartAria")} />
           </ChartCard>
         </div>
       </div>
       <div className="ik-grid4" style={{ marginBottom: 24 }}>
-        <StatCard label="Completed learning" value={p.completed_resources} description="Articles, videos, courses" icon="book-open" tone="growth" />
-        <StatCard label="Completed practice" value={p.completed_tasks} description="Practical tasks with feedback" icon="pencil-ruler" />
-        <StatCard label="Reflections" value={p.reflections} description="Plan reflection steps" icon="message-square-text" tone="neutral" />
-        <StatCard label="Reassessments" value={p.reassessments} description={`${snaps.length} measurements in total`} icon="refresh-cw" tone="neutral" />
+        <StatCard label={t("progress.stats.learning")} value={p.completed_resources} description={t("progress.stats.learningDescription")} icon="book-open" tone="growth" />
+        <StatCard label={t("progress.stats.practice")} value={p.completed_tasks} description={t("progress.stats.practiceDescription")} icon="pencil-ruler" />
+        <StatCard label={t("progress.stats.reflections")} value={p.reflections} description={t("progress.stats.reflectionsDescription")} icon="message-square-text" tone="neutral" />
+        <StatCard label={t("progress.stats.reassessments")} value={p.reassessments} description={t("progress.stats.reassessmentsDescription", { count: snaps.length })} icon="refresh-cw" tone="neutral" />
       </div>
       <div className="ik-grid2">
-        <ChartCard title="Competency growth" description="First measurement → latest, largest changes first"
-          summary={growth[0] ? `Largest change: ${growth[0].name} (${signed(growth[0].change_since_first)}).` : "Growth appears after your second measurement."}>
-          {growth.length ? <CompareBars items={growth.map((t) => ({ label: t.name, before: t.first, after: t.current }))} beforeLabel="First" afterLabel="Latest" />
-            : <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>No competency has been measured twice yet.</p>}
+        <ChartCard title={t("progress.growth.title")} description={t("progress.growth.description")}
+          summary={growth[0] ? t("progress.growth.summary", { name: growth[0].name, change: signed(growth[0].change_since_first) || "0" }) : t("progress.growth.empty")}>
+          {growth.length ? <CompareBars items={growth.map((t) => ({ label: t.name, before: t.first, after: t.current }))} beforeLabel={t("progress.growth.first")} afterLabel={t("progress.growth.latest")} />
+            : <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{t("progress.growth.none")}</p>}
         </ChartCard>
         <Card padding={24}>
-          <h2 style={{ fontSize: 15, fontWeight: 600 }}>Recent activities</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 600 }}>{t("progress.recent.title")}</h2>
           {p.recent.length ? (
             <ul style={{ marginTop: 8, listStyle: "none", padding: 0 }}>
               {p.recent.map((a) => (
@@ -93,7 +100,7 @@ export function ProgressPage() {
                 </li>
               ))}
             </ul>
-          ) : <p style={{ marginTop: 8, fontSize: 14, color: "var(--color-neutral-500)" }}>Complete learning or practice activities to see them here.</p>}
+          ) : <p style={{ marginTop: 8, fontSize: 14, color: "var(--color-neutral-500)" }}>{t("progress.recent.empty")}</p>}
         </Card>
       </div>
     </>

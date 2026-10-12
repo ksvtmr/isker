@@ -1,51 +1,54 @@
 import { Card, EmptyState, Icon, PageHeader, StatusBadge, Tabs } from "@isker/design-system";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useTasks } from "../api/learning";
 import { LinkButton } from "../components/RouterLink";
 import { ErrorState, PageSkeleton } from "../components/States";
-import { DIFFICULTY_LABEL } from "../utils/format";
+import { difficultyLabel } from "../utils/format";
 
-const STATUS = { started: ["progress", "In progress"], submitted: ["progress", "Feedback ready"], completed: ["done", "Completed"] } as const;
+const STATUS = { started: ["progress", "common:progressStatus.in_progress"], submitted: ["progress", "learning:practice.feedbackReady"], completed: ["done", "common:progressStatus.completed"] } as const;
 
 export function PracticePage() {
+  const { t } = useTranslation("learning");
   const { data, isLoading, error, refetch } = useTasks();
   const [filter, setFilter] = useState("all");
   if (isLoading) return <PageSkeleton chart={false} />;
-  if (error || !data) return <><PageHeader title="Practice" /><ErrorState error={error} onRetry={() => refetch()} /></>;
-  const items = data.filter((t) => filter === "all" || (filter === "recommended" ? t.recommended : filter === "done" ? t.status === "completed" : t.status && t.status !== "completed"));
+  if (error || !data) return <><PageHeader title={t("common:nav.practice")} /><ErrorState error={error} onRetry={() => refetch()} /></>;
+  const items = data.filter((task) => filter === "all" || (filter === "recommended" ? task.recommended : filter === "done" ? task.status === "completed" : task.status && task.status !== "completed"));
   return (
     <>
-      <PageHeader title="Practice" subtitle="Practical entrepreneurship tasks. Submit a response to get rubric-based feedback linked to a competency." />
+      <PageHeader title={t("common:nav.practice")} subtitle={t("practice.subtitle")} />
       <div style={{ marginBottom: 20, overflowX: "auto" }}>
-        <Tabs ariaLabel="Filter tasks" value={filter} onChange={setFilter} tabs={[{ value: "all", label: "All tasks" }, { value: "recommended", label: "Recommended" }, { value: "active", label: "In progress" }, { value: "done", label: "Completed" }]} />
+        <Tabs ariaLabel={t("practice.filterAria")} value={filter} onChange={setFilter} tabs={[{ value: "all", label: t("practice.allTasks") }, { value: "recommended", label: t("practice.recommended") }, { value: "active", label: t("common:progressStatus.in_progress") }, { value: "done", label: t("common:progressStatus.completed") }]} />
       </div>
       {items.length ? (
         <div className="ik-grid-cards">
-          {items.map((t) => {
-            const st = t.status ? STATUS[t.status] : null;
+          {items.map((task) => {
+            const st = task.status ? STATUS[task.status] : null;
+            const action = task.status ? t("common:actions.open") : t("common:actions.start");
             return (
-              <Card key={t.id} padding={20} style={{ display: "flex", flexDirection: "column" }}>
+              <Card key={task.id} padding={20} style={{ display: "flex", flexDirection: "column" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
                   <span style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, fontWeight: 500, color: "var(--color-neutral-600)" }}>
-                    <span style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center", background: "var(--color-neutral-100)" }}><Icon name="pencil-ruler" size={15} /></span>Practical task
+                    <span style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center", background: "var(--color-neutral-100)" }}><Icon name="pencil-ruler" size={15} /></span>{t("practice.practicalTask")}
                   </span>
-                  {t.recommended && <StatusBadge status="recommended">Recommended</StatusBadge>}
+                  {task.recommended && <StatusBadge status="recommended">{t("practice.recommended")}</StatusBadge>}
                 </div>
-                <h2 style={{ marginTop: 14, fontSize: 16, fontWeight: 600 }}>{t.title}</h2>
-                <p style={{ marginTop: 6, fontSize: 13, fontWeight: 500, color: "var(--color-brand-600)" }}>{t.competency_name}</p>
-                <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.5, color: "var(--color-neutral-600)" }}>{t.description}</p>
+                <h2 style={{ marginTop: 14, fontSize: 16, fontWeight: 600 }}>{task.title}</h2>
+                <p style={{ marginTop: 6, fontSize: 13, fontWeight: 500, color: "var(--color-brand-600)" }}>{task.competency_name}</p>
+                <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.5, color: "var(--color-neutral-600)" }}>{task.description}</p>
                 <div style={{ marginTop: "auto", paddingTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 13, color: "var(--color-neutral-500)", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    {t.duration_minutes} min · {DIFFICULTY_LABEL[t.difficulty]}
-                    {st && <StatusBadge status={st[0]}>{st[1]}{t.feedback_score !== null ? ` · ${t.feedback_score}` : ""}</StatusBadge>}
+                    {t("common:time.minutes", { count: task.duration_minutes })} · {difficultyLabel(task.difficulty)}
+                    {st && <StatusBadge status={st[0]}>{t(st[1])}{task.feedback_score !== null ? ` · ${task.feedback_score}` : ""}</StatusBadge>}
                   </span>
-                  <LinkButton to={`/practice/${t.id}`} size="sm" variant="secondary" aria-label={`${t.status ? "Open" : "Start"}: ${t.title}`}>{t.status ? "Open" : "Start"}</LinkButton>
+                  <LinkButton to={`/practice/${task.id}`} size="sm" variant="secondary" aria-label={t("practice.actionAria", { action, title: task.title })}>{action}</LinkButton>
                 </div>
               </Card>
             );
           })}
         </div>
-      ) : <EmptyState icon="pencil-ruler" title="No tasks here yet" description="Tasks appear here as you start them or when your plan recommends them." />}
+      ) : <EmptyState icon="pencil-ruler" title={t("practice.emptyTitle")} description={t("practice.emptyText")} />}
     </>
   );
 }

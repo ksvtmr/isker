@@ -1,0 +1,145 @@
+{
+  "dashboard": {
+    "greeting": "{{greeting}}, {{name}}",
+    "subtitle": "Кәсіпкерлік құзыреттеріңізді дамытуды жалғастырыңыз.",
+    "continueDevelopment": "Дамуды жалғастыру",
+    "loadError": "Басқару тақтасын жүктеу мүмкін болмады",
+    "empty": {
+      "startTitle": "Алғашқы бағалаудан өтіңіз",
+      "finishTitle": "Алғашқы бағалауды аяқтаңыз",
+      "description": "Бағалаудан өткеннен кейін мұнда Сіздің құзыреттер профиліңіз, алшақтықтар және даму жоспары пайда болады.",
+      "startButton": "Бағалауды бастау",
+      "continueButton": "Бағалауды жалғастыру"
+    },
+    "score": {
+      "title": "Кәсіпкерлік балл",
+      "label": "Кәсіпкерлік балл",
+      "change": "Соңғы бағалаудан бергі өзгеріс: {{change}}",
+      "chartAria": "Жалпы балл тарихы"
+    },
+    "openPlan": "Даму жоспарын ашу",
+    "nextStep": "Ұсынылатын келесі қадам:",
+    "insightEmpty": "AI-қорытынды келесі бағалаудан кейін пайда болады.",
+    "stats": {
+      "strengths": "Күшті жақтар",
+      "strengthsDescription_one": "құзырет мақсатқа жетті немесе асып түсті",
+      "strengthsDescription_few": "құзырет мақсатқа жетті немесе асып түсті",
+      "strengthsDescription_many": "құзырет мақсатқа жетті немесе асып түсті",
+      "strengthsDescription_other": "құзырет мақсатқа жетті немесе асып түсті",
+      "strongest": "ең күштісі: {{name}}",
+      "priorityGaps": "Басым алшақтық",
+      "priorityGapsDescription_one": "құзырет мақсаттан 10+ балл төмен",
+      "priorityGapsDescription_few": "құзырет мақсаттан 10+ балл төмен",
+      "priorityGapsDescription_many": "құзырет мақсаттан 10+ балл төмен",
+      "priorityGapsDescription_other": "құзырет мақсаттан 10+ балл төмен",
+      "top": "басты: {{name}}",
+      "progress": "Даму барысы",
+      "progressDescription_one": "Жоспардағы {{count}} тапсырманың {{done}} орындалды",
+      "progressDescription_few": "Жоспардағы {{count}} тапсырманың {{done}} орындалды",
+      "progressDescription_many": "Жоспардағы {{count}} тапсырманың {{done}} орындалды",
+      "progressDescription_other": "Жоспардағы {{count}} тапсырманың {{done}} орындалды",
+      "nextAssessment": "Келесі бағалау",
+      "reassessCompetency": "Қайта бағалау: {{name}}",
+      "fullReassessment": "Толық қайта бағалау"
+    },
+    "profile": {
+      "title": "Сіздің құзыреттер профиліңіз",
+      "description": "Салалар бойынша топтастырылған 15 EntreComp құзыреті. Белгі Сіздің мақсатыңызды көрсетеді.",
+      "viewAll": "Толық профиль"
+    },
+    "areaScoreAria": "Сала балы: {{score}}",
+    "competencyBarAria": "{{name}}: 100-ден {{score}}, мақсат {{target}}",
+    "gaps": {
+      "title": "Басым алшақтықтар",
+      "description": "Мақсаттарыңыз үшін ең маңызды алшақтықтан бастаңыз.",
+      "analysis": "Алшақтықтарды талдау",
+      "continuePlan": "Жоспарды жалғастыру",
+      "startDevelopment": "Дамуды бастау",
+      "alsoBelow": "Мақсаттан төмен басқалары",
+      "noOther": "Мақсаттан 10+ балл төмен басқа құзырет жоқ.",
+      "emptyTitle": "Ашық басым алшақтықтар жоқ",
+      "emptyDescription": "Барлық құзырет мақсаттарыңызға сай. Дамуыңызды бақылау үшін қайта бағалаудан өтіңіз.",
+      "reassess": "Қайта бағалау"
+    },
+    "strongest": "Ең күшті құзыреттер"
+  },
+  "journey": {
+    "label": "Сіздің даму жолыңыз",
+    "assess": "Бағалау",
+    "assessDone": "Профиль өлшенді",
+    "assessInProgress": "Орындалуда",
+    "assessDuration": "Шамамен 25 минут",
+    "review": "Профиліңізді қарау",
+    "reviewDescription": "Күшті жақтар мен алшақтықтар",
+    "learn": "Оқу және практика",
+    "activities_one": "{{count}} тапсырманың {{done}}",
+    "activities_few": "{{count}} тапсырманың {{done}}",
+    "activities_many": "{{count}} тапсырманың {{done}}",
+    "activities_other": "{{count}} тапсырманың {{done}}",
+    "personalPlan": "Жеке жоспар",
+    "reassess": "Қайта бағалау",
+    "availableNow": "Қазір қолжетімді",
+    "afterPlan": "Жоспардан кейін"
+  },
+  "progress": {
+    "title": "Сіздің прогресіңіз",
+    "subtitle_one": "{{count}} өлшем бойынша құзыреттеріңіз қалай өзгерді.",
+    "subtitle_few": "{{count}} өлшем бойынша құзыреттеріңіз қалай өзгерді.",
+    "subtitle_many": "{{count}} өлшем бойынша құзыреттеріңіз қалай өзгерді.",
+    "subtitle_other": "{{count}} өлшем бойынша құзыреттеріңіз қалай өзгерді.",
+    "empty": {
+      "title": "Прогресс туралы деректер әзірге жоқ",
+      "description": "Дамуыңызды бақылауды бастау үшін алғашқы бағалаудан өтіңіз.",
+      "button": "Бағалауды бастау"
+    },
+    "locked": {
+      "title": "Соңғы екі өлшем көрсетілген",
+      "text": "Сіздің тарифіңізге ағымдағы және алдыңғы өлшем кіреді.",
+      "link": "Толық тарихы бар тарифтер"
+    },
+    "filterAria": "Сала бойынша сүзу",
+    "allCompetencies": "Барлық құзыреттер",
+    "areas": {
+      "ideas": "Идеялар мен мүмкіндіктер",
+      "resources": "Ресурстар",
+      "action": "Іске асыру"
+    },
+    "currentScore": "Ағымдағы балл",
+    "previous": "Алдыңғы",
+    "change": "Өзгеріс",
+    "sinceFirst": "Алғашқы өлшемнен бері",
+    "history": {
+      "title": "Балл тарихы",
+      "overall": "Жалпы",
+      "summary": "Балл {{first}}-ден {{last}}-ге өзгерді ({{change}}).",
+      "single": "Балдарыңыздың қалай өзгеретінін көру үшін қайта бағалаудан өтіңіз.",
+      "chartAria": "Салалар бойынша балл тарихы"
+    },
+    "stats": {
+      "learning": "Оқылған материалдар",
+      "learningDescription": "Мақалалар, бейнелер, курстар",
+      "practice": "Орындалған практика",
+      "practiceDescription": "Кері байланысы бар практикалық тапсырмалар",
+      "reflections": "Рефлексиялар",
+      "reflectionsDescription": "Жоспардағы рефлексия қадамдары",
+      "reassessments": "Қайта бағалаулар",
+      "reassessmentsDescription_one": "Барлығы {{count}} өлшем",
+      "reassessmentsDescription_few": "Барлығы {{count}} өлшем",
+      "reassessmentsDescription_many": "Барлығы {{count}} өлшем",
+      "reassessmentsDescription_other": "Барлығы {{count}} өлшем"
+    },
+    "growth": {
+      "title": "Құзыреттердің өсуі",
+      "description": "Алғашқы өлшем → соңғысы, ең үлкен өзгерістер алдымен",
+      "summary": "Ең үлкен өзгеріс: {{name}} ({{change}}).",
+      "empty": "Өсу екінші өлшемнен кейін көрінеді.",
+      "first": "Алғашқы",
+      "latest": "Соңғы",
+      "none": "Әзірге бірде-бір құзырет екі рет өлшенген жоқ."
+    },
+    "recent": {
+      "title": "Соңғы әрекеттер",
+      "empty": "Оқу немесе практикалық тапсырмаларды орындаңыз — олар осында көрсетіледі."
+    }
+  }
+}
