@@ -50,7 +50,7 @@ describe("accessibility (axe-core)", () => {
   it("sign-in page", async () => {
     mockApi({ "GET /api/auth/me": unauth });
     const { container } = renderApp("/login");
-    await screen.findByRole("heading", { name: "Sign in" });
+    await screen.findByRole("heading", { name: "Welcome back!" });
     await expectNoViolations(container);
   });
 

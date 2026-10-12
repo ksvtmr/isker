@@ -247,7 +247,8 @@ def resend_verification(user: CurrentUser, db: DB) -> Message:
 @router.get("/sessions", response_model=list[SessionOut], summary="Your active sessions (devices)")
 def list_sessions(auth: Auth, db: DB) -> list[SessionOut]:
     return [SessionOut(id=s.id, created_at=s.created_at, last_seen_at=s.last_seen_at, expires_at=s.expires_at,
-                       user_agent=s.user_agent, ip_address=s.ip_address, current=s.id == auth.session.id)
+                       user_agent=s.user_agent, ip_address=s.ip_address, current=s.id == auth.session.id,
+                       remember=s.remember, auth_method=s.auth_method)
             for s in accounts.active_sessions(db, auth.user.id)]
 
 

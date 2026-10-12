@@ -142,3 +142,5 @@ class SessionOut(BaseModel):
     user_agent: str | None
     ip_address: str | None
     current: bool
+    remember: bool = False
+    auth_method: str = "password"

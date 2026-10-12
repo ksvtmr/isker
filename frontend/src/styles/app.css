@@ -83,3 +83,7 @@
   .ik-kv{grid-template-columns:1fr}
 }
 .ik-table-wrap{position:relative}
+.ik-auth__top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.ik-google-btn{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:10px;text-decoration:none}
+.ik-google-btn:disabled{opacity:.6;cursor:not-allowed}
+.ik-auth__row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}

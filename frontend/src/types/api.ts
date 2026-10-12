@@ -51,6 +51,8 @@ export interface SessionInfo {
   expires_at: string;
   user_agent: string | null;
   current: boolean;
+  remember?: boolean;
+  auth_method?: "password" | "google";
 }
 
 export interface Entitlement {
