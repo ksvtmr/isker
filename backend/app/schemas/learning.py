@@ -23,6 +23,7 @@ class ResourceOut(BaseModel):
     recommended: bool
     started_at: datetime | None
     completed_at: datetime | None
+    locked: bool = False
 
 
 class ResourceDetail(ResourceOut):

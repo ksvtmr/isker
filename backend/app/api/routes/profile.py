@@ -6,7 +6,7 @@ from sqlalchemy import delete, select
 from app.api.deps import DB, CurrentUser
 from app.core.errors import ValidationError
 from app.models import GoalDefinition, User, UserGoal, UserProfile
-from app.schemas.common import ERROR_RESPONSES, Message
+from app.schemas.common import ERROR_RESPONSES
 from app.schemas.profile import GoalOut, OnboardingIn, ProfileOut, ProfileUpdate
 from app.services.audit import audit
 
@@ -102,11 +102,3 @@ def update_profile(body: ProfileUpdate, user: CurrentUser, db: DB) -> ProfileOut
     audit(db, user.id, "profile.updated", "user", user.id, fields=sorted(body.model_fields_set))
     db.commit()
     return _out(db, user)
-
-
-@router.delete("/api/users/me", response_model=Message, summary="Delete account and all personal data")
-def delete_account(user: CurrentUser, db: DB) -> Message:
-    audit(db, None, "user.deleted", "user", user.id)
-    db.delete(user)
-    db.commit()
-    return Message(message="Account deleted")

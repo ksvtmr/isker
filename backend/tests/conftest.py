@@ -15,12 +15,28 @@ from sqlalchemy.orm import Session  # noqa: E402
 
 import app.models  # noqa: E402,F401
 from app.core.database import Base, SessionLocal, engine  # noqa: E402
+from app.core.ratelimit import limiter  # noqa: E402
 from app.main import app  # noqa: E402
 from app.seed.run import seed_reference  # noqa: E402
+
+UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+class BrowserClient(TestClient):
+    """Behaves like the SPA: echoes the readable CSRF cookie in X-CSRF-Token on unsafe requests."""
+
+    def request(self, method, url, *args, **kwargs):  # type: ignore[override]
+        token = self.cookies.get("isker_csrf")
+        if method.upper() in UNSAFE and token:
+            headers = dict(kwargs.pop("headers", None) or {})
+            headers.setdefault("X-CSRF-Token", token)
+            kwargs["headers"] = headers
+        return super().request(method, url, *args, **kwargs)
 
 
 @pytest.fixture(autouse=True)
 def _schema():
+    limiter.reset()
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     db = SessionLocal()
@@ -39,14 +55,47 @@ def db() -> Session:
 
 @pytest.fixture
 def client() -> TestClient:
+    return BrowserClient(app)
+
+
+@pytest.fixture
+def raw_client() -> TestClient:
+    """A client that does NOT send the CSRF header (simulates a cross-site request)."""
     return TestClient(app)
 
 
 def register(
     client: TestClient, email: str = "learner@example.com", password: str = "Secret123", name: str = "Dana Learner"
 ) -> dict:
-    r = client.post("/api/auth/register", json={"email": email, "password": password, "full_name": name})
+    r = client.post(
+        "/api/auth/register", json={"email": email, "password": password, "full_name": name, "accept_terms": True}
+    )
     assert r.status_code == 201, r.text
+    return r.json()
+
+
+def make_user(db: Session, email: str, roles: tuple[str, ...] = ("user",), password: str = "Secret123", **kw):
+    """Create an account directly with the given roles (staff accounts can't self-register)."""
+    from app.core.security import hash_password
+    from app.models import User, UserProfile
+    from app.services.permissions import give_role
+
+    u = User(email=email, password_hash=hash_password(password), full_name=kw.pop("full_name", email.split("@")[0]),
+             onboarding_completed=True, **kw)
+    u.profile = UserProfile()
+    db.add(u)
+    db.flush()
+    for r in roles:
+        give_role(db, u, r)
+    db.commit()
+    db.refresh(u)
+    return u
+
+
+def login(client: TestClient, email: str, password: str = "Secret123") -> dict:
+    client.cookies.clear()
+    r = client.post("/api/auth/login", json={"email": email, "password": password})
+    assert r.status_code == 200, r.text
     return r.json()
 
 

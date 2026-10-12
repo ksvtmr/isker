@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
-from sqlalchemy import func, or_, select, update
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import DB, AdminUser
+from app.api.deps import DB, require_permission
 from app.core.errors import ConflictError, NotFoundError, ValidationError
 from app.models import (
     AIEvaluation,
@@ -35,7 +35,6 @@ from app.models.enums import (
 )
 from app.schemas.admin import (
     AdminStats,
-    AdminUserOut,
     AIEvaluationAdminOut,
     AssessmentAdminOut,
     AssessmentIn,
@@ -57,9 +56,14 @@ from app.services.audit import audit
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], responses=ERROR_RESPONSES)
 
+Analyst = Annotated[User, Depends(require_permission("analytics.view"))]
+ContentManager = Annotated[User, Depends(require_permission("content.manage"))]
+AIViewer = Annotated[User, Depends(require_permission("ai.view"))]
+AIManager = Annotated[User, Depends(require_permission("ai.manage"))]
+
 
 @router.get("/stats", response_model=AdminStats, summary="Platform and assessment statistics")
-def stats(_: AdminUser, db: DB) -> AdminStats:
+def stats(_: Analyst, db: DB) -> AdminStats:
     def count(stmt) -> int:
         return db.scalar(stmt) or 0
 
@@ -97,45 +101,16 @@ def stats(_: AdminUser, db: DB) -> AdminStats:
     )
 
 
-@router.get("/users", response_model=Page[AdminUserOut], summary="Users")
-def users(
-    _: AdminUser,
-    db: DB,
-    q: Annotated[str | None, Query(max_length=100)] = None,
-    page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=100)] = 25,
-) -> Page:
-    stmt = select(User)
-    if q:
-        stmt = stmt.where(or_(User.email.ilike(f"%{q}%"), User.full_name.ilike(f"%{q}%")))
-    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-    rows = db.scalars(stmt.order_by(User.id).offset((page - 1) * page_size).limit(page_size))
-    items = []
-    for u in rows:
-        out = AdminUserOut.model_validate(u)
-        done = list(
-            db.scalars(
-                select(AssessmentAttempt)
-                .where(AssessmentAttempt.user_id == u.id, AssessmentAttempt.status == AttemptStatus.COMPLETED)
-                .order_by(AssessmentAttempt.completed_at)
-            )
-        )
-        out.completed_attempts = len(done)
-        out.latest_overall = done[-1].overall_score if done else None
-        items.append(out)
-    return Page[AdminUserOut](items=items, total=total, page=page, page_size=page_size)
-
-
 # --- Competencies ----------------------------------------------------------------------------------
 
 
 @router.get("/competencies", response_model=list[CompetencyOut], summary="Competencies")
-def competencies(_: AdminUser, db: DB) -> list[CompetencyOut]:
+def competencies(_: ContentManager, db: DB) -> list[CompetencyOut]:
     return [CompetencyOut.model_validate(c) for c in views.competencies(db)]
 
 
 @router.put("/competencies/{competency_id}", response_model=CompetencyOut, summary="Edit a competency")
-def update_competency(competency_id: int, body: CompetencyUpdate, admin: AdminUser, db: DB) -> CompetencyOut:
+def update_competency(competency_id: int, body: CompetencyUpdate, admin: ContentManager, db: DB) -> CompetencyOut:
     c = db.get(Competency, competency_id)
     if c is None:
         raise NotFoundError("Competency not found", "COMPETENCY_NOT_FOUND")
@@ -181,7 +156,7 @@ def _get_q(db, qid: int) -> Question:
 
 
 @router.get("/questions", response_model=list[QuestionAdminOut], summary="Question bank")
-def questions(_: AdminUser, db: DB, assessment_id: int | None = None) -> list[QuestionAdminOut]:
+def questions(_: ContentManager, db: DB, assessment_id: int | None = None) -> list[QuestionAdminOut]:
     stmt = select(Question).options(selectinload(Question.options), selectinload(Question.competency_links))
     if assessment_id:
         stmt = stmt.where(Question.assessment_id == assessment_id)
@@ -217,7 +192,7 @@ def _apply_question(db, q: Question, body: QuestionIn) -> None:
 
 
 @router.post("/questions", response_model=QuestionAdminOut, status_code=status.HTTP_201_CREATED)
-def create_question(body: QuestionIn, admin: AdminUser, db: DB) -> QuestionAdminOut:
+def create_question(body: QuestionIn, admin: ContentManager, db: DB) -> QuestionAdminOut:
     last = db.scalar(select(func.max(Question.sort_order)).where(Question.assessment_id == body.assessment_id)) or 0
     q = Question(
         sort_order=body.sort_order or last + 1,
@@ -235,7 +210,7 @@ def create_question(body: QuestionIn, admin: AdminUser, db: DB) -> QuestionAdmin
 
 
 @router.put("/questions/{question_id}", response_model=QuestionAdminOut)
-def update_question(question_id: int, body: QuestionIn, admin: AdminUser, db: DB) -> QuestionAdminOut:
+def update_question(question_id: int, body: QuestionIn, admin: ContentManager, db: DB) -> QuestionAdminOut:
     q = _get_q(db, question_id)
     answered = db.scalar(select(func.count(Answer.id)).where(Answer.question_id == q.id)) or 0
     if answered and (q.type != body.type or len(q.options) != len(body.options)):
@@ -249,7 +224,7 @@ def update_question(question_id: int, body: QuestionIn, admin: AdminUser, db: DB
 
 
 @router.delete("/questions/{question_id}", response_model=Message, summary="Deactivate (history is preserved)")
-def deactivate_question(question_id: int, admin: AdminUser, db: DB) -> Message:
+def deactivate_question(question_id: int, admin: ContentManager, db: DB) -> Message:
     q = _get_q(db, question_id)
     q.is_active = False
     audit(db, admin.id, "admin.question_deactivated", "question", q.id)
@@ -273,12 +248,12 @@ def _a_out(db, a: Assessment) -> AssessmentAdminOut:
 
 
 @router.get("/assessments", response_model=list[AssessmentAdminOut])
-def assessments(_: AdminUser, db: DB) -> list[AssessmentAdminOut]:
+def assessments(_: ContentManager, db: DB) -> list[AssessmentAdminOut]:
     return [_a_out(db, a) for a in db.scalars(select(Assessment).order_by(Assessment.id))]
 
 
 @router.post("/assessments", response_model=AssessmentAdminOut, status_code=status.HTTP_201_CREATED)
-def create_assessment(body: AssessmentIn, admin: AdminUser, db: DB) -> AssessmentAdminOut:
+def create_assessment(body: AssessmentIn, admin: ContentManager, db: DB) -> AssessmentAdminOut:
     if db.scalar(select(Assessment.id).where(Assessment.code == body.code)):
         raise ConflictError("An assessment with this code exists.", "ASSESSMENT_CODE_TAKEN")
     a = Assessment(kind=AssessmentKind.FULL, **body.model_dump())
@@ -290,7 +265,7 @@ def create_assessment(body: AssessmentIn, admin: AdminUser, db: DB) -> Assessmen
 
 
 @router.put("/assessments/{assessment_id}", response_model=AssessmentAdminOut)
-def update_assessment(assessment_id: int, body: AssessmentUpdate, admin: AdminUser, db: DB) -> AssessmentAdminOut:
+def update_assessment(assessment_id: int, body: AssessmentUpdate, admin: ContentManager, db: DB) -> AssessmentAdminOut:
     a = db.get(Assessment, assessment_id)
     if a is None:
         raise NotFoundError("Assessment not found", "ASSESSMENT_NOT_FOUND")
@@ -311,12 +286,12 @@ def _check_comp(db, cid: int) -> None:
 
 
 @router.get("/resources", response_model=list[ResourceAdminOut])
-def resources(_: AdminUser, db: DB) -> list[LearningResource]:
+def resources(_: ContentManager, db: DB) -> list[LearningResource]:
     return list(db.scalars(select(LearningResource).order_by(LearningResource.competency_id, LearningResource.id)))
 
 
 @router.post("/resources", response_model=ResourceAdminOut, status_code=status.HTTP_201_CREATED)
-def create_resource(body: ResourceIn, admin: AdminUser, db: DB) -> LearningResource:
+def create_resource(body: ResourceIn, admin: ContentManager, db: DB) -> LearningResource:
     _check_comp(db, body.competency_id)
     if db.scalar(select(LearningResource.id).where(LearningResource.slug == body.slug)):
         raise ConflictError("A resource with this slug exists.", "SLUG_TAKEN")
@@ -329,7 +304,7 @@ def create_resource(body: ResourceIn, admin: AdminUser, db: DB) -> LearningResou
 
 
 @router.put("/resources/{resource_id}", response_model=ResourceAdminOut)
-def update_resource(resource_id: int, body: ResourceIn, admin: AdminUser, db: DB) -> LearningResource:
+def update_resource(resource_id: int, body: ResourceIn, admin: ContentManager, db: DB) -> LearningResource:
     r = db.get(LearningResource, resource_id)
     if r is None:
         raise NotFoundError("Resource not found", "RESOURCE_NOT_FOUND")
@@ -347,7 +322,7 @@ def update_resource(resource_id: int, body: ResourceIn, admin: AdminUser, db: DB
 
 
 @router.delete("/resources/{resource_id}", response_model=Message, summary="Unpublish a resource")
-def unpublish_resource(resource_id: int, admin: AdminUser, db: DB) -> Message:
+def unpublish_resource(resource_id: int, admin: ContentManager, db: DB) -> Message:
     r = db.get(LearningResource, resource_id)
     if r is None:
         raise NotFoundError("Resource not found", "RESOURCE_NOT_FOUND")
@@ -358,12 +333,12 @@ def unpublish_resource(resource_id: int, admin: AdminUser, db: DB) -> Message:
 
 
 @router.get("/tasks", response_model=list[TaskAdminOut])
-def tasks(_: AdminUser, db: DB) -> list[PracticalTask]:
+def tasks(_: ContentManager, db: DB) -> list[PracticalTask]:
     return list(db.scalars(select(PracticalTask).order_by(PracticalTask.competency_id, PracticalTask.id)))
 
 
 @router.post("/tasks", response_model=TaskAdminOut, status_code=status.HTTP_201_CREATED)
-def create_task(body: TaskIn, admin: AdminUser, db: DB) -> PracticalTask:
+def create_task(body: TaskIn, admin: ContentManager, db: DB) -> PracticalTask:
     _check_comp(db, body.competency_id)
     if db.scalar(select(PracticalTask.id).where(PracticalTask.slug == body.slug)):
         raise ConflictError("A task with this slug exists.", "SLUG_TAKEN")
@@ -377,7 +352,7 @@ def create_task(body: TaskIn, admin: AdminUser, db: DB) -> PracticalTask:
 
 
 @router.put("/tasks/{task_id}", response_model=TaskAdminOut)
-def update_task(task_id: int, body: TaskIn, admin: AdminUser, db: DB) -> PracticalTask:
+def update_task(task_id: int, body: TaskIn, admin: ContentManager, db: DB) -> PracticalTask:
     t = db.get(PracticalTask, task_id)
     if t is None:
         raise NotFoundError("Task not found", "TASK_NOT_FOUND")
@@ -390,7 +365,7 @@ def update_task(task_id: int, body: TaskIn, admin: AdminUser, db: DB) -> Practic
 
 
 @router.delete("/tasks/{task_id}", response_model=Message, summary="Unpublish a task")
-def unpublish_task(task_id: int, admin: AdminUser, db: DB) -> Message:
+def unpublish_task(task_id: int, admin: ContentManager, db: DB) -> Message:
     t = db.get(PracticalTask, task_id)
     if t is None:
         raise NotFoundError("Task not found", "TASK_NOT_FOUND")
@@ -405,7 +380,7 @@ def unpublish_task(task_id: int, admin: AdminUser, db: DB) -> Message:
 
 @router.get("/ai/evaluations", response_model=Page[AIEvaluationAdminOut], summary="AI evaluation log")
 def ai_evaluations(
-    _: AdminUser,
+    _: AIViewer,
     db: DB,
     status_filter: Annotated[AIEvalStatus | None, Query(alias="status")] = None,
     input_type: AIInputType | None = None,
@@ -425,7 +400,7 @@ def ai_evaluations(
 
 
 @router.get("/ai/prompts", response_model=list[PromptOut], summary="Prompt versions")
-def prompts(_: AdminUser, db: DB) -> list[AIPromptVersion]:
+def prompts(_: AIViewer, db: DB) -> list[AIPromptVersion]:
     return list(db.scalars(select(AIPromptVersion).order_by(AIPromptVersion.key, AIPromptVersion.version.desc())))
 
 
@@ -438,7 +413,7 @@ _PLACEHOLDERS = {
 @router.post(
     "/ai/prompts", response_model=PromptOut, status_code=status.HTTP_201_CREATED, summary="Create a new prompt version"
 )
-def create_prompt(body: PromptIn, admin: AdminUser, db: DB) -> AIPromptVersion:
+def create_prompt(body: PromptIn, admin: AIManager, db: DB) -> AIPromptVersion:
     try:
         body.user_template.format(**_PLACEHOLDERS[body.key])
     except (KeyError, IndexError, ValueError) as e:
@@ -467,7 +442,7 @@ def _activate(db, pv: AIPromptVersion) -> None:
 
 
 @router.post("/ai/prompts/{prompt_id}/activate", response_model=PromptOut, summary="Activate a prompt version")
-def activate_prompt(prompt_id: int, admin: AdminUser, db: DB) -> AIPromptVersion:
+def activate_prompt(prompt_id: int, admin: AIManager, db: DB) -> AIPromptVersion:
     pv = db.get(AIPromptVersion, prompt_id)
     if pv is None:
         raise NotFoundError("Prompt version not found")

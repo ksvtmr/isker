@@ -39,8 +39,8 @@ from app.schemas.progress import (
     SnapshotOut,
 )
 from app.services import assessments as assessment_service
+from app.services import entitlements, views
 from app.services import recommendations as rec_service
-from app.services import views
 from app.services.profile import history
 
 router = APIRouter(responses=ERROR_RESPONSES)
@@ -179,7 +179,15 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
         )
     recent = sorted([r for r in recent if r.date], key=lambda r: r.date, reverse=True)[:8]
     overall = [s.overall for s in snapshots]
+    locked = []
+    if not entitlements.allows(db, user, "progress.history"):
+        # Plans without full history see the latest two measurements (current vs previous).
+        locked.append("progress.history")
+        snapshots = snapshots[-2:]
+        for trend in trends:
+            trend.points = trend.points[-2:]
     return ProgressOverview(
+        locked_features=locked,
         snapshots=snapshots,
         trends=trends,
         overall_first=overall[0] if overall else None,

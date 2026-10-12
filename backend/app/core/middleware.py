@@ -1,0 +1,97 @@
+"""HTTP hardening middleware: request ids, security headers, request size limit."""
+
+from __future__ import annotations
+
+import re
+import uuid
+
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+from app.core.config import get_settings
+from app.core.context import client_ip_var, request_id_var, user_agent_var
+from app.core.errors import error_body
+
+_RID = re.compile(r"^[A-Za-z0-9._-]{8,64}$")
+
+# The SPA uses inline style attributes (design-system components), hence 'unsafe-inline' for styles only.
+CSP_APP = (
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; "
+    "base-uri 'self'; form-action 'self'; object-src 'none'"
+)
+# Swagger/ReDoc load their assets from jsDelivr.
+CSP_DOCS = (
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https://fastapi.tiangolo.com; "
+    "frame-ancestors 'none'; object-src 'none'"
+)
+
+
+class RequestContextMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        incoming = request.headers.get("x-request-id", "")
+        rid = incoming if _RID.match(incoming) else uuid.uuid4().hex
+        request_id_var.set(rid)
+        client_ip_var.set(request.client.host if request.client else None)
+        user_agent_var.set((request.headers.get("user-agent") or "")[:255] or None)
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = rid
+        return response
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        response = await call_next(request)
+        path = request.url.path
+        h = response.headers
+        h.setdefault("X-Content-Type-Options", "nosniff")
+        h.setdefault("X-Frame-Options", "DENY")
+        h.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        h.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+        h.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        h.setdefault("Content-Security-Policy", CSP_DOCS if path.startswith(("/api/docs", "/api/redoc")) else CSP_APP)
+        if path.startswith("/api/"):
+            h.setdefault("Cache-Control", "no-store")
+        if get_settings().secure_cookies:
+            h.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        return response
+
+
+class BodySizeLimitMiddleware:
+    """Reject request bodies larger than MAX_REQUEST_BYTES (checks Content-Length and the streamed size)."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        limit = get_settings().max_request_bytes
+        too_big = JSONResponse(error_body("PAYLOAD_TOO_LARGE", "The request is too large."), status_code=413)
+        for name, value in scope.get("headers", []):
+            if name == b"content-length" and value.isdigit() and int(value) > limit:
+                await too_big(scope, receive, send)
+                return
+        received = 0
+
+        async def limited_receive() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > limit:
+                    raise _TooLarge
+            return message
+
+        try:
+            await self.app(scope, limited_receive, send)
+        except _TooLarge:
+            await too_big(scope, receive, send)
+
+
+class _TooLarge(Exception):
+    pass

@@ -40,10 +40,12 @@ from app.models import (
     QuestionCompetency,
     QuestionOption,
     Recommendation,
+    SubscriptionPlan,
     User,
     UserGoal,
     UserLearningProgress,
     UserProfile,
+    UserSubscription,
 )
 from app.models.ai import AIPromptVersion
 from app.models.enums import (
@@ -58,14 +60,16 @@ from app.models.enums import (
     ProgressStatus,
     QuestionType,
     ResourceType,
-    UserRole,
+    SubscriptionSource,
 )
 from app.seed.competencies import AREAS, COMPETENCIES, GOALS
 from app.seed.learning import RESOURCES, TASKS
 from app.seed.questions import ASSESSMENT, LIKERT, LIKERT_OPTIONS, OPEN, S_SELF, S_SJT, SITUATIONAL
 from app.services import assessments as assessment_service
 from app.services import recommendations as rec_service
+from app.services import subscriptions as sub_service
 from app.services.levels import LEVEL_BANDS
+from app.services.permissions import DEFAULT_ROLE, SUPER_ADMIN, ensure_rbac, give_role
 
 log = logging.getLogger("isker.seed")
 
@@ -79,6 +83,8 @@ DEV_ADMIN_PASSWORD = "IskerAdmin2026"
 
 
 def seed_reference(db: Session) -> None:
+    ensure_rbac(db)
+    sub_service.ensure_default_plans(db)
     areas = {}
     for i, (code, name, token) in enumerate(AREAS):
         a = db.scalar(select(CompetencyArea).where(CompetencyArea.code == code)) or CompetencyArea(code=code)
@@ -218,21 +224,40 @@ def _password(env_value: str, dev_default: str, label: str) -> str | None:
     return dev_default
 
 
-def ensure_user(db: Session, email: str, password: str, name: str, role: UserRole) -> tuple[User, bool]:
+def ensure_user(db: Session, email: str, password: str, name: str, role: str) -> tuple[User, bool]:
     u = db.scalar(select(User).where(User.email == email))
     if u is not None:
         return u, False
+    now = datetime.now(UTC)
     u = User(
         email=email,
         password_hash=hash_password(password),
         full_name=name,
-        role=role,
-        onboarding_completed=role == UserRole.ADMIN,
+        onboarding_completed=role != DEFAULT_ROLE,
+        email_verified_at=now,  # seeded accounts are created by the operator, not by self-registration
+        terms_accepted_at=now,
+        terms_version=get_settings().terms_version,
     )
     u.profile = UserProfile()
     db.add(u)
     db.flush()
+    give_role(db, u, DEFAULT_ROLE)
+    if role != DEFAULT_ROLE:
+        give_role(db, u, role)
+    db.flush()
     return u, True
+
+
+def grant_demo_plan(db: Session, user: User) -> None:
+    """The demo learner gets a time-limited Pro grant so every feature can be explored (recorded as an admin grant)."""
+    if db.scalar(select(UserSubscription.id).where(UserSubscription.user_id == user.id).limit(1)) is not None:
+        return  # never re-grant: an admin may have changed or canceled it
+    pro = db.scalar(select(SubscriptionPlan).where(SubscriptionPlan.key == "pro"))
+    if pro is None or not pro.is_active:
+        return
+    sub_service.assign(db, user_id=user.id, plan=pro, actor_id=None, source=SubscriptionSource.ADMIN,
+                       reason="Demo account: complimentary Pro access (seed)",
+                       expires_at=datetime.now(UTC) + timedelta(days=365))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -476,13 +501,14 @@ def run(with_demo: bool = True) -> None:
         seed_reference(db)
         admin_pw = _password(s.admin_password, DEV_ADMIN_PASSWORD, "Admin")
         if admin_pw:
-            ensure_user(db, s.admin_email, admin_pw, "Isker Admin", UserRole.ADMIN)
+            ensure_user(db, s.admin_email, admin_pw, "Isker Admin", SUPER_ADMIN)
         if with_demo and s.seed_demo:
             demo_pw = _password(s.demo_password, DEV_DEMO_PASSWORD, "Demo")
             if demo_pw:
-                user, created = ensure_user(db, s.demo_email, demo_pw, "Aigerim Seitkali", UserRole.USER)
+                user, created = ensure_user(db, s.demo_email, demo_pw, "Aigerim Seitkali", DEFAULT_ROLE)
                 if created:
                     seed_demo(db, user)
+                grant_demo_plan(db, user)
         db.commit()
         log.info("Seed complete")
     except Exception:

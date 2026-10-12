@@ -19,9 +19,38 @@ def db_enum(enum_cls: type[StrEnum], name: str) -> SAEnum:
     )
 
 
-class UserRole(StrEnum):
-    USER = "user"
+class AccountStatus(StrEnum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"  # blocked by staff; reversible
+    DEACTIVATED = "deactivated"  # closed by the user or staff; eligible for controlled deletion
+
+
+class SubscriptionStatus(StrEnum):
+    TRIALING = "trialing"
+    ACTIVE = "active"
+    PAST_DUE = "past_due"
+    CANCELED = "canceled"
+    EXPIRED = "expired"
+    INCOMPLETE = "incomplete"
+
+
+class BillingInterval(StrEnum):
+    NONE = "none"
+    MONTH = "month"
+    YEAR = "year"
+
+
+class SubscriptionSource(StrEnum):
+    SYSTEM = "system"
     ADMIN = "admin"
+    PAYMENT = "payment"
+    TRIAL = "trial"
+
+
+class AuditOutcome(StrEnum):
+    SUCCESS = "success"
+    FAILURE = "failure"
+    DENIED = "denied"
 
 
 class LearningFormat(StrEnum):

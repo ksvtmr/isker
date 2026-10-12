@@ -8,7 +8,7 @@ from sqlalchemy import select
 from app.api.deps import DB, CurrentUser
 from app.core.errors import NotFoundError
 from app.models import AssessmentAttempt, Question
-from app.models.enums import AttemptStatus
+from app.models.enums import AttemptScope, AttemptStatus
 from app.schemas.assessment import (
     AnswerIn,
     AnswerOut,
@@ -26,7 +26,7 @@ from app.schemas.assessment import (
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.results import AttemptResults
 from app.services import assessments as svc
-from app.services import views
+from app.services import entitlements, views
 
 router = APIRouter(prefix="/api/assessments", tags=["assessments"], responses=ERROR_RESPONSES)
 
@@ -74,6 +74,13 @@ def overview(user: CurrentUser, db: DB) -> AssessmentOverview:
     summary="Start (or resume) a full assessment or a single-competency reassessment",
 )
 def start(body: StartAttemptIn, user: CurrentUser, db: DB) -> StartAttemptOut:
+    cur = svc.in_progress_attempt(db, user.id)
+    resuming = cur is not None and cur.scope == body.scope and (
+        body.scope == AttemptScope.FULL or cur.scope_competency_id == body.competency_id
+    )
+    if not resuming:
+        feature = "assessment.full" if body.scope == AttemptScope.FULL else "assessment.reassessment"
+        entitlements.require(db, user, feature)
     att, resumed = svc.start_attempt(db, user, body.scope, body.competency_id)
     db.commit()
     db.refresh(att)

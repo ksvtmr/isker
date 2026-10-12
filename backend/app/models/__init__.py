@@ -10,6 +10,14 @@ from app.models.assessment import (
     QuestionOption,
     Reassessment,
 )
+from app.models.auth import EmailVerificationToken, PasswordResetToken, UserSession
+from app.models.billing import (
+    PaymentWebhookEvent,
+    PlanEntitlement,
+    SubscriptionEvent,
+    SubscriptionPlan,
+    UserSubscription,
+)
 from app.models.competency import Competency, CompetencyArea, CompetencyLevel
 from app.models.learning import (
     LearningActivity,
@@ -20,10 +28,23 @@ from app.models.learning import (
     UserLearningProgress,
 )
 from app.models.progress import AuditLog, Notification, ProgressSnapshot
+from app.models.rbac import Permission, Role, RolePermission, UserRole
 from app.models.scoring import CompetencyGap, CompetencyScore
-from app.models.user import GoalCompetencyWeight, GoalDefinition, RevokedToken, User, UserGoal, UserProfile
+from app.models.user import GoalCompetencyWeight, GoalDefinition, User, UserGoal, UserProfile
 
 __all__ = [
+    "EmailVerificationToken",
+    "PasswordResetToken",
+    "PaymentWebhookEvent",
+    "Permission",
+    "PlanEntitlement",
+    "Role",
+    "RolePermission",
+    "SubscriptionEvent",
+    "SubscriptionPlan",
+    "UserRole",
+    "UserSession",
+    "UserSubscription",
     "AIEvaluation",
     "AIPromptVersion",
     "Answer",
@@ -48,7 +69,6 @@ __all__ = [
     "QuestionOption",
     "Reassessment",
     "Recommendation",
-    "RevokedToken",
     "User",
     "UserGoal",
     "UserLearningProgress",

@@ -78,6 +78,7 @@ _HTTP_CODES = {
     404: "NOT_FOUND",
     405: "METHOD_NOT_ALLOWED",
     409: "CONFLICT",
+    413: "PAYLOAD_TOO_LARGE",
     429: "RATE_LIMITED",
 }
 
@@ -85,7 +86,11 @@ _HTTP_CODES = {
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError) -> JSONResponse:
-        return JSONResponse(error_body(exc.code, exc.message, exc.details), status_code=exc.status_code)
+        headers = None
+        if exc.status_code == 429 and isinstance(exc.details, dict) and "retry_after_seconds" in exc.details:
+            headers = {"Retry-After": str(int(exc.details["retry_after_seconds"]))}
+        return JSONResponse(error_body(exc.code, exc.message, exc.details), status_code=exc.status_code,
+                            headers=headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError) -> JSONResponse:

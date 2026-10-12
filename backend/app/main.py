@@ -11,10 +11,25 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from app.api.routes import admin, assessments, auth, competencies, learning, plan, practice, profile, progress
+from app.api.routes import (
+    admin,
+    admin_billing,
+    admin_system,
+    admin_users,
+    assessments,
+    auth,
+    billing,
+    competencies,
+    learning,
+    plan,
+    practice,
+    profile,
+    progress,
+)
 from app.core.config import get_settings
 from app.core.database import SessionLocal
 from app.core.errors import install_error_handlers
+from app.core.middleware import BodySizeLimitMiddleware, RequestContextMiddleware, SecurityHeadersMiddleware
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -23,8 +38,14 @@ Isker assesses and develops entrepreneurial competencies (EntreComp, 15 competen
 
 **Product loop:** Assess → Profile → Identify Gaps → Recommend → Learn → Practice → Re-assess → Track Progress.
 
-**Authentication:** `POST /api/auth/login` returns a JWT and also sets an httpOnly session cookie.
-Send the token as `Authorization: Bearer <token>` (or rely on the cookie in a browser).
+**Authentication:** `POST /api/auth/login` sets an httpOnly session cookie (`isker_session`) and a readable CSRF
+cookie (`isker_csrf`). Browsers must echo the CSRF cookie in an `X-CSRF-Token` header on POST/PUT/PATCH/DELETE.
+API clients may instead send the returned token as `Authorization: Bearer <token>` (no CSRF header needed).
+Every token is bound to a server-side session that can be revoked.
+
+**Authorization:** role-based (user, content_manager, support, admin, super_admin) with permission checks on the
+server. **Entitlements:** plan features are enforced by the server; a missing entitlement returns
+`403 UPGRADE_REQUIRED`.
 
 **Errors** always use one envelope: `{"error": {"code": "ASSESSMENT_NOT_FOUND", "message": "...", "details": ...}}`.
 """
@@ -42,7 +63,11 @@ TAGS = [
     {"name": "practice", "description": "Practical tasks with AI feedback"},
     {"name": "progress", "description": "Dashboard and longitudinal progress"},
     {"name": "ai", "description": "AI subsystem status and explanations"},
-    {"name": "admin", "description": "Content management, AI governance and statistics (admin only)"},
+    {"name": "billing", "description": "Plans, entitlements, payment webhooks and data export"},
+    {"name": "admin", "description": "Content management and AI governance (permission-based)"},
+    {"name": "admin-users", "description": "User management, roles and account lifecycle (permission-based)"},
+    {"name": "admin-billing", "description": "Plans and subscriptions administration (permission-based)"},
+    {"name": "admin-system", "description": "Analytics, roles, audit logs and settings (permission-based)"},
 ]
 
 
@@ -61,11 +86,17 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=["Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID"],
+        expose_headers=["X-Request-ID", "Retry-After"],
     )
+    # Added last = runs first: request id/context → security headers → body size limit → CORS → routes.
+    app.add_middleware(BodySizeLimitMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RequestContextMiddleware)
     install_error_handlers(app)
-    for r in (auth, profile, assessments, competencies, plan, learning, practice, progress, admin):
+    for r in (auth, profile, assessments, competencies, plan, learning, practice, progress, billing, admin,
+              admin_users, admin_billing, admin_system):
         app.include_router(r.router)
 
     @app.get("/api/health", tags=["progress"], summary="Liveness and database check")

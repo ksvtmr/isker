@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.models.enums import AIEvalStatus, AIInputType, Difficulty, QuestionType, ResourceType, UserRole
+from app.models.enums import AIEvalStatus, AIInputType, Difficulty, QuestionType, ResourceType
 from app.schemas.common import ORM
 
 
@@ -19,19 +19,6 @@ class AdminStats(BaseModel):
     resources_completed: int
     tasks_completed: int
     competency_averages: list[dict]
-
-
-class AdminUserOut(ORM):
-    id: int
-    email: str
-    full_name: str
-    role: UserRole
-    is_active: bool
-    onboarding_completed: bool
-    created_at: datetime
-    last_login_at: datetime | None
-    completed_attempts: int = 0
-    latest_overall: int | None = None
 
 
 class CompetencyUpdate(BaseModel):

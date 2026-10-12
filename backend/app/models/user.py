@@ -6,7 +6,7 @@ from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Te
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, TimestampMixin, utcnow
-from app.models.enums import ExperienceLevel, LearningFormat, UserRole, db_enum
+from app.models.enums import AccountStatus, ExperienceLevel, LearningFormat, db_enum
 
 
 class User(TimestampMixin, Base):
@@ -16,15 +16,34 @@ class User(TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(120))
-    role: Mapped[UserRole] = mapped_column(db_enum(UserRole, "user_role"), default=UserRole.USER)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    status: Mapped[AccountStatus] = mapped_column(
+        db_enum(AccountStatus, "account_status"), default=AccountStatus.ACTIVE, index=True
+    )
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    terms_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    terms_version: Mapped[str | None] = mapped_column(String(16))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status_reason: Mapped[str | None] = mapped_column(String(500))
+    deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     profile: Mapped[UserProfile | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
     goals: Mapped[list[UserGoal]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    role_links = relationship(
+        "UserRole", foreign_keys="UserRole.user_id", cascade="all, delete-orphan", back_populates="user"
+    )
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == AccountStatus.ACTIVE
+
+    @property
+    def role_keys(self) -> list[str]:
+        return sorted(link.role.key for link in self.role_links)
 
 
 class UserProfile(TimestampMixin, Base):
@@ -91,12 +110,3 @@ class UserGoal(Base):
 
     user: Mapped[User] = relationship(back_populates="goals")
     goal: Mapped[GoalDefinition] = relationship()
-
-
-class RevokedToken(Base):
-    """JWT denylist so that logout invalidates the token server-side."""
-
-    __tablename__ = "revoked_tokens"
-
-    jti: Mapped[str] = mapped_column(String(64), primary_key=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)

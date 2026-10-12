@@ -53,6 +53,7 @@ class ProgressOverview(BaseModel):
     reflections: int
     reassessments: int
     recent: list[ActivityLogItem]
+    locked_features: list[str] = []
 
 
 class DashboardOut(BaseModel):

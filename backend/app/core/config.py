@@ -23,7 +23,34 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expires_minutes: int = 60 * 24
     auth_cookie_name: str = "isker_session"
-    cookie_secure: bool = False
+    csrf_cookie_name: str = "isker_csrf"
+    # None = automatic: Secure cookies in production, plain cookies in development (http://localhost).
+    cookie_secure: bool | None = None
+
+    # Public URL of the web app; used to build links in emails (verification, password reset).
+    app_base_url: str = "http://localhost:5173"
+    # Email: auto | smtp | console | disabled. auto = smtp when SMTP_HOST is set, console in development,
+    # otherwise disabled. "console" writes emails to the server log and is refused in production.
+    email_backend: str = "auto"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "Isker <no-reply@isker.local>"
+    smtp_starttls: bool = True
+    # When true, unverified accounts can't sign in (only enable once email delivery works).
+    require_email_verification: bool = False
+    verification_token_hours: int = 48
+    reset_token_minutes: int = 60
+    terms_version: str = "2026-10"
+
+    # Abuse protection
+    rate_limit_enabled: bool = True
+    max_request_bytes: int = 1_000_000
+
+    # Payments (no provider is integrated yet; see app/services/payments.py)
+    payment_provider: str = ""
+    payment_webhook_secret: str = ""
 
     # Comma-separated in the environment (NoDecode: not parsed as JSON).
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173", "http://localhost:8080"]
@@ -68,7 +95,23 @@ class Settings(BaseSettings):
             self.jwt_secret = secrets.token_urlsafe(48)
         if self.is_production and len(self.jwt_secret) < 32:
             raise ValueError("JWT_SECRET must be at least 32 characters in production")
+        if any(o.strip() == "*" for o in self.cors_origins):
+            raise ValueError("CORS_ORIGINS must list explicit origins; '*' is not allowed with credentials")
+        if self.is_production and self.email_backend == "console":
+            raise ValueError("EMAIL_BACKEND=console is for development only")
         return self
+
+    @property
+    def secure_cookies(self) -> bool:
+        return self.is_production if self.cookie_secure is None else self.cookie_secure
+
+    @property
+    def effective_email_backend(self) -> str:
+        if self.email_backend != "auto":
+            return self.email_backend
+        if self.smtp_host:
+            return "smtp"
+        return "disabled" if self.is_production else "console"
 
     @property
     def is_production(self) -> bool:

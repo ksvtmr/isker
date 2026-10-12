@@ -13,6 +13,7 @@ from app.models import Competency, LearningResource, Recommendation, UserLearnin
 from app.models.enums import Difficulty, ProgressStatus, RecommendationStatus, ResourceType
 from app.schemas.common import ERROR_RESPONSES, Page
 from app.schemas.learning import ProgressIn, ResourceDetail, ResourceOut
+from app.services import entitlements
 from app.services import recommendations as rec_service
 from app.services.audit import audit
 
@@ -88,10 +89,16 @@ def list_resources(
             r for r in rows if (progress[r.id].status if r.id in progress else ProgressStatus.NOT_STARTED) == status
         ]
     rows.sort(key=lambda r: (r.id not in recs, r.competency.sort_order, r.id))
+    adv = entitlements.allows(db, user, "learning.advanced_resources")
     total = len(rows)
     rows = rows[(page - 1) * page_size : page * page_size]
     return Page[ResourceOut](
-        items=[ResourceOut(**_out(r, progress.get(r.id), r.id in recs)) for r in rows],
+        items=[
+            ResourceOut(
+                **_out(r, progress.get(r.id), r.id in recs), locked=r.difficulty == Difficulty.ADVANCED and not adv
+            )
+            for r in rows
+        ],
         total=total,
         page=page,
         page_size=page_size,
@@ -106,6 +113,14 @@ def _get(db, rid: int) -> LearningResource:
     )
     if r is None:
         raise NotFoundError("Learning resource not found", "RESOURCE_NOT_FOUND")
+    return r
+
+
+def _get_for(db, user, rid: int) -> LearningResource:
+    """Load a resource the user's plan allows (advanced resources need learning.advanced_resources)."""
+    r = _get(db, rid)
+    if r.difficulty == Difficulty.ADVANCED:
+        entitlements.require(db, user, "learning.advanced_resources", consume=0)
     return r
 
 
@@ -130,7 +145,7 @@ def _detail(db, user_id: int, r: LearningResource) -> ResourceDetail:
 
 @router.get("/resources/{resource_id}", response_model=ResourceDetail, summary="Resource content and progress")
 def get_resource(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
-    r = _get(db, resource_id)
+    r = _get_for(db, user, resource_id)
     p = _progress(db, user.id, r.id)
     if p is not None:
         p.last_accessed_at = utcnow()
@@ -140,7 +155,7 @@ def get_resource(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
 
 @router.post("/resources/{resource_id}/start", response_model=ResourceDetail, summary="Start (or continue)")
 def start(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
-    r = _get(db, resource_id)
+    r = _get_for(db, user, resource_id)
     p = _progress(db, user.id, r.id)
     now = utcnow()
     if p is None:
@@ -157,7 +172,7 @@ def start(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
 
 @router.put("/resources/{resource_id}/progress", response_model=ResourceDetail, summary="Update reading progress")
 def update_progress(resource_id: int, body: ProgressIn, user: CurrentUser, db: DB) -> ResourceDetail:
-    r = _get(db, resource_id)
+    r = _get_for(db, user, resource_id)
     p = _progress(db, user.id, r.id)
     now = utcnow()
     if p is None:
@@ -174,7 +189,7 @@ def update_progress(resource_id: int, body: ProgressIn, user: CurrentUser, db: D
 
 @router.post("/resources/{resource_id}/complete", response_model=ResourceDetail, summary="Mark as completed")
 def complete(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
-    r = _get(db, resource_id)
+    r = _get_for(db, user, resource_id)
     p = _progress(db, user.id, r.id)
     now = utcnow()
     if p is None:

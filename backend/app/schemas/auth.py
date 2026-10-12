@@ -5,8 +5,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from app.models.enums import UserRole
-from app.schemas.common import ORM
+from app.models.enums import AccountStatus
 
 
 def _strong(pw: str) -> str:
@@ -19,6 +18,14 @@ class RegisterIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     full_name: str = Field(min_length=2, max_length=120)
+    accept_terms: bool = Field(description="Must be true: the user accepts the terms and the privacy notice")
+
+    @field_validator("accept_terms")
+    @classmethod
+    def _terms(cls, v: bool) -> bool:
+        if v is not True:
+            raise ValueError("Accept the terms and privacy notice to create an account")
+        return v
 
     @field_validator("password")
     @classmethod
@@ -60,12 +67,15 @@ class ChangePasswordIn(BaseModel):
         return _strong(v)
 
 
-class UserOut(ORM):
+class UserOut(BaseModel):
     id: int
     email: str
     full_name: str
-    role: UserRole
+    status: AccountStatus
+    roles: list[str]
+    permissions: list[str]
     onboarding_completed: bool
+    email_verified: bool
     created_at: datetime
 
 
@@ -74,3 +84,41 @@ class AuthOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_at: datetime
+    email_verification: str  # "verified" | "sent" | "logged" | "unavailable" | "not_required"
+
+
+class EmailIn(BaseModel):
+    email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+$")
+
+    @field_validator("email")
+    @classmethod
+    def _lower(cls, v: str) -> str:
+        return v.strip().lower()
+
+
+class TokenIn(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+
+
+class ResetPasswordIn(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+    new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def _pw(cls, v: str) -> str:
+        return _strong(v)
+
+
+class PasswordConfirmIn(BaseModel):
+    password: str = Field(min_length=1, max_length=128)
+
+
+class SessionOut(BaseModel):
+    id: str
+    created_at: datetime
+    last_seen_at: datetime
+    expires_at: datetime
+    user_agent: str | None
+    ip_address: str | None
+    current: bool

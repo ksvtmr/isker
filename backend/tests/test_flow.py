@@ -176,10 +176,14 @@ def test_onboarding_rejects_unknown_goal(client):
     assert r.status_code == 422 and r.json()["error"]["code"] == "INVALID_GOAL"
 
 
-def test_delete_account(client):
+def test_close_account_requires_password_and_signs_out(client):
     register(client)
     attempt_id = _start(client)["attempt"]["id"]
     answer_all(client, attempt_id)
     client.post(f"/api/assessments/attempts/{attempt_id}/submit")
-    assert client.delete("/api/users/me").status_code == 200
+    r = client.post("/api/auth/deactivate", json={"password": "Wrong1234"})
+    assert r.status_code == 401
+    assert client.post("/api/auth/deactivate", json={"password": "Secret123"}).status_code == 200
     assert client.get("/api/auth/me").status_code == 401
+    r = client.post("/api/auth/login", json={"email": "learner@example.com", "password": "Secret123"})
+    assert r.status_code == 401 and r.json()["error"]["code"] == "ACCOUNT_DEACTIVATED"

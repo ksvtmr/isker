@@ -1,21 +1,9 @@
-from app.core.security import hash_password
-from app.models import User
-from app.models.enums import UserRole
+from tests.conftest import login, make_user
 
 
 def _admin(client, db):
-    db.add(
-        User(
-            email="admin@example.com",
-            password_hash=hash_password("Admin1234"),
-            full_name="Admin",
-            role=UserRole.ADMIN,
-            onboarding_completed=True,
-        )
-    )
-    db.commit()
-    r = client.post("/api/auth/login", json={"email": "admin@example.com", "password": "Admin1234"})
-    assert r.status_code == 200
+    make_user(db, "admin@example.com", ("user", "admin"), password="Admin1234")
+    login(client, "admin@example.com", "Admin1234")
 
 
 def test_admin_stats_and_catalogue(client, db):

@@ -20,7 +20,8 @@ def test_password_is_hashed(client, db):
 def test_duplicate_email_conflict(client):
     register(client)
     r = client.post(
-        "/api/auth/register", json={"email": "LEARNER@example.com", "password": "Secret123", "full_name": "Other"}
+        "/api/auth/register", json={"email": "LEARNER@example.com", "password": "Secret123", "full_name": "Other",
+              "accept_terms": True},
     )
     assert r.status_code == 409
     assert r.json()["error"]["code"] == "EMAIL_TAKEN"
@@ -73,6 +74,7 @@ def test_admin_requires_admin_role(client):
     r = client.get("/api/admin/stats")
     assert r.status_code == 403
     assert r.json()["error"]["code"] == "FORBIDDEN"
+    assert "missing" in r.json()["error"]["details"]
 
 
 def test_login_works_for_reserved_domain_accounts(client, db):

@@ -12,6 +12,7 @@ from app.models import AIEvaluation, Competency, PracticalTask, PracticeSubmissi
 from app.models.enums import AIInputType, PracticeStatus, RecommendationStatus
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.learning import FeedbackOut, SubmitIn, TaskDetail, TaskOut
+from app.services import entitlements
 from app.services import recommendations as rec_service
 from app.services.audit import audit
 
@@ -133,6 +134,7 @@ def get_task(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
 def start(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
     t = _get(db, task_id)
     if _sub(db, user.id, t.id) is None:
+        entitlements.require(db, user, "practice.tasks")
         db.add(PracticeSubmission(user_id=user.id, task_id=t.id, status=PracticeStatus.STARTED))
         audit(db, user.id, "practice.started", "practical_task", t.id)
     rec_service.on_task_started(db, user.id, t.id)
@@ -152,8 +154,10 @@ def submit(task_id: int, body: SubmitIn, user: CurrentUser, db: DB) -> TaskDetai
         raise ValidationError(
             f"Write at least {t.min_length} characters so the feedback can be specific.", "RESPONSE_TOO_SHORT"
         )
+    entitlements.require(db, user, "practice.ai_feedback", consume=0)
     s = _sub(db, user.id, t.id)
     if s is None:
+        entitlements.require(db, user, "practice.tasks")
         s = PracticeSubmission(user_id=user.id, task_id=t.id, status=PracticeStatus.STARTED)
         db.add(s)
     if s.status == PracticeStatus.COMPLETED:

@@ -41,12 +41,22 @@ class Notification(Base):
 
 
 class AuditLog(Base):
+    """Append-only audit trail. No API updates or deletes rows; on PostgreSQL a trigger rejects UPDATE/DELETE.
+
+    `actor_id` and `target_id` are plain integers (no foreign keys) so that history survives account deletion
+    and is never rewritten. Never store passwords, tokens or secrets in `details`.
+    """
+
     __tablename__ = "audit_logs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    actor_id: Mapped[int | None] = mapped_column(Integer, index=True)
     action: Mapped[str] = mapped_column(String(64), index=True)
-    entity_type: Mapped[str | None] = mapped_column(String(64))
-    entity_id: Mapped[int | None] = mapped_column(Integer)
+    target_type: Mapped[str | None] = mapped_column(String(64))
+    target_id: Mapped[int | None] = mapped_column(Integer, index=True)
+    outcome: Mapped[str] = mapped_column(String(16), default="success", index=True)
+    reason: Mapped[str | None] = mapped_column(String(500))
+    request_id: Mapped[str | None] = mapped_column(String(64))
+    ip_address: Mapped[str | None] = mapped_column(String(64))
     details: Mapped[dict | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
