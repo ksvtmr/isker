@@ -1,10 +1,10 @@
-import { Button, Card, EmptyState, Icon, InlineAlert, PageHeader, Prose, ProgressBar, StatusBadge } from "@isker/design-system";
+import { Button, Card, EmptyState, Icon, PageHeader, Prose, ProgressBar, StatusBadge } from "@isker/design-system";
 import { useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ApiError, errorMessage } from "../api/client";
+import { ApiError } from "../api/client";
 import { useCompleteResource, useResource, useResourceProgress, useStartResource } from "../api/learning";
 import { LinkButton } from "../components/RouterLink";
-import { ErrorState, PageSkeleton } from "../components/States";
+import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { useToast } from "../components/Toaster";
 import { DIFFICULTY_LABEL, RESOURCE_TYPE_LABEL, formatDate } from "../utils/format";
 
@@ -49,7 +49,7 @@ export function LearningDetailPage() {
           {!started ? (
             <div>
               <p style={{ fontSize: 15, color: "var(--color-neutral-700)" }}>Start this {RESOURCE_TYPE_LABEL[r.type].toLowerCase()} to track your progress. It counts towards your plan for <b>{r.competency_name}</b>.</p>
-              {start.error && <div style={{ marginTop: 12 }}><InlineAlert>{errorMessage(start.error)}</InlineAlert></div>}
+              {start.error && <div style={{ marginTop: 12 }}><ApiErrorAlert error={start.error} /></div>}
               <div style={{ marginTop: 20 }}><Button size="lg" iconLeft="book-open" loading={start.isPending} onClick={() => start.mutate(r.id)}>Start {RESOURCE_TYPE_LABEL[r.type]}</Button></div>
             </div>
           ) : (
@@ -70,7 +70,7 @@ export function LearningDetailPage() {
             </div>
             {r.status === "in_progress" && (
               <div style={{ marginTop: 16 }}>
-                {complete.error && <div style={{ marginBottom: 12 }}><InlineAlert>{errorMessage(complete.error)}</InlineAlert></div>}
+                {complete.error && <div style={{ marginBottom: 12 }}><ApiErrorAlert error={complete.error} /></div>}
                 <Button variant="success" iconLeft="check" fullWidth loading={complete.isPending}
                   onClick={() => complete.mutate(r.id, { onSuccess: () => toast({ title: "Marked as complete", description: "Added to your progress and plan." }) })}>
                   Mark as complete

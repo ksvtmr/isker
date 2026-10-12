@@ -1,5 +1,6 @@
-import { Button, EmptyState, SkeletonCard } from "@isker/design-system";
-import { errorMessage } from "../api/client";
+import { Button, EmptyState, InlineAlert, SkeletonCard } from "@isker/design-system";
+import { errorMessage, isUpgradeRequired } from "../api/client";
+import { LinkButton } from "./RouterLink";
 
 /** Page-level loading skeleton (shimmer, never a blank screen). */
 export function PageSkeleton({ cards = 3, chart = true }: { cards?: number; chart?: boolean }) {
@@ -16,8 +17,11 @@ export function PageSkeleton({ cards = 3, chart = true }: { cards?: number; char
   );
 }
 
-/** Friendly error with retry. */
+/** Friendly error with retry. Plan limits (UPGRADE_REQUIRED) get a link to the plans page instead of a retry. */
 export function ErrorState({ error, onRetry, title = "Something went wrong" }: { error: unknown; onRetry?: () => void; title?: string }) {
+  if (isUpgradeRequired(error)) {
+    return <EmptyState icon="lock" title="Not included in your plan" description={errorMessage(error)} action={<LinkButton to="/plans">See plans</LinkButton>} />;
+  }
   return (
     <EmptyState
       tone="error"
@@ -27,4 +31,18 @@ export function ErrorState({ error, onRetry, title = "Something went wrong" }: {
       action={onRetry && <Button variant="secondary" iconLeft="rotate-cw" onClick={onRetry}>Try again</Button>}
     />
   );
+}
+
+/** Inline error for a failed action. Plan limits show a "See plans" link. */
+export function ApiErrorAlert({ error }: { error: unknown }) {
+  if (!error) return null;
+  if (isUpgradeRequired(error)) {
+    return (
+      <InlineAlert tone="warning" title="Not included in your plan">
+        {errorMessage(error)}
+        <span style={{ display: "block", marginTop: 8 }}><LinkButton to="/plans" size="sm" variant="secondary">See plans</LinkButton></span>
+      </InlineAlert>
+    );
+  }
+  return <InlineAlert>{errorMessage(error)}</InlineAlert>;
 }

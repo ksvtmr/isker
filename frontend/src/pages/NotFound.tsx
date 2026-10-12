@@ -8,3 +8,8 @@ export function NotFound() {
     </main>
   );
 }
+
+/** Not-found content inside an existing layout (e.g. the admin shell). */
+export function NotFoundInline() {
+  return <EmptyState icon="search-x" title="Page not found" description="This admin page doesn't exist." action={<LinkButton to="/admin">Admin dashboard</LinkButton>} />;
+}

@@ -22,7 +22,7 @@ a{color:var(--color-brand-600);text-decoration:none}a:hover{color:var(--color-br
 .isk-btn--secondary{background:#fff;color:var(--color-neutral-800);border-color:var(--color-neutral-200)}.isk-btn--secondary:hover{background:var(--color-neutral-50)}
 .isk-btn--ghost{background:transparent;color:var(--color-neutral-700)}.isk-btn--ghost:hover{background:var(--color-neutral-100)}
 .isk-btn--danger{background:var(--color-error);color:#fff}.isk-btn--danger:hover{background:#b91c1c}
-.isk-btn--success{background:var(--color-growth-600);color:#fff}.isk-btn--success:hover{background:var(--color-growth-700)}
+.isk-btn--success{background:var(--color-growth-700);color:#fff}.isk-btn--success:hover{background:var(--color-growth-800)}
 .isk-btn--full{width:100%}
 .isk-spinner{width:16px;height:16px;border-radius:9999px;border:2px solid rgb(255 255 255 / .4);border-top-color:#fff;animation:isk-spin .8s linear infinite}
 .isk-btn--secondary .isk-spinner,.isk-btn--ghost .isk-spinner{border-color:var(--color-neutral-200);border-top-color:var(--color-neutral-600)}
@@ -32,7 +32,7 @@ a{color:var(--color-brand-600);text-decoration:none}a:hover{color:var(--color-br
 .isk-label{font-size:var(--text-sm);font-weight:500;color:var(--color-neutral-700)}
 .isk-hint{font-size:var(--text-xs);color:var(--color-neutral-500)}.isk-hint--error{color:var(--color-error)}.isk-hint--success{color:var(--color-success)}
 .isk-input{height:40px;padding:0 12px;border:1px solid var(--color-neutral-200);border-radius:var(--radius-md);background:#fff;color:var(--color-neutral-900);font-size:var(--text-sm);transition:border-color var(--duration-fast),box-shadow var(--duration-fast);width:100%}
-.isk-input::placeholder{color:var(--color-neutral-400)}
+.isk-input::placeholder{color:var(--color-neutral-500)}
 .isk-input:hover{border-color:var(--color-neutral-300)}
 .isk-input:focus{outline:none;border-color:var(--color-brand-500);box-shadow:0 0 0 3px var(--color-brand-100)}
 .isk-input:disabled{background:var(--color-neutral-50);color:var(--color-neutral-400);cursor:not-allowed}
@@ -83,7 +83,7 @@ a.isk-btn:hover{text-decoration:none}
 .isk-sidebar__user{margin-top:12px;display:flex;align-items:center;gap:10px;padding:12px;border:0;border-top:1px solid var(--color-neutral-100);background:transparent;text-align:left;width:100%;border-radius:0;color:inherit}
 .isk-sidebar__user:hover{background:var(--color-neutral-50);text-decoration:none}
 .isk-avatar{width:32px;height:32px;flex:none;border-radius:9999px;background:var(--color-brand-100);color:var(--color-brand-700);display:grid;place-items:center;font-size:12px;font-weight:600}
-.isk-sidebar__section{margin:16px 12px 6px;font-size:11px;font-weight:600;letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--color-neutral-400)}
+.isk-sidebar__section{margin:16px 12px 6px;font-size:11px;font-weight:600;letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--color-neutral-500)}
 /* Tablet: collapsed (icon-only) sidebar */
 @media (min-width:768px) and (max-width:1099px){
   .isk-sidebar{width:76px;padding:20px 12px}
@@ -119,4 +119,58 @@ a.isk-btn:hover{text-decoration:none}
 @media (max-width:767px){.ik-page-head{margin-bottom:20px}.ik-page-head__action{width:100%}.ik-page-head__action .isk-btn{width:100%}}
 .ik-score{display:flex;align-items:baseline;gap:6px}
 .ik-score__value{font-weight:600;letter-spacing:-0.03em;line-height:1;color:var(--color-neutral-900)}
-.ik-score__max{color:var(--color-neutral-400)}
+.ik-score__max{color:var(--color-neutral-500)}
+/* --- Administration & data components (Additions) --- */
+.isk-badge{display:inline-flex;align-items:center;gap:5px;border-radius:9999px;padding:2px 9px;font-size:var(--text-xs);font-weight:500;line-height:18px;white-space:nowrap;border:1px solid transparent}
+.isk-badge--neutral{background:var(--color-neutral-100);color:var(--color-neutral-700)}
+.isk-badge--brand{background:var(--color-brand-50);color:var(--color-brand-700);border-color:var(--color-brand-100)}
+.isk-badge--success{background:var(--color-growth-50);color:var(--color-growth-800);border-color:var(--color-growth-100)}
+.isk-badge--warning{background:var(--color-warning-bg);color:#92400e;border-color:#fde68a}
+.isk-badge--error{background:var(--color-error-bg);color:#991b1b;border-color:#fecaca}
+.isk-badge--info{background:var(--color-info-bg);color:var(--color-brand-800);border-color:var(--color-brand-100)}
+.isk-crumbs ol{display:flex;flex-wrap:wrap;align-items:center;gap:6px;list-style:none;margin:0 0 12px;padding:0;font-size:13px;color:var(--color-neutral-500)}
+.isk-crumbs li{display:inline-flex;align-items:center;gap:6px}
+.isk-crumbs a{color:var(--color-neutral-600);font-weight:500}.isk-crumbs a:hover{color:var(--color-brand-700)}
+.isk-crumbs [aria-current="page"]{color:var(--color-neutral-900);font-weight:500}
+.isk-table-wrap{overflow-x:auto;position:relative}
+.isk-table{width:100%;border-collapse:collapse;font-size:14px}
+.isk-table th{text-align:left;font-size:12px;font-weight:500;color:var(--color-neutral-600);padding:10px 16px;border-bottom:1px solid var(--color-neutral-200);background:var(--color-neutral-50);white-space:nowrap}
+.isk-table td{padding:12px 16px;border-bottom:1px solid var(--color-neutral-100);vertical-align:middle;color:var(--color-neutral-800)}
+.isk-table tr:last-child td{border-bottom:0}
+.isk-table .isk-num{font-variant-numeric:tabular-nums}
+.isk-sort-btn{all:unset;display:inline-flex;align-items:center;gap:4px;cursor:pointer;border-radius:4px}
+.isk-sort-btn:hover{color:var(--color-neutral-900)}
+.isk-sort-btn:focus-visible{outline:3px solid var(--color-brand-200);outline-offset:2px}
+.isk-row-link{color:var(--color-neutral-900);font-weight:500;display:inline-block}
+.isk-row-link:hover{color:var(--color-brand-700)}
+.isk-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--color-neutral-100);font-size:13px;color:var(--color-neutral-600)}
+.isk-stepper{display:flex;gap:8px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+.isk-stepper__item{flex:1 1 140px;min-width:0}
+.isk-stepper__link{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:var(--radius-md);border:1px solid var(--color-neutral-200);background:#fff;color:inherit;height:100%}
+a.isk-stepper__link:hover{border-color:var(--color-brand-300);text-decoration:none}
+.isk-stepper__item[aria-current="step"] .isk-stepper__link{border-color:var(--color-brand-600);box-shadow:0 0 0 1px var(--color-brand-600)}
+.isk-stepper__dot{width:24px;height:24px;flex:none;border-radius:9999px;display:grid;place-items:center;font-size:12px;font-weight:600}
+.isk-stepper__dot--done{background:var(--color-growth-50);color:var(--color-growth-700)}
+.isk-stepper__dot--current{background:var(--color-brand-600);color:#fff}
+.isk-stepper__dot--todo{background:var(--color-neutral-100);color:var(--color-neutral-600)}
+.isk-stepper__label{display:block;font-size:13px;font-weight:600;color:var(--color-neutral-900)}
+.isk-stepper__desc{display:block;font-size:12px;color:var(--color-neutral-500);margin-top:2px}
+.isk-admin{display:flex;min-height:100vh;background:var(--color-neutral-50)}
+.isk-admin__side{flex:none}
+.isk-admin__main{flex:1;min-width:0}
+.isk-admin__main:focus{outline:none}
+.isk-admin__content{max-width:1280px;margin:0 auto;padding:28px 36px 64px}
+.isk-admin__mobile{display:none}
+.isk-kv{display:grid;gap:10px;margin:0;font-size:14px}
+.isk-kv__row{display:grid;grid-template-columns:minmax(140px,200px) 1fr;gap:16px}
+.isk-kv dt{color:var(--color-neutral-500)}.isk-kv dd{margin:0;color:var(--color-neutral-900);min-width:0;overflow-wrap:anywhere}
+@media (max-width:767px){
+  .isk-admin{flex-direction:column}
+  .isk-admin__side{display:none}
+  .isk-admin__mobile{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;z-index:30;height:56px;padding:0 16px;background:#fff;border-bottom:1px solid var(--color-neutral-200)}
+  .isk-admin__content{padding:20px 16px 48px}
+  .isk-hide-sm{display:none}
+  .isk-kv__row{grid-template-columns:1fr;gap:2px}
+}
+/* Links inside running text are underlined so they don't rely on colour alone (WCAG 1.4.1). */
+p a:not(.isk-btn),li > a:not(.isk-btn):not(.isk-nav-item):not(.ik-list-row):not(.isk-row-link):not(.isk-stepper__link):not(.ik-row-btn),.isk-alert a:not(.isk-btn),.isk-prose a,.isk-check a,dd a{text-decoration:underline;text-underline-offset:2px}

@@ -1,4 +1,4 @@
-import { Card, ChartCard, CompareBars, EmptyState, Icon, LineChart, PageHeader, ScoreValue, StatCard, Tabs } from "@isker/design-system";
+import { Card, ChartCard, InlineAlert, CompareBars, EmptyState, Icon, LineChart, PageHeader, ScoreValue, StatCard, Tabs } from "@isker/design-system";
 import { useState } from "react";
 import { useProgress } from "../api/progress";
 import { LinkButton } from "../components/RouterLink";
@@ -31,6 +31,13 @@ export function ProgressPage() {
   return (
     <>
       <PageHeader title="Your Progress" subtitle={`How your competencies changed across ${snaps.length} measurement${snaps.length === 1 ? "" : "s"}.`} />
+      {p.locked_features?.includes("progress.history") && (
+        <div style={{ marginBottom: 20 }}>
+          <InlineAlert tone="info" title="Showing your latest two measurements">
+            Your plan includes the current and previous measurement. <LinkButton to="/plans" size="sm" variant="ghost">See plans with full history</LinkButton>
+          </InlineAlert>
+        </div>
+      )}
       <div style={{ marginBottom: 24, overflowX: "auto" }}>
         <Tabs ariaLabel="Filter by area" value={area} onChange={setArea} tabs={[{ value: "all", label: "All competencies" }, ...AREAS]} />
       </div>
@@ -40,7 +47,7 @@ export function ProgressPage() {
           <div style={{ marginTop: 8 }}><ScoreValue value={last} label="Current score" /></div>
           <dl className="ik-kv" style={{ marginTop: 16 }}>
             {prev !== null && <><dt>Previous</dt><dd>{prev}</dd></>}
-            <dt>Change</dt><dd style={{ fontWeight: 600, color: last - (prev ?? last) >= 0 ? "var(--color-growth-600)" : "var(--color-error)" }}>{prev !== null ? signed(last - prev) : "—"}</dd>
+            <dt>Change</dt><dd style={{ fontWeight: 600, color: last - (prev ?? last) >= 0 ? "var(--color-growth-700)" : "var(--color-error)" }}>{prev !== null ? signed(last - prev) : "—"}</dd>
             <dt>Since first</dt><dd>{signed(last - first) || "0"}</dd>
           </dl>
           <ul style={{ marginTop: 16, listStyle: "none", padding: 0 }}>

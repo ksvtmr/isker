@@ -39,7 +39,7 @@ export function PracticePage() {
                     {t.duration_minutes} min · {DIFFICULTY_LABEL[t.difficulty]}
                     {st && <StatusBadge status={st[0]}>{st[1]}{t.feedback_score !== null ? ` · ${t.feedback_score}` : ""}</StatusBadge>}
                   </span>
-                  <LinkButton to={`/practice/${t.id}`} size="sm" variant="secondary" aria-label={`Open task: ${t.title}`}>{t.status ? "Open" : "Start"}</LinkButton>
+                  <LinkButton to={`/practice/${t.id}`} size="sm" variant="secondary" aria-label={`${t.status ? "Open" : "Start"}: ${t.title}`}>{t.status ? "Open" : "Start"}</LinkButton>
                 </div>
               </Card>
             );

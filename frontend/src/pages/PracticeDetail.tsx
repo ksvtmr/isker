@@ -1,10 +1,10 @@
-import { AIInsight, Button, Card, EmptyState, InlineAlert, LevelBadge, PageHeader, ProgressBar, ScoreValue, StatusBadge, Textarea } from "@isker/design-system";
+import { AIInsight, Button, Card, EmptyState, LevelBadge, PageHeader, ProgressBar, ScoreValue, StatusBadge, Textarea } from "@isker/design-system";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ApiError, errorMessage } from "../api/client";
+import { ApiError } from "../api/client";
 import { useCompleteTask, useStartTask, useSubmitTask, useTask } from "../api/learning";
 import { LinkButton } from "../components/RouterLink";
-import { ErrorState, PageSkeleton } from "../components/States";
+import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { useToast } from "../components/Toaster";
 import { DIFFICULTY_LABEL, confidenceLabel } from "../utils/format";
 
@@ -33,7 +33,7 @@ export function PracticeDetailPage() {
     <>
       <PageHeader back={{ label: "Practice", href: "/practice", onClick: () => navigate("/practice") }}
         eyebrow={`Practical task · ${t.duration_minutes} min · ${DIFFICULTY_LABEL[t.difficulty]}`} title={t.title} subtitle={t.description} />
-      {mutationError && <div style={{ marginBottom: 16 }}><InlineAlert>{errorMessage(mutationError)}</InlineAlert></div>}
+      {mutationError && <div style={{ marginBottom: 16 }}><ApiErrorAlert error={mutationError} /></div>}
       <div className="ik-grid3" style={{ alignItems: "start" }}>
         <div className="ik-span2" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Card padding={28}>

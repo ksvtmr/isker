@@ -1,13 +1,13 @@
 import {
-  AIInsight, Button, Card, ChartCard, EmptyState, GapBadge, Icon, InlineAlert, LevelBadge, LineChart, PageHeader, ProgressBar,
+  AIInsight, Button, Card, ChartCard, EmptyState, GapBadge, Icon, LevelBadge, LineChart, PageHeader, ProgressBar,
   ScoreValue, SectionTitle, StatusBadge,
 } from "@isker/design-system";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStartAttempt } from "../api/assessments";
-import { ApiError, errorMessage } from "../api/client";
+import { ApiError } from "../api/client";
 import { useCompetencyDetail } from "../api/competencies";
 import { LinkButton, useSpaClick } from "../components/RouterLink";
-import { ErrorState, PageSkeleton } from "../components/States";
+import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import type { RecommendedItem } from "../types/api";
 import { confidenceLabel, formatDate, gapLabel, shortMonth, signed } from "../utils/format";
 
@@ -82,7 +82,7 @@ export function CompetencyDetailPage() {
   return (
     <>
       <PageHeader back={back} eyebrow={c.area.name} title={c.name} action={reassessBtn} />
-      {start.error && <div style={{ marginBottom: 16 }}><InlineAlert>{errorMessage(start.error)}</InlineAlert></div>}
+      {start.error && <div style={{ marginBottom: 16 }}><ApiErrorAlert error={start.error} /></div>}
 
       <div className="ik-grid3" style={{ marginBottom: 24 }}>
         <Card padding={24}>
@@ -94,7 +94,7 @@ export function CompetencyDetailPage() {
           <div style={{ marginTop: 20 }}><ProgressBar value={cur.score} target={cur.target} showValue={false} ariaLabel={`Score ${cur.score}, target ${cur.target}`} /></div>
           <dl className="ik-kv" style={{ marginTop: 16 }}>
             <dt>Target</dt><dd>{cur.target} / 100{cur.gap ? ` · ${cur.gap} points to go` : " · reached"}</dd>
-            {cur.change !== null && <><dt>Progress</dt><dd style={{ color: cur.change >= 0 ? "var(--color-growth-600)" : "var(--color-error)", fontWeight: 500 }}>{signed(cur.change)} since previous measurement</dd></>}
+            {cur.change !== null && <><dt>Progress</dt><dd style={{ color: cur.change >= 0 ? "var(--color-growth-700)" : "var(--color-error)", fontWeight: 500 }}>{signed(cur.change)} since previous measurement</dd></>}
             {first !== undefined && hist.length > 1 && <><dt>Since first</dt><dd>{signed(cur.score - first)} points</dd></>}
             <dt>Measured</dt><dd>{formatDate(cur.assessed_at)}</dd>
           </dl>

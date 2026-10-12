@@ -1,6 +1,8 @@
 /** Types mirroring the backend Pydantic schemas (see /api/docs). */
 
-export type Role = "user" | "admin";
+export type RoleKey = "user" | "content_manager" | "support" | "admin" | "super_admin" | (string & {});
+export type AccountStatus = "active" | "suspended" | "deactivated";
+export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "expired" | "incomplete";
 export type Level = "Foundation" | "Developing" | "Intermediate" | "Advanced" | "Proficient";
 export type GapBand = "high" | "medium" | "low";
 export type QuestionType = "likert" | "situational" | "open" | "practical";
@@ -19,16 +21,98 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
-  role: Role;
+  status: AccountStatus;
+  roles: RoleKey[];
+  permissions: string[];
   onboarding_completed: boolean;
+  email_verified: boolean;
   created_at: string;
 }
+
+/** What the API says happened with the confirmation email. "logged" = dev mode: written to the server log, not sent. */
+export type VerificationState = "verified" | "sent" | "logged" | "unavailable" | "not_required" | "not_verified";
 
 export interface AuthResponse {
   user: User;
   access_token: string;
   token_type: string;
   expires_at: string;
+  email_verification: VerificationState;
+}
+
+export interface SessionInfo {
+  id: string;
+  created_at: string;
+  last_seen_at: string | null;
+  expires_at: string;
+  user_agent: string | null;
+  current: boolean;
+}
+
+export interface Entitlement {
+  key: string;
+  label: string;
+  description: string;
+  kind: "flag" | "limit";
+  enabled: boolean;
+  limit: number | null;
+  used: number | null;
+  remaining: number | null;
+  window_days: number | null;
+}
+
+export interface BillingPlan {
+  id: number;
+  key: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  currency: string;
+  billing_interval: "none" | "month" | "year";
+  trial_days: number;
+  is_active: boolean;
+  is_default: boolean;
+  sort_order: number;
+  entitlements: { feature_key: string; enabled: boolean; limit_value: number | null }[];
+}
+
+export interface Subscription {
+  id: number;
+  user_id: number;
+  plan: BillingPlan;
+  status: SubscriptionStatus;
+  source: "system" | "admin" | "payment" | "trial";
+  started_at: string;
+  expires_at: string | null;
+  cancel_at_period_end: boolean;
+  canceled_at: string | null;
+  ended_at: string | null;
+  created_by_id: number | null;
+  provider: string | null;
+  note: string | null;
+}
+
+export interface SubscriptionEvent {
+  id: number;
+  subscription_id: number;
+  user_id: number;
+  event_type: string;
+  from_status: string | null;
+  to_status: string | null;
+  plan_id: number | null;
+  actor_id: number | null;
+  source: string;
+  reason: string | null;
+  details: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface MySubscription {
+  plan: BillingPlan;
+  subscription: Subscription | null;
+  entitlements: Entitlement[];
+  history: SubscriptionEvent[];
+  payments: { provider: string | null; configured: boolean; checkout_available: boolean; note: string };
 }
 
 export interface Goal {
@@ -320,6 +404,8 @@ export interface Resource {
   recommended: boolean;
   started_at: string | null;
   completed_at: string | null;
+  /** Advanced resource not included in the user's plan. */
+  locked?: boolean;
 }
 
 export interface ResourceDetail extends Resource {
@@ -415,6 +501,8 @@ export interface ProgressOverview {
   reflections: number;
   reassessments: number;
   recent: { title: string; competency: string; type: string; date: string }[];
+  /** Plan features that limit this view (e.g. "progress.history" = only the latest two measurements). */
+  locked_features?: string[];
 }
 
 export interface Dashboard {

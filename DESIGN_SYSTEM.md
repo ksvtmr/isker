@@ -85,8 +85,9 @@ import { Button, CompetencyCard, AIInsight } from "@isker/design-system";
 - **Data:** ProgressBar, LevelBadge, GapBadge, ScoreCard, StatCard, CompetencyCard, ChartCard, RadarChart, LineChart, CompareBars, ScoreValue*
 - **Feedback:** AIInsight, EmptyState, Skeleton, SkeletonCard, Toast, Modal, InlineAlert*, StatusBadge*
 - **Navigation:** NavItem, Sidebar, Wordmark, BottomNav, Tabs (+ `ISKER_NAV`, `ISKER_NAV_FOOTER`, `ISKER_BOTTOM_NAV`)
-- **Learning:** RecommendationCard, AssessmentProgress, PlanStep
-- **Layout & content:** PageHeader*, SectionTitle*, Prose*
+- **Learning:** RecommendationCard, AssessmentProgress, PlanStep, Stepper*
+- **Layout & content:** PageHeader*, SectionTitle*, Prose*, KeyValueList*
+- **Administration & data:** AdminLayout*, DataTable*, Pagination*, Breadcrumbs*, Badge*, ConfirmActionDialog*, PermissionGuard*, BarChart*
 - **Helpers:** `levelFromScore`, `gapFromScore`, `LEVELS`
 
 `*` = additions made while building the production app. They use only existing tokens and follow the rules above.
@@ -98,6 +99,28 @@ import { Button, CompetencyCard, AIInsight } from "@isker/design-system";
 - **Information architecture** follows the product brief: Dashboard, Assessment, Competencies, Development Plan, Learning, Practice, Progress, and in the footer Profile and Settings.
 - **Tablet:** between 768 and 1099px the Sidebar collapses to icons only. Mobile (<768px) uses the top bar, bottom nav and a menu sheet.
 - **Charts:** the DS RadarChart, LineChart and CompareBars are used for all competency visualisation, so Recharts was not added (it would have duplicated these components with a different visual style).
+
+### Administration components (added with the admin panel)
+- **AdminLayout** — dedicated admin shell: own sidebar (sections passed in, already filtered by permission), skip link,
+  `main#admin-main` (focused on navigation), mobile top bar. Collapses like the Sidebar on tablet.
+- **DataTable** — `<caption>` for screen readers, sortable headers are real buttons with `aria-sort`, skeleton rows
+  while loading, empty state slot, rows open through a real link in the first cell (no clickable `<tr>`). Columns can
+  be hidden on phones (`hideOnMobile`); the table scrolls inside its card, never the page.
+- **Pagination** — "21–40 of 132" announced politely; Previous/Next buttons.
+- **ConfirmActionDialog** — for sensitive actions: optional mandatory reason (saved in the audit log), optional
+  type-to-confirm text for irreversible actions, `confirmDisabled` for the caller's own fields. Shows the server
+  error inside the dialog and never reports success itself — the caller closes it after the API confirms.
+- **PermissionGuard** — renders children only when the given permissions are held (UI convenience; the API enforces).
+- **Badge** — neutral/brand/success/warning/error/info; always text, colour is secondary.
+- **Breadcrumbs**, **Stepper** (journey with done/current/todo spelled out for screen readers), **KeyValueList**,
+  **BarChart** (bars plus a hidden data table for screen readers).
+
+### Contrast fixes (WCAG 2.2 AA)
+- Text that used `--color-neutral-400` (2.6:1 on white) now uses `--color-neutral-500` (4.8:1); placeholders too.
+- Positive-change text uses `--color-growth-700` instead of `-600` (3.9:1 → 5.6:1); the success button background
+  moved to `growth-700`. Locked badges and the AI-insight confidence label use `neutral-600` on tinted backgrounds.
+- Links inside running text are underlined so they are not distinguished by colour alone.
+- Verified with axe-core in the browser (including colour contrast) on 20 pages — see `scripts/e2e/journey.mjs`.
 
 ### Rules for contributors
 1. Do not hard-code colours. Use tokens (`var(--color-brand-600)`, `var(--gap-high-fg)` …).

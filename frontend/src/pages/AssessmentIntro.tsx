@@ -1,11 +1,10 @@
-import { Button, Card, Icon, InlineAlert, Modal, PageHeader, Select, type IconName } from "@isker/design-system";
+import { Button, Card, Icon, Modal, PageHeader, Select, type IconName } from "@isker/design-system";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { assessmentsApi, useAssessmentOverview, useStartAttempt } from "../api/assessments";
-import { errorMessage } from "../api/client";
 import { useScoreProfile } from "../api/competencies";
 import { useSpaClick } from "../components/RouterLink";
-import { ErrorState, PageSkeleton } from "../components/States";
+import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { formatDate } from "../utils/format";
 
 export function AssessmentIntro() {
@@ -52,7 +51,7 @@ export function AssessmentIntro() {
   return (
     <>
       <PageHeader title={assessment.title} subtitle={`Measure the 15 EntreComp competencies and get a profile with strengths, gaps and a development plan.`} />
-      {start.error && <div style={{ marginBottom: 16 }}><InlineAlert>{errorMessage(start.error)}</InlineAlert></div>}
+      {start.error && <div style={{ marginBottom: 16 }}><ApiErrorAlert error={start.error} /></div>}
       <div className="ik-grid3" style={{ alignItems: "start", marginBottom: 24 }}>
         <Card padding={28} className="ik-span2">
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

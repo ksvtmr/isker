@@ -1,5 +1,8 @@
 # Isker platform audit (before the admin, security and UX overhaul)
 
+> **Status:** this audit describes the platform *before* the overhaul. What was fixed, how it was tested and what
+> remains is in [admin-security-ux-report.md](admin-security-ux-report.md).
+
 Scope: frontend (React + design system), backend (FastAPI), database (PostgreSQL + Alembic), auth, admin,
 deployment config. This was a code inspection of the repository at commit `25e038c`.
 

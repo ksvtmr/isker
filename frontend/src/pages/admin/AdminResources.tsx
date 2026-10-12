@@ -3,6 +3,7 @@ import { useState } from "react";
 import { adminApi, useAdminCompetencies, useAdminMutation, useAdminResources, useAdminTasks, type AdminResource, type AdminTask, type ResourceInput, type TaskInput } from "../../api/admin";
 import { errorMessage } from "../../api/client";
 import { ErrorState, PageSkeleton } from "../../components/States";
+import { useConfirmAction } from "./common";
 import { useToast } from "../../components/Toaster";
 import { DIFFICULTY_LABEL, RESOURCE_TYPE_LABEL } from "../../utils/format";
 
@@ -22,6 +23,7 @@ export function AdminResources() {
   const saveT = useAdminMutation((v: TaskInput & { id?: number }) => { const { id, ...body } = v; return id ? adminApi.updateTask(id, body) : adminApi.createTask(body); });
   const unpubR = useAdminMutation(adminApi.unpublishResource);
   const unpubT = useAdminMutation(adminApi.unpublishTask);
+  const confirm = useConfirmAction();
 
   if (comps.isLoading || res.isLoading || tasks.isLoading) return <PageSkeleton chart={false} />;
   if (res.error || tasks.error || !res.data || !tasks.data) return <ErrorState error={res.error ?? tasks.error} onRetry={() => { res.refetch(); tasks.refetch(); }} />;
@@ -43,6 +45,7 @@ export function AdminResources() {
   const status = (p: boolean) => (p ? <StatusBadge status="done">Published</StatusBadge> : <StatusBadge status="todo">Unpublished</StatusBadge>);
   return (
     <>
+      {confirm.dialog}
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <Tabs ariaLabel="Content type" value={tab} onChange={setTab} tabs={[{ value: "resources", label: `Learning resources (${res.data.length})` }, { value: "tasks", label: `Practical tasks (${tasks.data.length})` }]} />
         <Button iconLeft="plus" onClick={() => {
@@ -63,12 +66,12 @@ export function AdminResources() {
                 <tr key={x.id}><td><b style={{ fontWeight: 500 }}>{x.title}</b><div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{x.slug}</div></td><td>{compName(x.competency_id)}</td>
                   <td>{RESOURCE_TYPE_LABEL[x.type]}</td><td>{DIFFICULTY_LABEL[x.difficulty]}</td><td className="num">{x.duration_minutes}</td><td>{status(x.is_published)}</td>
                   <td style={{ textAlign: "right", whiteSpace: "nowrap" }}><Button size="sm" variant="ghost" onClick={() => { setLocalError(null); setR(x); }}>Edit</Button>
-                    {x.is_published && <Button size="sm" variant="ghost" onClick={() => unpubR.mutate(x.id)}>Unpublish</Button>}</td></tr>
+                    {x.is_published && <Button size="sm" variant="ghost" onClick={() => confirm.ask({ title: `Unpublish “${x.title}”?`, description: "Learners won't see it in the catalogue any more. Their progress is kept and you can publish it again.", confirmLabel: "Unpublish", success: "Resource unpublished", run: () => unpubR.mutateAsync(x.id) })}>Unpublish</Button>}</td></tr>
               )) : tasks.data.map((x: AdminTask) => (
                 <tr key={x.id}><td><b style={{ fontWeight: 500 }}>{x.title}</b><div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{x.slug}</div></td><td>{compName(x.competency_id)}</td>
                   <td>{x.rubric.length} criteria</td><td>{DIFFICULTY_LABEL[x.difficulty]}</td><td className="num">{x.duration_minutes}</td><td>{status(x.is_published)}</td>
                   <td style={{ textAlign: "right", whiteSpace: "nowrap" }}><Button size="sm" variant="ghost" onClick={() => { setLocalError(null); setT({ ...x, rubricText: JSON.stringify(x.rubric, null, 2) }); }}>Edit</Button>
-                    {x.is_published && <Button size="sm" variant="ghost" onClick={() => unpubT.mutate(x.id)}>Unpublish</Button>}</td></tr>
+                    {x.is_published && <Button size="sm" variant="ghost" onClick={() => confirm.ask({ title: `Unpublish “${x.title}”?`, description: "Learners won't be offered this task any more. Their submissions are kept.", confirmLabel: "Unpublish", success: "Task unpublished", run: () => unpubT.mutateAsync(x.id) })}>Unpublish</Button>}</td></tr>
               ))}
             </tbody>
           </table>

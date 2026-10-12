@@ -1,6 +1,6 @@
 import {
   AIInsight, Card, CompetencyCard, EmptyState, GapBadge, LevelBadge, LineChart, PageHeader, ProgressBar,
-  RecommendationCard, ScoreValue, SectionTitle, StatCard, Icon,
+  RecommendationCard, ScoreValue, SectionTitle, StatCard, Icon, Stepper, type StepperStep,
 } from "@isker/design-system";
 import { useNavigate } from "react-router-dom";
 import { useProgress, useDashboard } from "../api/progress";
@@ -22,7 +22,7 @@ function ScoreHero({ d }: { d: Dashboard }) {
           <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {p.level && <LevelBadge level={p.level} showDot />}
             {p.change !== null && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 500, color: p.change >= 0 ? "var(--color-growth-600)" : "var(--color-error)" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 500, color: p.change >= 0 ? "var(--color-growth-700)" : "var(--color-error)" }}>
                 <Icon name="trending-up" size={16} />
                 {signed(p.change)} points since your last assessment
               </span>
@@ -38,6 +38,23 @@ function ScoreHero({ d }: { d: Dashboard }) {
       </div>
     </Card>
   );
+}
+
+/** The product loop as a stepper: what's done and what to do next (first unfinished step is "current"). */
+function JourneyStepper({ d }: { d: Dashboard }) {
+  const navigate = useNavigate();
+  const nr = d.next_reassessment;
+  const has = d.profile.has_profile;
+  const planDone = d.plan_total > 0 && d.plan_done >= d.plan_total;
+  const raw: (Omit<StepperStep, "status"> & { done: boolean; to: string })[] = [
+    { label: "Assess", description: has ? "Profile measured" : d.in_progress_attempt_id ? "In progress" : "About 25 minutes", done: has, to: d.in_progress_attempt_id ? `/assessment/${d.in_progress_attempt_id}` : "/assessment" },
+    { label: "Review your profile", description: "Strengths and gaps", done: has, to: "/competencies" },
+    { label: "Learn & practise", description: has ? `${d.plan_done} of ${d.plan_total} activities` : "Personal plan", done: planDone, to: "/development-plan" },
+    { label: "Reassess", description: nr ? (nr.ready ? "Available now" : `In ${nr.days} days`) : "After your plan", done: false, to: "/assessment" },
+  ];
+  const current = raw.findIndex((r) => !r.done);
+  const steps: StepperStep[] = raw.map((r, i) => ({ label: r.label, description: r.description, status: r.done ? "done" : i === current ? "current" : "todo", href: r.to, onClick: () => navigate(r.to) }));
+  return <div style={{ marginBottom: 24 }}><Stepper label="Your development journey" steps={steps} /></div>;
 }
 
 function AreaSummary({ code, name, items, score }: { code: string; name: string; items: CompetencyScore[]; score: number | null }) {
@@ -86,6 +103,7 @@ export function DashboardPage() {
     return (
       <>
         {header}
+        <JourneyStepper d={d} />
         <EmptyState
           icon="clipboard-check"
           title={d.in_progress_attempt_id ? "Finish your first assessment" : "Complete your first assessment"}
@@ -107,6 +125,7 @@ export function DashboardPage() {
   return (
     <>
       {header}
+      <JourneyStepper d={d} />
       <div className="ik-grid3" style={{ marginBottom: 24 }}>
         <ScoreHero d={d} />
         {d.insight ? (

@@ -13,7 +13,7 @@ function renderApp(route: string) {
   );
 }
 const unauth = { status: 401, json: { error: { code: "NOT_AUTHENTICATED", message: "Please sign in to continue." } } };
-const me = (o: object = {}) => ({ id: 1, email: "a@b.co", full_name: "Dana Learner", role: "user", onboarding_completed: true, created_at: "2026-01-01", ...o });
+const me = (o: object = {}) => ({ id: 1, email: "a@b.co", full_name: "Dana Learner", status: "active", roles: ["user"], permissions: [], email_verified: true, onboarding_completed: true, created_at: "2026-01-01", ...o });
 
 describe("routing and guards", () => {
   it("redirects anonymous users from protected pages to login with next", async () => {

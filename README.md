@@ -77,6 +77,27 @@ npm install
 npm run dev        # http://localhost:5173, proxies /api to :8000
 ```
 
+## Accounts, roles and plans
+
+| Seeded account (development defaults) | Role | Plan |
+|---|---|---|
+| `admin@isker.local` / `IskerAdmin2026` | super_admin | Free |
+| `demo@isker.local` / `IskerDemo2026` | user | Pro (1-year admin grant) |
+
+In production, set `ADMIN_PASSWORD` / `DEMO_PASSWORD`; accounts without a password are not created.
+
+- **Roles:** `user`, `content_manager`, `support`, `admin`, `super_admin`. Permissions are checked on the server
+  (`backend/app/services/permissions.py`). Staff can only manage accounts and grant roles ranked below their own;
+  nobody can change their own roles; the last active super admin is protected.
+- **Plans:** Free (core journey with limits), Pro and Premium. Limits are enforced by the API
+  (`backend/app/services/entitlements.py`). No payment provider is integrated: paid plans are granted by admins at
+  `/admin/users/:id`; signed provider webhooks are supported once configured (`PAYMENT_PROVIDER`, `PAYMENT_WEBHOOK_SECRET`).
+- **Email:** without `SMTP_*` settings, development writes verification/reset emails to the server log and the UI says
+  so; production sends nothing and says so. Nothing pretends an email was sent.
+- **Security:** httpOnly session cookie + CSRF token, revocable server-side sessions, rate limits, security headers,
+  append-only audit log. See [docs/admin-security-ux-report.md](docs/admin-security-ux-report.md) for what is and
+  isn't covered.
+
 ## AI configuration
 
 | Variable | Effect |
@@ -93,6 +114,10 @@ ratings, never from a model-chosen number.
 ```bash
 cd backend && .venv/bin/pytest && .venv/bin/ruff check app tests && .venv/bin/mypy app
 npm test && npm run typecheck && npm run lint && npm run build
+# Browser journey + axe-core accessibility run against a running instance (API + built SPA on one origin):
+cd scripts/e2e && npm install && BASE=http://localhost:8000 node journey.mjs
+# Regenerate docs/api.md, docs/database.md and docs/openapi.json from the code:
+cd backend && .venv/bin/python scripts/gen_docs.py
 ```
 
 ## Documentation
@@ -102,10 +127,16 @@ npm test && npm run typecheck && npm run lint && npm run build
 - [docs/database.md](docs/database.md) — entities, constraints, all tables
 - [docs/testing.md](docs/testing.md) — test suites and the end-to-end verification
 - [docs/traceability.md](docs/traceability.md) — requirement → UI → API → DB → tests
+- [docs/platform-audit.md](docs/platform-audit.md) — audit of the platform before the admin/security/UX overhaul
+- [docs/admin-security-ux-report.md](docs/admin-security-ux-report.md) — what was implemented, tested, and what is left
 - [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) — visual language and component catalogue
 
 ## Main routes
 `/` · `/login` · `/register` · `/onboarding` · `/dashboard` · `/assessment` · `/assessment/:id` · `/results` ·
 `/competencies` · `/competencies/:id` · `/development-plan` · `/learning` · `/learning/:id` · `/practice` ·
-`/practice/:id` · `/progress` · `/profile` · `/settings` · `/admin` · `/admin/competencies` · `/admin/questions` ·
-`/admin/assessments` · `/admin/resources` · `/admin/users` · `/admin/ai`
+`/practice/:id` · `/progress` · `/profile` · `/settings` · `/plans` · `/forgot-password` · `/reset-password` ·
+`/verify-email` · `/terms` · `/privacy`
+
+Admin (each section requires its permission): `/admin` · `/admin/users` · `/admin/users/:id` · `/admin/roles` ·
+`/admin/subscriptions` · `/admin/plans` · `/admin/assessments` · `/admin/competencies` · `/admin/learning-resources` ·
+`/admin/analytics` · `/admin/ai` · `/admin/audit-logs` · `/admin/settings`

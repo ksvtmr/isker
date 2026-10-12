@@ -85,7 +85,7 @@ export function ResultsPage() {
               <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{c.name}</p>
               <div style={{ marginTop: 8 }}><ScoreValue value={c.score} size={40} label={c.name} /></div>
               {c.change !== null && (
-                <p style={{ marginTop: 10, fontSize: 14, fontWeight: 500, color: c.change >= 0 ? "var(--color-growth-600)" : "var(--color-error)", display: "flex", alignItems: "center", gap: 4 }}>
+                <p style={{ marginTop: 10, fontSize: 14, fontWeight: 500, color: c.change >= 0 ? "var(--color-growth-700)" : "var(--color-error)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Icon name="trending-up" size={16} />{signed(c.change)} points since your previous measurement
                 </p>
               )}
@@ -101,7 +101,7 @@ export function ResultsPage() {
           <div style={{ marginTop: 8 }}><ScoreValue value={p.overall} label="Overall score" /></div>
           <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             {p.level && <LevelBadge level={p.level} showDot />}
-            {p.change !== null && <span style={{ fontSize: 13, fontWeight: 500, color: p.change >= 0 ? "var(--color-growth-600)" : "var(--color-error)" }}>{signed(p.change)} vs previous</span>}
+            {p.change !== null && <span style={{ fontSize: 13, fontWeight: 500, color: p.change >= 0 ? "var(--color-growth-700)" : "var(--color-error)" }}>{signed(p.change)} vs previous</span>}
           </div>
           <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 14 }}>
             {p.areas.map((a) => <ProgressBar key={a.code} label={a.name} value={a.score ?? 0} color={AREA_COLOR[a.code]} />)}
@@ -122,7 +122,7 @@ export function ResultsPage() {
       <div className="ik-grid3" style={{ marginBottom: 32 }}>
         <Card padding={20}>
           <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Your Strengths</h2>
-          <ul style={{ listStyle: "none", padding: 0 }}>{p.strengths.map((c) => <Row key={c.code} c={c} tone="var(--color-growth-600)" />)}</ul>
+          <ul style={{ listStyle: "none", padding: 0 }}>{p.strengths.map((c) => <Row key={c.code} c={c} tone="var(--color-growth-700)" />)}</ul>
         </Card>
         <Card padding={20}>
           <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Priority Development Areas</h2>

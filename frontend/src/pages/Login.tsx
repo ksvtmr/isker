@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogin } from "../api/auth";
 import { errorMessage } from "../api/client";
 import { loginSchema, type LoginValues } from "../features/schemas";
+import { homeFor } from "../layouts/guards";
 
 export function LoginPage() {
   const login = useLogin();
@@ -17,7 +18,7 @@ export function LoginPage() {
       onSuccess: ({ user }) => {
         const next = new URLSearchParams(location.search).get("next");
         const safe = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
-        navigate(safe ?? (user.role === "admin" ? "/admin" : user.onboarding_completed ? "/dashboard" : "/onboarding"), { replace: true });
+        navigate(safe ?? homeFor(user), { replace: true });
       },
     });
 
@@ -34,6 +35,7 @@ export function LoginPage() {
             {login.error && <InlineAlert>{errorMessage(login.error)}</InlineAlert>}
             <Input label="Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
             <Input label="Password" type="password" autoComplete="current-password" {...register("password")} error={errors.password?.message} />
+            <p style={{ marginTop: -6, fontSize: 13 }}><Link to="/forgot-password">Forgot your password?</Link></p>
             <Button type="submit" size="lg" fullWidth loading={login.isPending}>Sign in</Button>
           </form>
         </Card>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Competency, Difficulty, Page, QuestionType, ResourceType, Role } from "../types/api";
+import type { Competency, Difficulty, QuestionType, ResourceType } from "../types/api";
+import type { Page } from "../types/api";
 import { api, qs } from "./client";
 import { keys } from "./keys";
 
@@ -14,19 +15,6 @@ export interface AdminStats {
   resources_completed: number;
   tasks_completed: number;
   competency_averages: { code: string; name: string; average: number | null; measurements: number }[];
-}
-
-export interface AdminUser {
-  id: number;
-  email: string;
-  full_name: string;
-  role: Role;
-  is_active: boolean;
-  onboarding_completed: boolean;
-  created_at: string;
-  last_login_at: string | null;
-  completed_attempts: number;
-  latest_overall: number | null;
 }
 
 export interface RubricItem { criterion: string; description: string; competency?: string | null; keywords?: string[] }
@@ -135,7 +123,6 @@ export interface PromptVersion {
 
 export const adminApi = {
   stats: () => api.get<AdminStats>("/api/admin/stats"),
-  users: (q: string, page: number) => api.get<Page<AdminUser>>(`/api/admin/users${qs({ q, page })}`),
   competencies: () => api.get<Competency[]>("/api/admin/competencies"),
   updateCompetency: (id: number, body: Partial<Competency> & { reflection_prompt?: string; learning_priority?: number }) =>
     api.put<Competency>(`/api/admin/competencies/${id}`, body),
@@ -163,8 +150,6 @@ export const adminApi = {
 };
 
 export const useAdminStats = () => useQuery({ queryKey: keys.admin("stats"), queryFn: adminApi.stats });
-export const useAdminUsers = (q: string, page: number) =>
-  useQuery({ queryKey: keys.admin("users", q, page), queryFn: () => adminApi.users(q, page) });
 export const useAdminCompetencies = () => useQuery({ queryKey: keys.admin("competencies"), queryFn: adminApi.competencies });
 export const useAdminQuestions = () => useQuery({ queryKey: keys.admin("questions"), queryFn: adminApi.questions });
 export const useAdminAssessments = () => useQuery({ queryKey: keys.admin("assessments"), queryFn: adminApi.assessments });

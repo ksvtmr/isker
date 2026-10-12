@@ -6,11 +6,12 @@ import { LoginPage } from "../pages/Login";
 import { RegisterPage } from "../pages/Register";
 import { mockApi, renderWithProviders } from "./utils";
 
-const user = { id: 1, email: "a@b.co", full_name: "Dana", role: "user", onboarding_completed: true, created_at: "2026-01-01" };
+const user = { id: 1, email: "a@b.co", full_name: "Dana", status: "active", roles: ["user"], permissions: [], email_verified: true, onboarding_completed: true, created_at: "2026-01-01" };
 
 describe("validation schemas", () => {
   it("requires a letter and a number in passwords and matching confirmation", () => {
-    const base = { full_name: "Dana", email: "a@b.co" };
+    const base = { full_name: "Dana", email: "a@b.co", accept_terms: true };
+    expect(registerSchema.safeParse({ ...base, accept_terms: false, password: "abcd1234", confirm: "abcd1234" }).success).toBe(false);
     expect(registerSchema.safeParse({ ...base, password: "abcdefgh", confirm: "abcdefgh" }).success).toBe(false);
     expect(registerSchema.safeParse({ ...base, password: "abcd1234", confirm: "abcd1235" }).success).toBe(false);
     expect(registerSchema.safeParse({ ...base, password: "abcd1234", confirm: "abcd1234" }).success).toBe(true);
@@ -59,7 +60,25 @@ describe("register form", () => {
     await userEvent.type(screen.getByLabelText("Email"), "a@b.co");
     await userEvent.type(screen.getByLabelText("Password"), "Secret123");
     await userEvent.type(screen.getByLabelText("Confirm password"), "Secret123");
+    await userEvent.click(screen.getByLabelText(/I agree to the/));
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     expect(await screen.findByText("An account with this email already exists.")).toBeInTheDocument();
+  });
+
+  it("requires accepting the terms before calling the API and sends accept_terms", async () => {
+    const calls = mockApi({ "POST /api/auth/register": { status: 201, json: { user: { ...user, onboarding_completed: false }, access_token: "x", token_type: "bearer", expires_at: "2027-01-01", email_verification: "logged" } } });
+    renderWithProviders(<RegisterPage />);
+    await userEvent.type(screen.getByLabelText("Full name"), "Dana Learner");
+    await userEvent.type(screen.getByLabelText("Email"), "a@b.co");
+    await userEvent.type(screen.getByLabelText("Password"), "Secret123");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "Secret123");
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(await screen.findByText(/You need to accept the Terms of Use/)).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+    await userEvent.click(screen.getByLabelText(/I agree to the/));
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(await screen.findByTestId("location")).toBeInTheDocument();
+    await waitFor(() => expect(calls).toHaveLength(1));
+    expect(calls[0].body).toEqual({ full_name: "Dana Learner", email: "a@b.co", password: "Secret123", accept_terms: true });
   });
 });

@@ -19,8 +19,15 @@ export const registerSchema = z
     email: z.string().trim().min(1, "Enter your email").email("Enter a valid email address"),
     password: passwordRule,
     confirm: z.string(),
+    accept_terms: z.boolean().refine((v) => v, "You need to accept the Terms of Use and Privacy Policy to create an account"),
   })
   .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords do not match" });
+
+export const forgotSchema = z.object({ email: z.string().trim().min(1, "Enter your email").email("Enter a valid email address") });
+
+export const resetSchema = z
+  .object({ new_password: passwordRule, confirm: z.string() })
+  .refine((v) => v.new_password === v.confirm, { path: ["confirm"], message: "Passwords do not match" });
 
 export const onboardingSchema = z.object({
   full_name: z.string().trim().min(2, "Enter your name").max(120),

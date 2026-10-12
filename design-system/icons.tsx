@@ -4,7 +4,8 @@
  * but are bundled locally instead of fetched from a CDN at runtime.
  */
 import {
-  ArrowLeft, ArrowRight, Award, Bell, BookOpen, Bot, Briefcase, CalendarClock, Check, ChevronDown, ChevronLeft,
+  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, Ban, ChartColumn, CreditCard, Download, KeyRound, Layers, Mail,
+  MonitorSmartphone, ScrollText, ShieldCheck, Undo2, UserCog, UserX, Award, Bell, BookOpen, Bot, Briefcase, CalendarClock, Check, ChevronDown, ChevronLeft,
   ChevronRight, ChevronUp, CircleAlert, CircleCheck, CircleDot, CirclePlay, ClipboardCheck, ClipboardList, Clock,
   CloudOff, Database, Dumbbell, ExternalLink, Eye, FileStack, FileText, Flag, GraduationCap, Info, LayoutDashboard,
   LayoutTemplate, Library, Lightbulb, ListChecks, Lock, LogOut, Menu, MessageSquareText, PencilRuler, Pencil, Play,
@@ -14,6 +15,10 @@ import {
 } from "lucide-react";
 
 export const ICONS: Record<string, LucideIcon> = {
+  "arrow-down": ArrowDown, "arrow-up": ArrowUp, "arrow-up-down": ArrowUpDown, ban: Ban, "chart-column": ChartColumn,
+  "credit-card": CreditCard, download: Download, "key-round": KeyRound, layers: Layers, mail: Mail,
+  "monitor-smartphone": MonitorSmartphone, "scroll-text": ScrollText, "shield-check": ShieldCheck, "undo-2": Undo2,
+  "user-cog": UserCog, "user-x": UserX,
   "arrow-left": ArrowLeft, "arrow-right": ArrowRight, award: Award, bell: Bell, "book-open": BookOpen, bot: Bot,
   briefcase: Briefcase, "calendar-clock": CalendarClock, check: Check, "chevron-down": ChevronDown,
   "chevron-left": ChevronLeft, "chevron-right": ChevronRight, "chevron-up": ChevronUp, "circle-alert": CircleAlert,

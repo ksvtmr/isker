@@ -18,7 +18,7 @@ function ResourceCard({ r }: { r: Resource }) {
           <span style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center", background: "var(--color-neutral-100)" }}><Icon name={RESOURCE_TYPE_ICON[r.type]} size={15} /></span>
           {RESOURCE_TYPE_LABEL[r.type]}
         </span>
-        {r.recommended && <StatusBadge status="recommended">Recommended</StatusBadge>}
+        {r.locked ? <StatusBadge status="locked">Pro</StatusBadge> : r.recommended && <StatusBadge status="recommended">Recommended</StatusBadge>}
       </div>
       <h2 style={{ marginTop: 14, fontSize: 16, fontWeight: 600, lineHeight: 1.35 }}>{r.title}</h2>
       <p style={{ marginTop: 6, fontSize: 13, fontWeight: 500, color: "var(--color-brand-600)" }}>{r.competency_name}</p>
@@ -29,7 +29,9 @@ function ResourceCard({ r }: { r: Resource }) {
           {r.duration_minutes} min · {DIFFICULTY_LABEL[r.difficulty]}
           {r.status === "completed" && <StatusBadge status="done">Completed</StatusBadge>}
         </span>
-        <LinkButton to={`/learning/${r.id}`} size="sm" variant={r.status === "completed" ? "ghost" : "secondary"} aria-label={`${action}: ${r.title}`}>{action}</LinkButton>
+        {r.locked
+          ? <LinkButton to="/plans" size="sm" variant="ghost" aria-label={`See plans: ${r.title} needs a plan with advanced resources`}>See plans</LinkButton>
+          : <LinkButton to={`/learning/${r.id}`} size="sm" variant={r.status === "completed" ? "ghost" : "secondary"} aria-label={`${action}: ${r.title}`}>{action}</LinkButton>}
       </div>
     </Card>
   );

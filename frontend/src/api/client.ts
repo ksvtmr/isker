@@ -1,6 +1,7 @@
 /**
  * Thin fetch wrapper. All server calls go through here (never from components directly).
- * Auth uses the httpOnly session cookie set by the API; no token is stored in JS.
+ * Auth uses the httpOnly session cookie set by the API; no token is stored in JS. Unsafe requests echo the readable
+ * `isker_csrf` cookie in the X-CSRF-Token header (double-submit CSRF protection, enforced by the API).
  */
 
 export interface ApiErrorBody {
@@ -35,7 +36,15 @@ export class ApiError extends Error {
 
 const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
-type Method = "GET" | "POST" | "PUT" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+const CSRF_COOKIE = "isker_csrf";
+
+export function csrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(?:^|; )${CSRF_COOKIE}=([^;]*)`));
+  return m ? decodeURIComponent(m[1]) : null;
+}
 
 let onUnauthorized: (() => void) | null = null;
 /** Registered by the auth layer so an expired session sends the user to /login. */
@@ -45,11 +54,17 @@ export function setUnauthorizedHandler(fn: (() => void) | null) {
 
 export async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let res: Response;
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (method !== "GET") {
+    const token = csrfToken();
+    if (token) headers["X-CSRF-Token"] = token;
+  }
   try {
     res = await fetch(BASE + path, {
       method,
       credentials: "include",
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      headers: Object.keys(headers).length ? headers : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal,
     });
@@ -83,7 +98,8 @@ export const api = {
   get: <T>(path: string, signal?: AbortSignal) => request<T>("GET", path, undefined, signal),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body ?? {}),
   put: <T>(path: string, body?: unknown) => request<T>("PUT", path, body ?? {}),
-  del: <T>(path: string) => request<T>("DELETE", path),
+  patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body ?? {}),
+  del: <T>(path: string, body?: unknown) => request<T>("DELETE", path, body),
 };
 
 export function qs(params: Record<string, string | number | boolean | null | undefined>): string {
@@ -97,4 +113,9 @@ export function qs(params: Record<string, string | number | boolean | null | und
 export function errorMessage(e: unknown, fallback = "Something went wrong. Please try again."): string {
   if (e instanceof ApiError) return e.message;
   return fallback;
+}
+
+/** True when the server refused because the user's plan doesn't include a feature (403 UPGRADE_REQUIRED). */
+export function isUpgradeRequired(e: unknown): e is ApiError {
+  return e instanceof ApiError && e.code === "UPGRADE_REQUIRED";
 }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import secrets
 from functools import lru_cache
 from typing import Annotated
@@ -99,6 +100,9 @@ class Settings(BaseSettings):
             raise ValueError("CORS_ORIGINS must list explicit origins; '*' is not allowed with credentials")
         if self.is_production and self.email_backend == "console":
             raise ValueError("EMAIL_BACKEND=console is for development only")
+        # Render (and similar hosts) expose the public URL; use it for email links unless APP_BASE_URL is set.
+        if "app_base_url" not in self.model_fields_set and os.environ.get("RENDER_EXTERNAL_URL"):
+            self.app_base_url = os.environ["RENDER_EXTERNAL_URL"].rstrip("/")
         return self
 
     @property

@@ -25,7 +25,6 @@ export const profileApi = {
   get: () => api.get<Profile>("/api/profile"),
   onboarding: (body: OnboardingInput) => api.post<Profile>("/api/profile/onboarding", body),
   update: (body: ProfileUpdate) => api.put<Profile>("/api/profile", body),
-  deleteAccount: () => api.del<{ message: string }>("/api/users/me"),
 };
 
 export const useGoals = () => useQuery({ queryKey: keys.goals, queryFn: profileApi.goals, staleTime: Infinity });
@@ -50,17 +49,6 @@ export function useUpdateProfile() {
       qc.setQueryData(keys.profile, p);
       qc.setQueryData<User | null | undefined>(keys.me, (u) => (u ? { ...u, full_name: p.full_name } : u));
       derivedKeys.forEach((k) => qc.invalidateQueries({ queryKey: k }));
-    },
-  });
-}
-
-export function useDeleteAccount() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: profileApi.deleteAccount,
-    onSuccess: () => {
-      qc.clear();
-      qc.setQueryData(keys.me, null);
     },
   });
 }

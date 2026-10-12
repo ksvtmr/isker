@@ -8,6 +8,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
   type CSSProperties,
@@ -227,7 +228,7 @@ export function CompareBars({ items, max = 100, beforeLabel = "Before", afterLab
             <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--color-neutral-800)" }}>{it.label}</span>
             <span style={{ fontSize: "var(--text-sm)", fontVariantNumeric: "tabular-nums", color: "var(--color-neutral-500)", whiteSpace: "nowrap" }}>
               {it.before} → <b style={{ color: "var(--color-neutral-900)", fontWeight: 600 }}>{it.after}</b>{" "}
-              <span style={{ color: d >= 0 ? "var(--color-growth-600)" : "var(--color-error)", fontWeight: 500 }}>{d >= 0 ? "+" : ""}{d}</span>
+              <span style={{ color: d >= 0 ? "var(--color-growth-700)" : "var(--color-error)", fontWeight: 500 }}>{d >= 0 ? "+" : ""}{d}</span>
             </span>
             <div
               role="img"
@@ -293,7 +294,7 @@ export function LineChart({ labels, series, height = 220, min = 0, max = 100, ti
       {ticks.map((t) => (
         <g key={t}>
           <line x1={pl} x2={W - pr} y1={y(t)} y2={y(t)} stroke="var(--color-neutral-100)" />
-          <text x={pl - 8} y={y(t)} textAnchor="end" dominantBaseline="middle" fontSize="11" fill="var(--color-neutral-400)" fontFamily="var(--font-sans)">{t}</text>
+          <text x={pl - 8} y={y(t)} textAnchor="end" dominantBaseline="middle" fontSize="11" fill="var(--color-neutral-500)" fontFamily="var(--font-sans)">{t}</text>
         </g>
       ))}
       {labels.map((l, i) => (
@@ -382,11 +383,11 @@ export function CompetencyCard({ name, area, score, max = 100, level, gap, targe
           <h3 style={{ marginTop: area ? 4 : 0, fontSize: "var(--text-md)", fontWeight: 600, color: "var(--color-neutral-900)", lineHeight: 1.35, textWrap: "pretty" }}>{name}</h3>
         </div>
         {notAssessed ? (
-          <span style={{ fontSize: "var(--text-sm)", color: "var(--color-neutral-400)", whiteSpace: "nowrap" }}>Not assessed</span>
+          <span style={{ fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", whiteSpace: "nowrap" }}>Not assessed</span>
         ) : (
           <span style={{ whiteSpace: "nowrap" }}>
             <span style={{ fontSize: "var(--text-2xl)", fontWeight: 600, letterSpacing: "-0.02em", color: "var(--color-neutral-900)" }}>{fmt}</span>
-            <span style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-400)" }}> / {max}</span>
+            <span style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-500)" }}> / {max}</span>
           </span>
         )}
       </div>
@@ -467,10 +468,10 @@ export function ScoreCard({ label, score, max = 100, description, trend, level }
       <div style={{ fontSize: "var(--text-sm)", color: "var(--color-neutral-500)" }}>{label}</div>
       <div style={{ marginTop: 8, display: "flex", alignItems: "flex-end", gap: 4 }}>
         <span style={{ fontSize: "var(--text-3xl)", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.1 }}>{fmt}</span>
-        <span style={{ marginBottom: 3, fontSize: "var(--text-sm)", color: "var(--color-neutral-400)" }}>/ {max}</span>
+        <span style={{ marginBottom: 3, fontSize: "var(--text-sm)", color: "var(--color-neutral-500)" }}>/ {max}</span>
         {level && <span style={{ marginLeft: "auto", alignSelf: "center" }}>{level}</span>}
       </div>
-      {trend && <p style={{ marginTop: 8, fontSize: "var(--text-sm)", fontWeight: 500, color: trend.startsWith("-") ? "var(--color-error)" : "var(--color-growth-600)" }}>{trend}</p>}
+      {trend && <p style={{ marginTop: 8, fontSize: "var(--text-sm)", fontWeight: 500, color: trend.startsWith("-") ? "var(--color-error)" : "var(--color-growth-700)" }}>{trend}</p>}
       {description && <p style={{ marginTop: 8, fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", textWrap: "pretty" }}>{description}</p>}
     </Card>
   );
@@ -481,7 +482,7 @@ export type Tone = "brand" | "growth" | "warning" | "neutral";
 export function StatCard({ label, value, change, description, icon, tone = "brand" }: { label: ReactNode; value: ReactNode; change?: ReactNode; description?: ReactNode; icon?: IconName; tone?: Tone }) {
   const tones: Record<Tone, [string, string]> = {
     brand: ["var(--color-brand-50)", "var(--color-brand-600)"],
-    growth: ["var(--color-growth-50)", "var(--color-growth-600)"],
+    growth: ["var(--color-growth-50)", "var(--color-growth-700)"],
     warning: ["var(--color-warning-bg)", "var(--color-warning)"],
     neutral: ["var(--color-neutral-100)", "var(--color-neutral-600)"],
   };
@@ -498,7 +499,7 @@ export function StatCard({ label, value, change, description, icon, tone = "bran
       </div>
       <div style={{ marginTop: 8, display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
         <span style={{ fontSize: "var(--text-2xl)", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.25, textWrap: "balance" }}>{value}</span>
-        {change && <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--color-growth-600)" }}>{change}</span>}
+        {change && <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--color-growth-700)" }}>{change}</span>}
       </div>
       {description && <p style={{ marginTop: 6, fontSize: "var(--text-xs)", color: "var(--color-neutral-500)" }}>{description}</p>}
     </Card>
@@ -518,7 +519,7 @@ export function AIInsight({ title = "AI insight", context, children, action, con
         </span>
         <span style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--color-brand-800)" }}>{title}</span>
         {context && <span style={{ fontSize: "var(--text-xs)", color: "var(--color-brand-700)", background: "#fff", border: "1px solid var(--color-brand-100)", borderRadius: 9999, padding: "2px 8px" }}>{context}</span>}
-        {confidence && <span style={{ marginLeft: "auto", fontSize: "var(--text-xs)", color: "var(--color-neutral-500)" }}>Confidence: {confidence}</span>}
+        {confidence && <span style={{ marginLeft: "auto", fontSize: "var(--text-xs)", color: "var(--color-neutral-600)" }}>Confidence: {confidence}</span>}
       </div>
       <div style={{ marginTop: 12, fontSize: "var(--text-sm)", lineHeight: "24px", color: "var(--color-neutral-700)", textWrap: "pretty" }}>{children}</div>
       {action && <div style={{ marginTop: 14 }}>{action}</div>}
@@ -581,7 +582,7 @@ export function Modal({ open = true, onClose, title, description, children, foot
           {description && <p style={{ marginTop: 6, fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", lineHeight: 1.5 }}>{description}</p>}
         </div>
         {onClose && (
-          <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-400)", padding: 4, display: "flex", borderRadius: 6 }}>
+          <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-500)", padding: 4, display: "flex", borderRadius: 6 }}>
             <Icon name="x" size={18} />
           </button>
         )}
@@ -628,7 +629,7 @@ export function Toast({ variant = "success", title, description, onClose, action
         {action && <div style={{ marginTop: 8 }}>{action}</div>}
       </div>
       {onClose && (
-        <button type="button" aria-label="Dismiss" onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-400)", padding: 2, display: "flex" }}>
+        <button type="button" aria-label="Dismiss" onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-500)", padding: 2, display: "flex" }}>
           <Icon name="x" size={16} />
         </button>
       )}
@@ -656,7 +657,7 @@ export function StatusBadge({ status, children }: { status: "done" | "progress" 
     done: ["var(--color-growth-50)", "var(--color-growth-700)", "check"],
     progress: ["var(--color-brand-50)", "var(--color-brand-700)", "circle-dot"],
     todo: ["var(--color-neutral-100)", "var(--color-neutral-600)", undefined],
-    locked: ["var(--color-neutral-100)", "var(--color-neutral-500)", "lock"],
+    locked: ["var(--color-neutral-100)", "var(--color-neutral-600)", "lock"],
     recommended: ["var(--color-brand-50)", "var(--color-brand-700)", "sparkles"],
   } as const;
   const [bg, fg, ic] = map[status];
@@ -743,7 +744,7 @@ export const AnswerOption = forwardRef<HTMLButtonElement, AnswerOptionProps>(fun
     <button ref={ref} type="button" role="radio" aria-checked={checked} className="isk-choice" onClick={onSelect} tabIndex={tabIndex} onKeyDown={onKeyDown}>
       <span className="isk-choice__dot" />
       <span style={{ flex: 1 }}>{label}</span>
-      {index !== undefined && <span aria-hidden="true" style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-400)", fontWeight: 500 }}>{String.fromCharCode(65 + index)}</span>}
+      {index !== undefined && <span aria-hidden="true" style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-500)", fontWeight: 500 }}>{String.fromCharCode(65 + index)}</span>}
     </button>
   );
 });
@@ -801,7 +802,7 @@ export function AssessmentProgress({ current, total, section }: { current: numbe
       <div style={{ marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           Question {current} of {total}
-          {section && <span style={{ color: "var(--color-neutral-400)", fontWeight: 400 }}> · {section}</span>}
+          {section && <span style={{ color: "var(--color-neutral-500)", fontWeight: 400 }}> · {section}</span>}
         </span>
         <span style={{ fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", fontVariantNumeric: "tabular-nums" }}>{Math.round(pct)}%</span>
       </div>
@@ -827,13 +828,13 @@ export function PlanStep({ step, title, meta, action, status = "todo", last = fa
   return (
     <div style={{ display: "grid", gridTemplateColumns: "36px minmax(0,1fr)", gap: 16 }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <span style={{ width: 36, height: 36, borderRadius: 9999, display: "grid", placeItems: "center", flex: "none", background: done ? "var(--color-growth-50)" : locked ? "var(--color-neutral-100)" : "var(--color-brand-50)", color: done ? "var(--color-growth-600)" : locked ? "var(--color-neutral-400)" : "var(--color-brand-600)", border: status === "current" ? "1.5px solid var(--color-brand-600)" : "1.5px solid transparent" }}>
+        <span style={{ width: 36, height: 36, borderRadius: 9999, display: "grid", placeItems: "center", flex: "none", background: done ? "var(--color-growth-50)" : locked ? "var(--color-neutral-100)" : "var(--color-brand-50)", color: done ? "var(--color-growth-600)" : locked ? "var(--color-neutral-500)" : "var(--color-brand-600)", border: status === "current" ? "1.5px solid var(--color-brand-600)" : "1.5px solid transparent" }}>
           <Icon name={done ? "check" : locked ? "lock" : ic} size={16} />
         </span>
         {!last && <span style={{ flex: 1, width: 2, minHeight: 16, background: done ? "var(--color-growth-200)" : "var(--color-neutral-200)", margin: "4px 0" }} />}
       </div>
       <div style={{ paddingBottom: last ? 0 : 24, minWidth: 0 }}>
-        <p style={{ fontSize: "var(--text-xs)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: locked ? "var(--color-neutral-400)" : "var(--color-neutral-500)", marginTop: 2 }}>
+        <p style={{ fontSize: "var(--text-xs)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: locked ? "var(--color-neutral-500)" : "var(--color-neutral-500)", marginTop: 2 }}>
           {lab}
           <span className="isk-sr-only"> — {statusText}</span>
         </p>
@@ -869,7 +870,7 @@ export function RecommendationCard({ competency, title, description, duration, d
       <div style={{ padding: 24, display: "flex", flexDirection: "column", flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <span style={{ fontSize: "var(--text-xs)", fontWeight: 500, color: "var(--color-brand-600)" }}>Recommended for {competency}</span>
-          {gap ? <GapBadge gap={gap} suffix="priority" /> : <span style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-400)" }}>{duration}</span>}
+          {gap ? <GapBadge gap={gap} suffix="priority" /> : <span style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-500)" }}>{duration}</span>}
         </div>
         {current !== undefined && (
           <p style={{ marginTop: 12, fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", fontVariantNumeric: "tabular-nums" }}>
@@ -888,7 +889,7 @@ export function RecommendationCard({ competency, title, description, duration, d
           <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: "var(--radius-md)", background: "var(--color-neutral-50)", border: "1px solid var(--color-neutral-100)" }}>
             <p style={{ fontSize: "var(--text-xs)", fontWeight: 500, color: "var(--color-neutral-500)" }}>Practice</p>
             <p style={{ marginTop: 2, fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--color-neutral-800)" }}>
-              {practice.title} <span style={{ color: "var(--color-neutral-400)", fontWeight: 400 }}>· {practice.duration}</span>
+              {practice.title} <span style={{ color: "var(--color-neutral-500)", fontWeight: 400 }}>· {practice.duration}</span>
             </p>
           </div>
         )}
@@ -1143,5 +1144,323 @@ export function ScoreValue({ value, max = 100, size = 48, label }: { value: numb
       <span className="ik-score__value" style={{ fontSize: size }}>{value ?? "—"}</span>
       <span className="ik-score__max" style={{ fontSize: size >= 40 ? 16 : 13 }}>/ {max}</span>
     </div>
+  );
+}
+
+/* ============================================================================================
+ * Administration & data components (Additions — used by the admin area and account settings)
+ * ========================================================================================== */
+
+export type BadgeTone = "neutral" | "brand" | "success" | "warning" | "error" | "info";
+
+/** Addition: generic labelled badge (roles, statuses, plans). Text is always present; colour is secondary. */
+export function Badge({ tone = "neutral", icon, children, title }: { tone?: BadgeTone; icon?: IconName; children: ReactNode; title?: string }) {
+  return (
+    <span className={cx("isk-badge", `isk-badge--${tone}`)} title={title}>
+      {icon && <Icon name={icon} size={12} />}
+      {children}
+    </span>
+  );
+}
+
+export interface Crumb { label: ReactNode; href?: string; onClick?: () => void }
+
+/** Addition: breadcrumb trail. The last item is the current page (aria-current). */
+export function Breadcrumbs({ items, label = "Breadcrumb" }: { items: Crumb[]; label?: string }) {
+  return (
+    <nav aria-label={label} className="isk-crumbs">
+      <ol>
+        {items.map((c, i) => {
+          const last = i === items.length - 1;
+          return (
+            <li key={i}>
+              {last || !c.href ? (
+                <span aria-current={last ? "page" : undefined}>{c.label}</span>
+              ) : (
+                <a href={c.href} onClick={(e) => { if (c.onClick && !(e.metaKey || e.ctrlKey || e.shiftKey)) { e.preventDefault(); c.onClick(); } }}>{c.label}</a>
+              )}
+              {!last && <Icon name="chevron-right" size={14} />}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+export type SortOrder = "asc" | "desc";
+
+export interface DataColumn<T> {
+  key: string;
+  header: ReactNode;
+  render: (row: T) => ReactNode;
+  sortable?: boolean;
+  align?: "left" | "right";
+  width?: number | string;
+  /** Hide on narrow screens (the first column is always kept). */
+  hideOnMobile?: boolean;
+}
+
+export interface DataTableProps<T> {
+  columns: DataColumn<T>[];
+  rows: T[];
+  rowKey: (row: T) => string | number;
+  caption: string;
+  sort?: { key: string; order: SortOrder };
+  onSortChange?: (key: string, order: SortOrder) => void;
+  empty?: ReactNode;
+  loading?: boolean;
+  /** Makes the first cell a link/button to the row's detail page. */
+  onRowOpen?: (row: T) => void;
+  rowHref?: (row: T) => string;
+}
+
+/**
+ * Addition: accessible data table. Sortable headers are buttons and expose `aria-sort`; the caption is read by
+ * screen readers; rows open through a real link in the first cell (keyboard friendly, no clickable <tr>).
+ */
+export function DataTable<T>({ columns, rows, rowKey, caption, sort, onSortChange, empty, loading = false, onRowOpen, rowHref }: DataTableProps<T>) {
+  const ariaSort = (c: DataColumn<T>) => (!c.sortable ? undefined : sort?.key === c.key ? (sort.order === "asc" ? "ascending" : "descending") : "none");
+  return (
+    <div className="isk-table-wrap" aria-busy={loading || undefined}>
+      <table className="isk-table">
+        <caption className="isk-sr-only">{caption}{sort ? `, sorted by ${sort.key.replace(/_/g, " ")} ${sort.order === "asc" ? "ascending" : "descending"}` : ""}</caption>
+        <thead>
+          <tr>
+            {columns.map((c) => (
+              <th key={c.key} scope="col" aria-sort={ariaSort(c)} style={{ width: c.width, textAlign: c.align ?? "left" }} className={c.hideOnMobile ? "isk-hide-sm" : undefined}>
+                {c.sortable && onSortChange ? (
+                  <button type="button" className="isk-sort-btn" onClick={() => onSortChange(c.key, sort?.key === c.key && sort.order === "asc" ? "desc" : "asc")}>
+                    {c.header}
+                    <Icon name={sort?.key === c.key ? (sort.order === "asc" ? "arrow-up" : "arrow-down") : "arrow-up-down"} size={13} />
+                  </button>
+                ) : c.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {loading && rows.length === 0 ? (
+            Array.from({ length: 5 }, (_, i) => (
+              <tr key={`sk${i}`}>{columns.map((c) => <td key={c.key} className={c.hideOnMobile ? "isk-hide-sm" : undefined}><Skeleton height={10} width="70%" /></td>)}</tr>
+            ))
+          ) : rows.length === 0 ? (
+            <tr><td colSpan={columns.length}>{empty ?? <p style={{ padding: 16, color: "var(--color-neutral-500)", fontSize: 14 }}>No results.</p>}</td></tr>
+          ) : (
+            rows.map((r) => (
+              <tr key={rowKey(r)}>
+                {columns.map((c, i) => {
+                  const content = c.render(r);
+                  const linked = i === 0 && (rowHref || onRowOpen);
+                  return (
+                    <td key={c.key} style={{ textAlign: c.align ?? "left" }} className={cx(c.align === "right" && "isk-num", c.hideOnMobile && "isk-hide-sm")}>
+                      {linked ? (
+                        <a className="isk-row-link" href={rowHref?.(r) ?? "#"} onClick={(e) => { if (onRowOpen && !(e.metaKey || e.ctrlKey || e.shiftKey)) { e.preventDefault(); onRowOpen(r); } }}>{content}</a>
+                      ) : content}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Addition: pagination with a live range summary ("21–40 of 132"). */
+export function Pagination({ page, pageSize, total, onChange, label = "Pagination" }: { page: number; pageSize: number; total: number; onChange: (page: number) => void; label?: string }) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(total, page * pageSize);
+  return (
+    <nav className="isk-pagination" aria-label={label}>
+      <p aria-live="polite">{total === 0 ? "No results" : `${from}–${to} of ${total}`}</p>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <Button size="sm" variant="secondary" iconLeft="chevron-left" disabled={page <= 1} onClick={() => onChange(page - 1)}>Previous</Button>
+        <span style={{ fontSize: 13, color: "var(--color-neutral-600)" }}>Page {page} of {pages}</span>
+        <Button size="sm" variant="secondary" iconRight="chevron-right" disabled={page >= pages} onClick={() => onChange(page + 1)}>Next</Button>
+      </div>
+    </nav>
+  );
+}
+
+export interface ConfirmActionDialogProps {
+  open: boolean;
+  title: string;
+  description?: ReactNode;
+  confirmLabel: string;
+  tone?: "danger" | "primary";
+  /** Ask for a reason (stored in the audit log). */
+  requireReason?: boolean;
+  reasonLabel?: string;
+  /** Ask the person to type this exact text to confirm (for irreversible actions). */
+  confirmText?: string;
+  busy?: boolean;
+  /** Extra condition from the caller's own fields (e.g. a password input in `children`). */
+  confirmDisabled?: boolean;
+  error?: ReactNode;
+  children?: ReactNode;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}
+
+/**
+ * Addition: confirmation for sensitive actions. The confirm button stays disabled until the reason and/or the
+ * typed confirmation are valid; it never reports success itself — the caller closes it after the server confirms.
+ */
+export function ConfirmActionDialog({ open, title, description, confirmLabel, tone = "danger", requireReason = false, reasonLabel = "Reason (saved in the audit log)", confirmText, busy = false, confirmDisabled = false, error, children, onConfirm, onCancel }: ConfirmActionDialogProps) {
+  const [reason, setReason] = useState("");
+  const [typed, setTyped] = useState("");
+  useEffect(() => { if (open) { setReason(""); setTyped(""); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const reasonOk = !requireReason || reason.trim().length >= 3;
+  const typedOk = !confirmText || typed.trim().toLowerCase() === confirmText.toLowerCase();
+  return (
+    <Modal open={open} onClose={busy ? undefined : onCancel} title={title} description={description}
+      footer={<>
+        <Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
+        <Button variant={tone === "danger" ? "danger" : "primary"} loading={busy} disabled={!reasonOk || !typedOk || confirmDisabled} onClick={() => onConfirm(reason.trim())}>{confirmLabel}</Button>
+      </>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {error && <InlineAlert>{error}</InlineAlert>}
+        {children}
+        {requireReason && (
+          <Textarea label={reasonLabel} rows={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)}
+            hint={reason.trim().length > 0 && reason.trim().length < 3 ? undefined : "At least 3 characters."}
+            error={reason.trim().length > 0 && reason.trim().length < 3 ? "Please give a short reason." : undefined} />
+        )}
+        {confirmText && (
+          <Input label={`Type ${confirmText} to confirm`} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} />
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/** Addition: renders children only when every required permission is held; otherwise the fallback (default: nothing). */
+export function PermissionGuard({ granted, require, any = false, fallback = null, children }: { granted: readonly string[] | undefined; require: string | string[]; any?: boolean; fallback?: ReactNode; children: ReactNode }) {
+  const need = Array.isArray(require) ? require : [require];
+  const have = new Set(granted ?? []);
+  const ok = any ? need.some((p) => have.has(p)) : need.every((p) => have.has(p));
+  return <>{ok ? children : fallback}</>;
+}
+
+export interface StepperStep { label: ReactNode; description?: ReactNode; status: "done" | "current" | "todo"; href?: string; onClick?: () => void }
+
+/** Addition: horizontal journey stepper (wraps on small screens). Status is given in text, not only colour. */
+export function Stepper({ steps, label = "Progress" }: { steps: StepperStep[]; label?: string }) {
+  return (
+    <ol className="isk-stepper" aria-label={label}>
+      {steps.map((s, i) => {
+        const statusText = s.status === "done" ? "Completed" : s.status === "current" ? "Current step" : "Not started";
+        const inner = (
+          <>
+            <span className={cx("isk-stepper__dot", `isk-stepper__dot--${s.status}`)} aria-hidden="true">
+              {s.status === "done" ? <Icon name="check" size={14} /> : i + 1}
+            </span>
+            <span style={{ minWidth: 0 }}>
+              <span className="isk-stepper__label">{s.label}</span>
+              <span className="isk-sr-only">: {statusText}</span>
+              {s.description && <span className="isk-stepper__desc">{s.description}</span>}
+            </span>
+          </>
+        );
+        return (
+          <li key={i} className="isk-stepper__item" aria-current={s.status === "current" ? "step" : undefined}>
+            {s.href ? (
+              <a href={s.href} className="isk-stepper__link" onClick={(e) => { if (s.onClick && !(e.metaKey || e.ctrlKey || e.shiftKey)) { e.preventDefault(); s.onClick(); } }}>{inner}</a>
+            ) : <div className="isk-stepper__link">{inner}</div>}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+export interface AdminLayoutProps {
+  nav: NavEntry[];
+  active?: string;
+  hrefFor: (id: string) => string;
+  onNavigate: (id: string) => void;
+  /** Rendered under the navigation (e.g. "Back to app", "Sign out"). */
+  footer?: ReactNode;
+  user?: { name: string; role?: string; initials: string };
+  /** Top bar content on small screens (menu button etc.). */
+  mobileBar?: ReactNode;
+  children: ReactNode;
+}
+
+/** Addition: administration shell — dedicated sidebar (sections filtered by the caller), skip link and main region. */
+export function AdminLayout({ nav, active, hrefFor, onNavigate, footer, user, mobileBar, children }: AdminLayoutProps) {
+  return (
+    <div className="isk-admin">
+      <a href="#admin-main" className="isk-skip-link">Skip to content</a>
+      <div className="isk-admin__side">
+        <aside className="isk-sidebar" aria-label="Administration navigation">
+          <div className="isk-sidebar__brand" style={{ padding: "4px 12px 6px", display: "flex", alignItems: "center", gap: 8 }}>
+            <Wordmark />
+            <Badge tone="brand">Admin</Badge>
+          </div>
+          <nav aria-label="Administration" style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 14 }}>
+            {nav.map((it) => (
+              <NavItem key={it.id} icon={it.icon} label={it.label} active={active === it.id} href={hrefFor(it.id)} onClick={() => onNavigate(it.id)} />
+            ))}
+          </nav>
+          <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 2, paddingTop: 16 }}>
+            {footer}
+            {user && (
+              <div className="isk-sidebar__user" title={user.name}>
+                <span className="isk-avatar">{user.initials}</span>
+                <span className="isk-sidebar__user-text" style={{ minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--color-neutral-900)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</span>
+                  {user.role && <span style={{ display: "block", fontSize: 12, color: "var(--color-neutral-500)" }}>{user.role}</span>}
+                </span>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+      {mobileBar && <header className="isk-admin__mobile">{mobileBar}</header>}
+      <main id="admin-main" tabIndex={-1} className="isk-admin__main">
+        <div className="isk-admin__content">{children}</div>
+      </main>
+    </div>
+  );
+}
+
+/** Addition: description list for "label: value" facts (account details, settings). */
+export function KeyValueList({ items }: { items: Array<{ label: ReactNode; value: ReactNode }> }) {
+  return (
+    <dl className="isk-kv">
+      {items.map((it, i) => (
+        <div key={i} className="isk-kv__row"><dt>{it.label}</dt><dd>{it.value ?? "—"}</dd></div>
+      ))}
+    </dl>
+  );
+}
+
+/** Addition: accessible bar chart (values also available as a hidden table for screen readers). */
+export function BarChart({ data, ariaLabel, height = 160, color = "var(--color-brand-600)", valueSuffix = "" }: { data: Array<{ label: string; value: number }>; ariaLabel: string; height?: number; color?: string; valueSuffix?: string }) {
+  const max = Math.max(1, ...data.map((d) => d.value));
+  const n = Math.max(1, data.length);
+  const step = Math.max(1, Math.ceil(n / 8));
+  return (
+    <figure style={{ margin: 0 }}>
+      <svg role="img" aria-label={ariaLabel} viewBox={`0 0 ${n * 12} ${height}`} preserveAspectRatio="none" style={{ width: "100%", height, display: "block" }}>
+        {data.map((d, i) => {
+          const h = (d.value / max) * (height - 4);
+          return <rect key={i} x={i * 12 + 2} y={height - h} width={8} height={Math.max(h, d.value > 0 ? 2 : 0)} rx={2} fill={color}><title>{`${d.label}: ${d.value}${valueSuffix}`}</title></rect>;
+        })}
+        <line x1={0} x2={n * 12} y1={height - 0.5} y2={height - 0.5} stroke="var(--color-neutral-200)" />
+      </svg>
+      <div aria-hidden="true" style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, color: "var(--color-neutral-500)" }}>
+        {data.filter((_, i) => i % step === 0).map((d) => <span key={d.label}>{d.label}</span>)}
+      </div>
+      <table className="isk-sr-only">
+        <caption>{ariaLabel}</caption>
+        <tbody>{data.map((d) => <tr key={d.label}><th scope="row">{d.label}</th><td>{d.value}{valueSuffix}</td></tr>)}</tbody>
+      </table>
+    </figure>
   );
 }

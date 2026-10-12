@@ -1,4 +1,4 @@
-import { Button, Card, InlineAlert, Input, Wordmark } from "@isker/design-system";
+import { Button, Card, Checkbox, InlineAlert, Input, Wordmark } from "@isker/design-system";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,11 +9,14 @@ import { registerSchema, type RegisterValues } from "../features/schemas";
 export function RegisterPage() {
   const reg = useRegister();
   const navigate = useNavigate();
-  const { register, handleSubmit, setError, formState: { errors } } = useForm<RegisterValues>({ resolver: zodResolver(registerSchema) });
+  const { register, handleSubmit, setError, formState: { errors } } = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { accept_terms: false },
+  });
 
   const onSubmit = ({ confirm: _confirm, ...v }: RegisterValues) =>
     reg.mutate(v, {
-      onSuccess: () => navigate("/onboarding", { replace: true }),
+      onSuccess: (data) => navigate(`/onboarding?verification=${data.email_verification}`, { replace: true }),
       onError: (e) => {
         if (e instanceof ApiError) {
           if (e.code === "EMAIL_TAKEN") setError("email", { message: e.message });
@@ -38,6 +41,15 @@ export function RegisterPage() {
             <Input label="Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
             <Input label="Password" type="password" autoComplete="new-password" hint="At least 8 characters, with a letter and a number." {...register("password")} error={errors.password?.message} />
             <Input label="Confirm password" type="password" autoComplete="new-password" {...register("confirm")} error={errors.confirm?.message} />
+            <div>
+              <Checkbox
+                {...register("accept_terms")}
+                aria-invalid={errors.accept_terms ? true : undefined}
+                aria-describedby={errors.accept_terms ? "terms-error" : undefined}
+                label={<>I agree to the <Link to="/terms" target="_blank" rel="noopener">Terms of Use</Link> and the <Link to="/privacy" target="_blank" rel="noopener">Privacy Policy</Link></>}
+              />
+              {errors.accept_terms && <p id="terms-error" className="isk-hint isk-hint--error" style={{ marginTop: 6 }}>{errors.accept_terms.message}</p>}
+            </div>
             <Button type="submit" size="lg" fullWidth loading={reg.isPending}>Create account</Button>
           </form>
         </Card>

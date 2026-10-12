@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useMe } from "../api/auth";
+import { can, hasAdminAccess, useMe } from "../api/auth";
 import { ErrorState } from "../components/States";
-import { SkeletonCard } from "@isker/design-system";
+import { EmptyState, SkeletonCard } from "@isker/design-system";
 
 function FullPageLoading() {
   return (
@@ -19,15 +19,29 @@ export function RequireAuth({ allowIncompleteOnboarding = false }: { allowIncomp
   if (isLoading) return <FullPageLoading />;
   if (error) return <div style={{ maxWidth: 560, margin: "15vh auto 0", padding: 16 }}><ErrorState error={error} onRetry={() => refetch()} /></div>;
   if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
-  if (!allowIncompleteOnboarding && !user.onboarding_completed && user.role !== "admin") return <Navigate to="/onboarding" replace />;
+  if (!allowIncompleteOnboarding && !user.onboarding_completed && !hasAdminAccess(user)) return <Navigate to="/onboarding" replace />;
   return <Outlet />;
 }
 
+/** The admin area: any staff role (admin.access). Each admin page additionally checks its own permission. */
 export function RequireAdmin() {
   const { data: user, isLoading } = useMe();
+  const location = useLocation();
   if (isLoading) return <FullPageLoading />;
-  if (!user) return <Navigate to="/login?next=/admin" replace />;
-  if (user.role !== "admin") return <Navigate to="/dashboard" replace />;
+  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />;
+  if (!hasAdminAccess(user)) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+}
+
+/** Inside the admin area: shows an explanation (not a blank page) when a section needs a permission the user lacks. */
+export function RequirePermission({ permission }: { permission: string }) {
+  const { data: user } = useMe();
+  if (!can(user, permission)) {
+    return (
+      <EmptyState icon="lock" title="You don't have access to this section"
+        description="Your role doesn't include this permission. Ask a super administrator if you need it." />
+    );
+  }
   return <Outlet />;
 }
 
@@ -39,7 +53,13 @@ export function RedirectIfAuthed() {
   if (user) {
     const next = new URLSearchParams(location.search).get("next");
     const safe = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
-    return <Navigate to={safe ?? (user.onboarding_completed ? "/dashboard" : "/onboarding")} replace />;
+    return <Navigate to={safe ?? homeFor(user)} replace />;
   }
   return <Outlet />;
+}
+
+/** Where a signed-in user lands by default. */
+export function homeFor(user: { onboarding_completed: boolean; permissions: string[] }): string {
+  if (user.permissions.includes("admin.access")) return "/admin";
+  return user.onboarding_completed ? "/dashboard" : "/onboarding";
 }

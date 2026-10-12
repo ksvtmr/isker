@@ -18,6 +18,8 @@ services:
         generateValue: true
       - key: COOKIE_SECURE
         value: "true"
+      # Email links use RENDER_EXTERNAL_URL automatically. Without SMTP_* variables no email is sent
+      # (EMAIL_BACKEND=auto → disabled in production) and the app says so honestly.
       - key: MOCK_AI
         value: "true"
       # Public demo account for reviewers (contains only seeded demo data).

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { adminApi, useAdminAssessments, useAdminMutation } from "../../api/admin";
 import { errorMessage } from "../../api/client";
 import { ErrorState, PageSkeleton } from "../../components/States";
+import { useConfirmAction } from "./common";
 import { useToast } from "../../components/Toaster";
 
 const BLANK = { code: "", title: "", description: "", estimated_minutes: "20" };
@@ -14,10 +15,12 @@ export function AdminAssessments() {
   const create = useAdminMutation(adminApi.createAssessment);
   const toggle = useAdminMutation((v: { id: number; is_active: boolean }) => adminApi.updateAssessment(v.id, { is_active: v.is_active }));
   const toast = useToast();
+  const confirm = useConfirmAction();
   if (isLoading) return <PageSkeleton chart={false} />;
   if (error || !data) return <ErrorState error={error} onRetry={() => refetch()} />;
   return (
     <>
+      {confirm.dialog}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}><Button iconLeft="plus" onClick={() => { setForm(BLANK); setOpen(true); }}>New assessment</Button></div>
       {toggle.error && <div style={{ marginBottom: 16 }}><InlineAlert>{errorMessage(toggle.error)}</InlineAlert></div>}
       <Card style={{ overflow: "hidden" }}>
@@ -29,7 +32,9 @@ export function AdminAssessments() {
                 <td><b style={{ fontWeight: 500 }}>{a.title}</b><div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{a.code} · {a.estimated_minutes} min</div></td>
                 <td className="num">{a.question_count}</td><td className="num">{a.attempt_count}</td><td className="num">{a.version}</td>
                 <td>{a.is_active ? <StatusBadge status="done">Active</StatusBadge> : <StatusBadge status="todo">Inactive</StatusBadge>}</td>
-                <td style={{ textAlign: "right" }}><Button size="sm" variant="ghost" onClick={() => toggle.mutate({ id: a.id, is_active: !a.is_active })}>{a.is_active ? "Deactivate" : "Activate"}</Button></td>
+                <td style={{ textAlign: "right" }}><Button size="sm" variant="ghost" onClick={() => a.is_active
+                  ? confirm.ask({ title: `Deactivate “${a.title}”?`, description: "New attempts can't start with it. Completed attempts and scores are kept.", confirmLabel: "Deactivate", success: "Assessment deactivated", run: () => toggle.mutateAsync({ id: a.id, is_active: false }) })
+                  : toggle.mutate({ id: a.id, is_active: true }, { onSuccess: () => toast({ title: "Assessment activated" }) })}>{a.is_active ? "Deactivate" : "Activate"}</Button></td>
               </tr>))}
             </tbody>
           </table>

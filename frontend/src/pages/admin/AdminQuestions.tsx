@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { adminApi, useAdminAssessments, useAdminCompetencies, useAdminMutation, useAdminQuestions, type AdminQuestion, type QuestionInput } from "../../api/admin";
 import { errorMessage } from "../../api/client";
 import { ErrorState, PageSkeleton } from "../../components/States";
+import { useConfirmAction } from "./common";
 import { useToast } from "../../components/Toaster";
 import type { QuestionType } from "../../types/api";
 
@@ -48,6 +49,7 @@ export function AdminQuestions() {
   const toast = useToast();
   const save = useAdminMutation((v: { id?: number; body: QuestionInput }) => (v.id ? adminApi.updateQuestion(v.id, v.body) : adminApi.createQuestion(v.body)));
   const deactivate = useAdminMutation(adminApi.deactivateQuestion);
+  const confirm = useConfirmAction();
   const codeById = useMemo(() => new Map((comps.data ?? []).map((c) => [c.id, c.code])), [comps.data]);
   const idByCode = useMemo(() => new Map((comps.data ?? []).map((c) => [c.code, c.id])), [comps.data]);
 
@@ -66,6 +68,7 @@ export function AdminQuestions() {
 
   return (
     <>
+      {confirm.dialog}
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <div style={{ width: 220 }}><Select aria-label="Filter by type" placeholder="All types" value={filter} onChange={(e) => setFilter(e.target.value)} options={["likert", "situational", "open", "practical"]} /></div>
         <Button iconLeft="plus" onClick={() => { setLocalError(null); setForm(BLANK); }}>New question</Button>
@@ -84,7 +87,7 @@ export function AdminQuestions() {
                 <td>{q.is_active ? <StatusBadge status="done">Active</StatusBadge> : <StatusBadge status="todo">Inactive</StatusBadge>}</td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                   <Button size="sm" variant="ghost" onClick={() => { setLocalError(null); setForm(toForm(q, codeById)); }}>Edit</Button>
-                  {q.is_active && <Button size="sm" variant="ghost" onClick={() => deactivate.mutate(q.id, { onSuccess: () => toast({ title: "Question deactivated" }) })}>Deactivate</Button>}
+                  {q.is_active && <Button size="sm" variant="ghost" onClick={() => confirm.ask({ title: "Deactivate this question?", description: "It disappears from new attempts. Existing answers and scores are kept.", confirmLabel: "Deactivate", success: "Question deactivated", run: () => deactivate.mutateAsync(q.id) })}>Deactivate</Button>}
                 </td>
               </tr>))}
             </tbody>

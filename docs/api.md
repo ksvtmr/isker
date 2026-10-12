@@ -4,14 +4,31 @@ Generated from the FastAPI OpenAPI schema (`docs/openapi.json`). Interactive doc
 
 ## Conventions
 
-- **Auth:** `POST /api/auth/login` or `/register` returns `{user, access_token, expires_at}` and sets an httpOnly `isker_session` cookie (SameSite=Lax). Send either the cookie or `Authorization: Bearer <token>`. `POST /api/auth/logout` revokes the token server-side (JWT `jti` denylist).
+- **Auth (browser):** `POST /api/auth/register` (requires `accept_terms: true`) or `/login` sets two cookies: the
+  httpOnly `isker_session` (SameSite=Lax, `Secure` in production) and a readable `isker_csrf`. Every
+  POST/PUT/PATCH/DELETE authenticated by the cookie must send `X-CSRF-Token: <isker_csrf value>`; otherwise
+  `403 CSRF_FAILED`.
+- **Auth (API clients):** send the returned `access_token` as `Authorization: Bearer <token>` (no CSRF header needed).
+  Each token is bound to a server-side session (`user_sessions`); logout, password change/reset, suspension and
+  "sign out everywhere" revoke sessions immediately (`401 SESSION_REVOKED` / `ACCOUNT_INACTIVE`).
+- **Authorization:** role-based permissions checked on the server (`403 FORBIDDEN` with `details.missing`,
+  `INSUFFICIENT_RANK`, `SELF_ACTION_FORBIDDEN`, `LAST_SUPER_ADMIN`). Denials are written to the audit log.
+- **Entitlements:** plan features are enforced by the server. A missing feature or exhausted limit returns
+  `403 UPGRADE_REQUIRED` with `details: {feature, plan, limit, used}`. `GET /api/entitlements/me` lists them.
+- **Rate limits:** sign-in, registration, password reset, verification and password change are limited per IP and per
+  account → `429 RATE_LIMITED` with a `Retry-After` header.
 - **Errors** always use one envelope:
   ```json
   {"error": {"code": "ASSESSMENT_NOT_FOUND", "message": "Assessment not found", "details": null}}
   ```
-  Validation errors are `422 VALIDATION_ERROR` with `details: [{field, message}]`. Other codes: `NOT_AUTHENTICATED` (401), `SESSION_EXPIRED`, `SESSION_REVOKED`, `INVALID_CREDENTIALS`, `FORBIDDEN` (403), `*_NOT_FOUND` (404), `EMAIL_TAKEN`/`CONFLICT` (409), `ASSESSMENT_INCOMPLETE`, `INVALID_OPTION`, `DATABASE_ERROR`/`INTERNAL_ERROR` (500, no stack traces).
+  Validation errors are `422 VALIDATION_ERROR` with `details: [{field, message}]`. Bodies over 1 MB → `413
+  PAYLOAD_TOO_LARGE`. 500s never include stack traces. Every response carries `X-Request-ID` (also stored in audit rows).
 - **Pagination:** list endpoints that can grow return `{items, total, page, page_size}` and accept `page`, `page_size`.
-- **Privacy:** question payloads never reveal which competency a question measures. Admin endpoints require `role=admin`.
+- **Privacy:** question payloads never reveal which competency a question measures; password hashes and tokens are
+  never returned; reset-password responses never reveal whether an email is registered.
+- **Payment webhooks:** `POST /api/billing/webhooks/{provider}` accepts signed, provider-neutral events
+  (`X-Isker-Signature: t=<unix>,v1=<HMAC-SHA256(secret, "t.body")>`), processed once per event id. Refused with
+  `503 PAYMENTS_NOT_CONFIGURED` until `PAYMENT_PROVIDER` and `PAYMENT_WEBHOOK_SECRET` are set. No card data is accepted.
 
 ## Endpoints
 
@@ -21,11 +38,19 @@ Registration, login, logout, current user
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/auth/register` | Create an account and start a session |
+| `POST` | `/api/auth/register` | Create an account (terms required) and start a session |
 | `POST` | `/api/auth/login` | Sign in with email and password |
-| `POST` | `/api/auth/logout` | Sign out and revoke the current token |
-| `GET` | `/api/auth/me` | Current user |
-| `POST` | `/api/auth/password` | Change password |
+| `POST` | `/api/auth/logout` | Sign out and revoke this session |
+| `GET` | `/api/auth/me` | Current user, roles and permissions |
+| `POST` | `/api/auth/password` | Change password (signs out other sessions) |
+| `POST` | `/api/auth/forgot-password` | Request a password reset link (same response whether or not the email exists) |
+| `POST` | `/api/auth/reset-password` | Set a new password with a reset token |
+| `POST` | `/api/auth/verify-email` | Confirm an email address with a token |
+| `POST` | `/api/auth/resend-verification` | Send the verification email again |
+| `GET` | `/api/auth/sessions` | Your active sessions (devices) |
+| `DELETE` | `/api/auth/sessions/{session_id}` | Sign out one of your sessions |
+| `POST` | `/api/auth/sessions/revoke-others` | Sign out all other sessions |
+| `POST` | `/api/auth/deactivate` | Close your account (reversible by support) |
 
 ### profile
 
@@ -37,7 +62,6 @@ Onboarding, goals and learning preferences
 | `GET` | `/api/profile` | Current user's profile, goals and preferences |
 | `PUT` | `/api/profile` | Update profile, goals and preferences |
 | `POST` | `/api/profile/onboarding` | Complete onboarding |
-| `DELETE` | `/api/users/me` | Delete account and all personal data |
 
 ### assessments
 
@@ -119,14 +143,25 @@ AI subsystem status and explanations
 | `GET` | `/api/ai/status` | Which AI provider is active (never exposes keys) |
 | `GET` | `/api/ai/evaluations/{evaluation_id}` | One of your AI evaluations (explainability) |
 
+### billing
+
+Plans, entitlements, payment webhooks and data export
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/plans` | Active subscription plans (public) |
+| `GET` | `/api/entitlements/me` | What my plan allows, with usage |
+| `GET` | `/api/subscription/me` | My plan, subscription and history |
+| `POST` | `/api/billing/webhooks/{provider}` | Signed payment-provider webhook (idempotent) |
+| `GET` | `/api/export/me` | Download all my data as JSON (requires the export.data entitlement) |
+
 ### admin
 
-Content management, AI governance and statistics (admin only)
+Content management and AI governance (permission-based)
 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/admin/stats` | Platform and assessment statistics |
-| `GET` | `/api/admin/users` | Users |
 | `GET` | `/api/admin/competencies` | Competencies |
 | `PUT` | `/api/admin/competencies/{competency_id}` | Edit a competency |
 | `GET` | `/api/admin/questions` | Question bank |
@@ -148,6 +183,55 @@ Content management, AI governance and statistics (admin only)
 | `GET` | `/api/admin/ai/prompts` | Prompt versions |
 | `POST` | `/api/admin/ai/prompts` | Create a new prompt version |
 | `POST` | `/api/admin/ai/prompts/{prompt_id}/activate` | Activate a prompt version |
+
+### admin-users
+
+User management, roles and account lifecycle (permission-based)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/admin/users` | Search, filter, sort and page user accounts |
+| `GET` | `/api/admin/users/{user_id}` | Full account details |
+| `PATCH` | `/api/admin/users/{user_id}` | Edit name or email (reason required) |
+| `DELETE` | `/api/admin/users/{user_id}` | Permanently delete a deactivated account (super admin; email confirmation required) |
+| `POST` | `/api/admin/users/{user_id}/suspend` | Suspend (signs the user out) |
+| `POST` | `/api/admin/users/{user_id}/deactivate` | Deactivate (data kept; permanent deletion is a separate step) |
+| `POST` | `/api/admin/users/{user_id}/reactivate` | Reactivate a suspended account |
+| `POST` | `/api/admin/users/{user_id}/revoke-sessions` | Sign the user out everywhere |
+| `POST` | `/api/admin/users/{user_id}/password-reset` | Send the user a password reset link (staff never see or set passwords) |
+| `POST` | `/api/admin/users/{user_id}/roles` | Grant a role |
+| `DELETE` | `/api/admin/users/{user_id}/roles/{role_key}` | Revoke a role |
+
+### admin-billing
+
+Plans and subscriptions administration (permission-based)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/admin/plans` | All plans, including inactive ones |
+| `POST` | `/api/admin/plans` | Create a plan |
+| `PATCH` | `/api/admin/plans/{plan_id}` | Edit a plan (price, limits, availability) |
+| `GET` | `/api/admin/subscriptions` | Subscriptions with filters |
+| `GET` | `/api/admin/subscription-events` | Subscription history |
+| `POST` | `/api/admin/users/{user_id}/subscriptions` | Assign or change a user's plan (optionally time-limited); replaces the current subscription |
+| `POST` | `/api/admin/subscriptions/{sub_id}/extend` | Extend the end date |
+| `POST` | `/api/admin/subscriptions/{sub_id}/cancel` | Cancel now or at the end of the period |
+| `POST` | `/api/admin/subscriptions/{sub_id}/status` | Change status along an allowed transition |
+
+### admin-system
+
+Analytics, roles, audit logs and settings (permission-based)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/admin/me` | The caller's admin permissions (drives the admin navigation) |
+| `GET` | `/api/admin/analytics/overview` | Dashboard metrics computed from the database |
+| `GET` | `/api/admin/permissions` | Permission catalogue |
+| `GET` | `/api/admin/roles` | Roles with their permissions and member counts |
+| `POST` | `/api/admin/roles` | Create a custom role |
+| `PUT` | `/api/admin/roles/{role_id}/permissions` | Replace a role's permissions |
+| `GET` | `/api/admin/audit-logs` | Append-only audit log with filters |
+| `GET` | `/api/admin/settings` | Configuration status (no secrets) |
 
 ### notifications
 

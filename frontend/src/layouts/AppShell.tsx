@@ -1,7 +1,8 @@
 import { BottomNav, ISKER_NAV, ISKER_NAV_FOOTER, Modal, NavItem, Sidebar, Wordmark, Icon } from "@isker/design-system";
 import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useLogout, useMe } from "../api/auth";
+import { hasAdminAccess, roleLabel, useLogout, useMe } from "../api/auth";
+import { EmailVerificationBanner } from "../components/AccountNotices";
 import { initials } from "../utils/format";
 import { NAV_PATHS, navIdForPath } from "./nav";
 
@@ -26,9 +27,10 @@ export function AppShell() {
   }, [location.pathname]);
 
   const doLogout = () => logout.mutate(undefined, { onSettled: () => navigate("/login", { replace: true }) });
-  const isAdmin = user?.role === "admin";
+  const isAdmin = hasAdminAccess(user);
   const footer = (
     <>
+      <NavItem icon="award" label="Plans" href="/plans" active={location.pathname === "/plans"} onClick={() => navigate("/plans")} />
       {isAdmin && <NavItem icon="shield" label="Admin" href="/admin" onClick={() => navigate("/admin")} />}
       <NavItem icon="log-out" label="Sign out" onClick={doLogout} />
     </>
@@ -43,7 +45,7 @@ export function AppShell() {
           onNavigate={go}
           hrefFor={hrefFor}
           footer={footer}
-          user={user ? { name: user.full_name, role: isAdmin ? "Administrator" : "Learner", initials: initials(user.full_name) } : undefined}
+          user={user ? { name: user.full_name, role: roleLabel(user), initials: initials(user.full_name) } : undefined}
         />
       </div>
       <header className="ik-mobile-top">
@@ -58,7 +60,10 @@ export function AppShell() {
         </div>
       </header>
       <main id="main" ref={mainRef} tabIndex={-1} className="ik-main">
-        <div className="ik-content"><Outlet /></div>
+        <div className="ik-content">
+          {user && <EmailVerificationBanner user={user} />}
+          <Outlet />
+        </div>
       </main>
       <div className="ik-bottom"><BottomNav active={active} onNavigate={go} hrefFor={hrefFor} /></div>
       <Modal open={menu} onClose={() => setMenu(false)} title="Menu">
@@ -66,6 +71,7 @@ export function AppShell() {
           {[...ISKER_NAV, ...ISKER_NAV_FOOTER].map((it) => (
             <NavItem key={it.id} icon={it.icon} label={it.label} active={active === it.id} href={hrefFor(it.id)} onClick={() => go(it.id)} />
           ))}
+          <NavItem icon="award" label="Plans" href="/plans" onClick={() => { setMenu(false); navigate("/plans"); }} />
           {isAdmin && <NavItem icon="shield" label="Admin" href="/admin" onClick={() => { setMenu(false); navigate("/admin"); }} />}
           <NavItem icon="log-out" label="Sign out" onClick={doLogout} />
         </nav>

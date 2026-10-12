@@ -1,11 +1,10 @@
-import { Button, Card, EmptyState, GapBadge, InlineAlert, Modal, PageHeader, PlanStep, ProgressBar, StatusBadge, Textarea, type PlanStepStatus } from "@isker/design-system";
+import { Button, Card, EmptyState, GapBadge, Modal, PageHeader, PlanStep, ProgressBar, StatusBadge, Textarea, type PlanStepStatus } from "@isker/design-system";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStartAttempt } from "../api/assessments";
-import { errorMessage } from "../api/client";
 import { usePlan, useReflect } from "../api/recommendations";
 import { LinkButton } from "../components/RouterLink";
-import { ErrorState, PageSkeleton } from "../components/States";
+import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { useToast } from "../components/Toaster";
 import type { Activity, Recommendation } from "../types/api";
 import { formatDate, gapLabel } from "../utils/format";
@@ -71,10 +70,10 @@ function PlanDetail({ rec }: { rec: Recommendation }) {
           meta={!re.locked && re.status !== "done" ? "About 5 minutes · only this competency" : undefined}
           action={!re.locked && re.status !== "done" && <Button size="sm" variant="success" iconLeft="refresh-cw" loading={start.isPending} onClick={reassess}>Start Reassessment</Button>} />
       )}
-      {start.error && <div style={{ marginTop: 12 }}><InlineAlert>{errorMessage(start.error)}</InlineAlert></div>}
+      {start.error && <div style={{ marginTop: 12 }}><ApiErrorAlert error={start.error} /></div>}
       <Modal open={open} onClose={() => setOpen(false)} title="Write reflection" description={refl?.prompt ?? undefined}
         footer={<><Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button disabled={text.trim().length < 10} loading={reflect.isPending} onClick={saveReflection}>Save reflection</Button></>}>
-        {reflect.error && <div style={{ marginBottom: 12 }}><InlineAlert>{errorMessage(reflect.error)}</InlineAlert></div>}
+        {reflect.error && <div style={{ marginBottom: 12 }}><ApiErrorAlert error={reflect.error} /></div>}
         <Textarea label="Your reflection" rows={5} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} hint="At least 10 characters." placeholder="The assumption I'm least sure about is…" />
       </Modal>
     </Card>
