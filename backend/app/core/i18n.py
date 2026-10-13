@@ -189,6 +189,17 @@ CATALOG: dict[str, dict[str, str]] = {
         "en": "What did you learn about {name}?",
     },
     "step.reassess": {"ru": "Повторная оценка: {name}", "kk": "Қайта бағалау: {name}", "en": "Reassess {name}"},
+    # In-app notifications
+    "notify.profile_ready": {
+        "ru": "Ваш профиль компетенций готов",
+        "kk": "Құзыреттер профиліңіз дайын",
+        "en": "Your competency profile is ready",
+    },
+    "notify.overall": {
+        "ru": "Общий балл {score} / 100.",
+        "kk": "Жалпы балл {score} / 100.",
+        "en": "Overall score {score} / 100.",
+    },
 }
 
 

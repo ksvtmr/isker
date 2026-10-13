@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import timedelta
 
 from fastapi import APIRouter
@@ -263,15 +264,23 @@ def dashboard(user: CurrentUser, db: DB) -> DashboardOut:
 
 
 @router.get("/api/notifications", response_model=list[NotificationOut], tags=["notifications"])
-def notifications(user: CurrentUser, db: DB) -> list[Notification]:
-    return list(
-        db.scalars(
-            select(Notification)
-            .where(Notification.user_id == user.id)
-            .order_by(Notification.created_at.desc())
-            .limit(50)
-        )
+def notifications(user: CurrentUser, db: DB) -> list[NotificationOut]:
+    rows = db.scalars(
+        select(Notification).where(Notification.user_id == user.id).order_by(Notification.created_at.desc()).limit(50)
     )
+    return [_notification_out(db, n) for n in rows]
+
+
+def _notification_out(db, n: Notification) -> NotificationOut:
+    """Known notification types are rendered in the request language; the stored text is the fallback."""
+    out = NotificationOut.model_validate(n, from_attributes=True)
+    if n.type == "assessment.completed":
+        m = re.search(r"attempt=(\d+)", n.link or "")
+        att = db.get(AssessmentAttempt, int(m.group(1))) if m else None
+        out.title = tr("notify.profile_ready")
+        if att is not None and att.overall_score is not None:
+            out.body = tr("notify.overall", score=att.overall_score)
+    return out
 
 
 @router.post("/api/notifications/{notification_id}/read", response_model=Message, tags=["notifications"])

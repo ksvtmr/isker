@@ -135,3 +135,18 @@ def test_password_reset_response_is_generic(client, db):
 def test_user_language_column_starts_empty_for_admin_created_accounts(db):
     u = make_user(db, "x@example.com")
     assert db.get(User, u.id).profile.language is None
+
+
+def test_notifications_and_plan_steps_follow_the_language(client):
+    register(client)
+    onboard(client)
+    a = client.post("/api/assessments/attempts", json={"scope": "full"}).json()["attempt"]["id"]
+    answer_all(client, a)
+    client.post(f"/api/assessments/attempts/{a}/submit")
+    en = client.get("/api/notifications", headers=EN).json()
+    kk = client.get("/api/notifications", headers=KK).json()
+    assert en[0]["title"] == "Your competency profile is ready"
+    assert kk[0]["title"] == "Құзыреттер профиліңіз дайын" and kk[0]["body"].startswith("Жалпы балл")
+    steps = client.get("/api/recommendations", headers=RU).json()[0]["activities"]
+    reassess = next(s for s in steps if s["kind"] == "reassess")
+    assert reassess["title"].startswith("Повторная оценка")
