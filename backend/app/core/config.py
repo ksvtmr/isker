@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     remember_me_days: int = 30
     # The session token is re-issued (rotated) after this many minutes of use; replaying an older token is detected.
     token_rotate_minutes: int = 60
-    # Google OpenID Connect (all three required to enable "Continue with Google").
+    # Google OpenID Connect: client id and secret enable "Continue with Google" (docs/google-oauth-setup.md).
     google_client_id: str = ""
     google_client_secret: str = ""
     # Exact URI registered in Google Cloud. Empty = {APP_BASE_URL}/api/auth/google/callback.

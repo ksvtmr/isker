@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Iterator
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, MetaData, create_engine, event
+from sqlalchemy import DateTime, Integer, MetaData, create_engine, event
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, declared_attr, mapped_column, sessionmaker
 
 from app.core.config import get_settings
 
@@ -31,6 +31,22 @@ def as_utc(dt: datetime) -> datetime:
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING)
+
+
+class Versioned:
+    """Optimistic locking for rows that several administrators may edit at the same time.
+
+    `lock_version` starts at 1 and SQLAlchemy increments it on every UPDATE, adding `WHERE lock_version = <loaded>`;
+    an update that matches no row raises StaleDataError, returned to the client as 409 VERSION_CONFLICT. Routes also
+    compare the version the client last saw (`expected_version` / `If-Match`) before applying a change, see
+    app/services/locking.py.
+    """
+
+    lock_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+
+    @declared_attr.directive
+    def __mapper_args__(cls) -> dict:  # noqa: N805
+        return {"version_id_col": cls.lock_version}
 
 
 class TimestampMixin:

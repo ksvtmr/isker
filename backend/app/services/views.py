@@ -211,16 +211,32 @@ def recommendation_out(db: Session, rec: Recommendation) -> RecommendationOut:
             dur, typ = res.duration_minutes, type_label(res.type.value)
         elif a.kind == ActivityKind.PRACTICE and task:
             dur, typ = task.duration_minutes, type_label("task")
+        # Titles and prompts are rendered now (not the stored copies) so they follow the interface language.
+        if a.kind == ActivityKind.LEARN and res:
+            title = res.title
+        elif a.kind == ActivityKind.PRACTICE and task:
+            title = task.title
+        elif a.kind == ActivityKind.REFLECT:
+            title = tr("step.reflect")
+        elif a.kind == ActivityKind.REASSESS:
+            title = tr("step.reassess", name=comp.name)
+        else:
+            title = a.title
+        prompt = (
+            (comp.reflection_prompt or tr("step.reflect_prompt", name=comp.name))
+            if a.kind == ActivityKind.REFLECT
+            else a.prompt
+        )
         acts.append(
             ActivityOut(
                 id=a.id,
                 kind=a.kind,
-                title=a.title,
+                title=title,
                 status=a.status,
                 locked=a.kind == ActivityKind.REASSESS and not unlocked and a.status.value != "done",
                 resource_id=a.resource_id,
                 task_id=a.task_id,
-                prompt=a.prompt,
+                prompt=prompt,
                 response_text=a.response_text,
                 duration_minutes=dur,
                 type=typ,

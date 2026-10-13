@@ -50,3 +50,65 @@ Isker's interface is available in **Russian (`ru`, default)**, **Kazakh (`kk`)**
   API** (`Accept-Language` is sent with every request). Don't translate it in the frontend.
 - Kazakh uses the Cyrillic alphabet with its specific letters (ә ғ қ ң ө ұ ү һ і). Write natural Kazakh, not a
   transliteration of Russian.
+
+## Language resolution and persistence
+
+Priority (implemented in `i18n/index.ts`, `i18n/useLanguage.ts`):
+
+1. **Account preference** (`user_profiles.language`, `PUT /api/auth/me/language`). Applied right after sign-in on
+   any device. `NULL` means "never chosen": the language in use is then saved, so a browser setting never
+   overwrites an explicit choice.
+2. **Choice made in this browser** (selector) — `localStorage["isker.lang"]`, also used for anonymous visitors.
+3. **Browser language** (`navigator.languages`, only `ru`/`kk`/`en` count).
+4. **Russian** (default).
+
+Changing the language updates the interface immediately, keeps the route and query string, saves the choice to the
+account when signed in and refetches API data (content is localized by the server). Registration sends the
+current language; Google sign-up stores the language of the page where the flow started.
+
+Missing keys fall back `kk → ru → en` (the test suite makes sure no key is missing).
+
+## Backend
+
+| Piece | Where |
+|---|---|
+| Request language from `Accept-Language` (`ru` default), `Vary: Accept-Language` | `app/core/middleware.py → parse_language`, `app/core/context.py → language_var` |
+| Texts the API composes (score explanations, recommendation reasons, evidence, labels, rule-based AI feedback and insights) | `app/core/i18n.py → tr(key, **values)` |
+| Emails (verification, password reset) in the account language | `app/services/email_templates.py` |
+| Error responses | stable `error.code` + English `message`; the frontend shows the translation of the code |
+| Success responses | `Message {message, code, count}` — the frontend translates `auth:messages.<code>` |
+| AI with a real model | the evaluation/insight prompts get an instruction to answer in the request language (`app/ai/service.py`) |
+
+Generated texts are rebuilt at read time from stored numbers and ids (explanations, reasons, rule-based insights,
+evidence), so switching the language also switches texts generated earlier. Texts written by a real AI model are
+stored as generated, in the language active at that moment.
+
+### Content translations
+
+English is the base text in the normal columns. Translatable tables have a `translations` JSON column:
+
+```json
+{"ru": {"name": "Выявление возможностей", "description": "…"}, "kk": {"name": "Мүмкіндіктерді анықтау"}}
+```
+
+| Table | Translated fields |
+|---|---|
+| `competency_areas` | name |
+| `competencies` | name, short_name, description, hint, reflection_prompt |
+| `competency_levels` | description |
+| `goal_definitions` | title, description |
+| `assessments` | title, description |
+| `questions` | section, text, help_text, rubric (criterion, description, keywords per position) |
+| `question_options` | label |
+| `learning_resources` | title, description, content |
+| `practical_tasks` | title, description, instructions, rubric |
+| `subscription_plans` | name, description |
+
+`app/core/content_i18n.py` swaps in the request language when rows are loaded (`set_committed_value`, so a
+localized value is never written back) with field-by-field fallback `kk → ru → en`. Rubric keywords of all
+languages are merged, so the rule-based evaluator recognizes answers written in any supported language.
+Learner requests are localized; the admin content editors work on the base text and edit translations explicitly.
+Seeded translations live in `app/seed/translations.py` and are applied by `app/seed/apply_translations.py`
+(matched by codes, slugs and English base text) on every seed run.
+
+What is and isn't translated is listed in [localization-audit.md](localization-audit.md).

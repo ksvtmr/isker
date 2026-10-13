@@ -177,6 +177,18 @@ CATALOG: dict[str, dict[str, str]] = {
         "next_step) in Kazakh (Cyrillic). Keep JSON keys and criterion names exactly as given.",
         "en": "Write every free-text field in English. Keep JSON keys and criterion names exactly as given.",
     },
+    # Development plan steps
+    "step.reflect": {
+        "ru": "Подведите итоги изученного",
+        "kk": "Үйренгеніңізді қорытыңыз",
+        "en": "Reflect on what you learned",
+    },
+    "step.reflect_prompt": {
+        "ru": "Что вы узнали о компетенции «{name}»?",
+        "kk": "«{name}» құзыреті туралы не білдіңіз?",
+        "en": "What did you learn about {name}?",
+    },
+    "step.reassess": {"ru": "Повторная оценка: {name}", "kk": "Қайта бағалау: {name}", "en": "Reassess {name}"},
 }
 
 
