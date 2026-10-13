@@ -26,6 +26,7 @@ from app.api.routes import (
     practice,
     profile,
     progress,
+    sync,
 )
 from app.core.config import get_settings
 from app.core.database import SessionLocal
@@ -97,7 +98,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestContextMiddleware)
     install_error_handlers(app)
     for r in (auth, oauth, profile, assessments, competencies, plan, learning, practice, progress, billing, admin,
-              admin_users, admin_billing, admin_system):
+              admin_users, admin_billing, admin_system, sync):
         app.include_router(r.router)
 
     @app.get("/api/health", tags=["progress"], summary="Liveness and database check")

@@ -28,7 +28,9 @@ from app.schemas.billing import (
 from app.schemas.common import ERROR_RESPONSES, Page
 from app.services import subscriptions as subs
 from app.services.audit import audit
+from app.services.content_admin import clean_translations, touch
 from app.services.entitlements import FEATURES
+from app.services.locking import changes, check_version, snapshot
 from app.services.permissions import assert_can_act_on
 
 router = APIRouter(prefix="/api/admin", tags=["admin-billing"], responses=ERROR_RESPONSES)
@@ -99,7 +101,8 @@ def create_plan(body: PlanIn, actor: PlanManager, db: DB) -> PlanAdminOut:
     _check_entitlements(body.entitlements)
     p = SubscriptionPlan(key=body.key, name=body.name, description=body.description, price_cents=body.price_cents,
                          currency=body.currency, billing_interval=body.billing_interval, trial_days=body.trial_days,
-                         is_active=body.is_active, is_default=False, sort_order=body.sort_order)
+                         is_active=body.is_active, is_default=False, sort_order=body.sort_order,
+                         translations=clean_translations(SubscriptionPlan, body.translations))
     _set_entitlements(p, body.entitlements)
     db.add(p)
     db.flush()
@@ -108,27 +111,40 @@ def create_plan(body: PlanIn, actor: PlanManager, db: DB) -> PlanAdminOut:
     return _plan_out(db, p)
 
 
+PLAN_FIELDS = ("name", "description", "price_cents", "currency", "billing_interval", "trial_days", "is_active",
+               "sort_order", "translations")
+
+
 @router.patch("/plans/{plan_id}", response_model=PlanAdminOut, summary="Edit a plan (price, limits, availability)")
 def update_plan(plan_id: int, body: PlanUpdate, actor: PlanManager, db: DB) -> PlanAdminOut:
     p = _get_plan(db, plan_id)
-    data = body.model_dump(exclude_unset=True, exclude={"reason", "entitlements"})
+    check_version(p, body.expected_version)
+    data = body.model_dump(exclude_unset=True, exclude={"reason", "entitlements", "translations", "expected_version"})
     if p.is_default and data.get("is_active") is False:
         raise ConflictError("The default plan can't be deactivated: users without a subscription rely on it.",
                             "DEFAULT_PLAN_REQUIRED")
     if p.is_default and data.get("price_cents"):
         raise ValidationError("The default plan must stay free.", "DEFAULT_PLAN_FREE")
-    changed = sorted(k for k, v in data.items() if getattr(p, k) != v)
+    before = snapshot(p, PLAN_FIELDS)
     for k, v in data.items():
         setattr(p, k, v)
+    if "translations" in body.model_fields_set:
+        p.translations = clean_translations(SubscriptionPlan, body.translations)
+    diff = changes(before, snapshot(p, PLAN_FIELDS))
     if body.entitlements is not None:
         _check_entitlements(body.entitlements)
-        before = {e.feature_key: (e.enabled, e.limit_value) for e in p.entitlements}
+        ents_before = {e.feature_key: [e.enabled, e.limit_value] for e in p.entitlements}
         _set_entitlements(p, body.entitlements)
-        if before != {e.feature_key: (e.enabled, e.limit_value) for e in p.entitlements}:
-            changed.append("entitlements")
-    if not changed:
+        ents_after = {e.feature_key: [e.enabled, e.limit_value] for e in p.entitlements}
+        if ents_before != ents_after:
+            diff["entitlements"] = {"from": {k: v for k, v in ents_before.items() if ents_after.get(k) != v},
+                                    "to": {k: v for k, v in ents_after.items() if ents_before.get(k) != v}}
+    if not diff:
         raise ValidationError("Nothing to change.", "NO_CHANGES")
-    audit(db, actor.id, "admin.plan_updated", "subscription_plan", p.id, reason=body.reason, fields=changed)
+    touch(p)
+    db.flush()
+    audit(db, actor.id, "admin.plan_updated", "subscription_plan", p.id, reason=body.reason, fields=sorted(diff),
+          changes=diff)
     db.commit()
     return _plan_out(db, p)
 

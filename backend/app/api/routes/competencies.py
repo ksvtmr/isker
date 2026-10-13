@@ -24,7 +24,7 @@ from app.models import (
     Recommendation,
     UserLearningProgress,
 )
-from app.models.enums import QuestionType, RecommendationStatus
+from app.models.enums import ContentStatus, QuestionType, RecommendationStatus
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.competency import (
     AIExplanationOut,
@@ -60,7 +60,7 @@ def catalog(db: DB) -> CompetencyCatalog:
         areas=[
             AreaOut.model_validate(a) for a in db.scalars(select(CompetencyArea).order_by(CompetencyArea.sort_order))
         ],
-        competencies=[CompetencyOut.model_validate(c) for c in views.competencies(db)],
+        competencies=[CompetencyOut.model_validate(c) for c in views.competencies(db, published_only=True)],
         levels=[
             LevelOut.model_validate(lv) for lv in db.scalars(select(CompetencyLevel).order_by(CompetencyLevel.rank))
         ],
@@ -105,7 +105,8 @@ def gaps(user: CurrentUser, db: DB) -> list[GapOut]:
 def _find(db, key: str) -> Competency:
     q = select(Competency).options(joinedload(Competency.area))
     c = db.scalar(q.where(Competency.id == int(key))) if key.isdigit() else db.scalar(q.where(Competency.code == key))
-    if c is None:
+    # Drafts are invisible to learners; archived competencies stay reachable so past results still render.
+    if c is None or c.status == ContentStatus.DRAFT:
         raise NotFoundError("Competency not found", "COMPETENCY_NOT_FOUND")
     return c
 
@@ -216,10 +217,14 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
         .options(selectinload(Recommendation.activities))
     )
     res = db.scalars(
-        select(LearningResource).where(LearningResource.competency_id == c.id, LearningResource.is_published.is_(True))
+        select(LearningResource).where(
+            LearningResource.competency_id == c.id, LearningResource.status == ContentStatus.PUBLISHED
+        )
     )
     tasks = db.scalars(
-        select(PracticalTask).where(PracticalTask.competency_id == c.id, PracticalTask.is_published.is_(True))
+        select(PracticalTask).where(
+            PracticalTask.competency_id == c.id, PracticalTask.status == ContentStatus.PUBLISHED
+        )
     )
     rec_res = rec.resource_id if rec else None
     rec_task = rec.task_id if rec else None
@@ -257,10 +262,10 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
         db.scalar(
             select(func.count(QuestionCompetency.id))
             .join(Question)
-            .where(QuestionCompetency.competency_id == c.id, Question.is_active.is_(True))
+            .where(QuestionCompetency.competency_id == c.id, Question.status == ContentStatus.PUBLISHED)
         )
         or 0
-    )
+    ) if c.status == ContentStatus.PUBLISHED else 0
 
     return CompetencyDetail(
         competency=CompetencyOut.model_validate(c),

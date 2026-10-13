@@ -26,6 +26,7 @@ from app.models import (
 from app.models.enums import (
     AttemptScope,
     AttemptStatus,
+    ContentStatus,
     PracticeStatus,
     ProgressStatus,
     QuestionType,
@@ -59,13 +60,37 @@ def get_attempt(db: Session, user: User, attempt_id: int) -> AssessmentAttempt:
     return att
 
 
-def questions_for(db: Session, attempt: AssessmentAttempt) -> list[Question]:
-    q = (
-        select(Question)
-        .where(Question.assessment_id == attempt.assessment_id, Question.is_active.is_(True))
-        .options(selectinload(Question.options), selectinload(Question.competency_links))
-        .order_by(Question.sort_order, Question.id)
+def _published_competencies():
+    return select(Competency.id).where(Competency.status == ContentStatus.PUBLISHED)
+
+
+def live_question_filter(assessment_id: int) -> tuple:
+    """Questions offered in new attempts: published, and measuring at least one published competency."""
+    return (
+        Question.assessment_id == assessment_id,
+        Question.status == ContentStatus.PUBLISHED,
+        Question.id.in_(
+            select(QuestionCompetency.question_id).where(
+                QuestionCompetency.competency_id.in_(_published_competencies())
+            )
+        ),
     )
+
+
+def questions_for(db: Session, attempt: AssessmentAttempt) -> list[Question]:
+    """The questions of an attempt.
+
+    A completed attempt is defined by the questions it answered (their versions are frozen, see admin question
+    versioning), so its results stay reproducible after the bank changes. An open attempt uses the published
+    questions that measure at least one published competency; where it already answered an older version of a
+    question that has since been replaced, it keeps that version so the answer is not lost.
+    """
+    opts = (selectinload(Question.options), selectinload(Question.competency_links))
+    order = (Question.sort_order, Question.id)
+    answered = select(Answer.question_id).where(Answer.attempt_id == attempt.id)
+    if attempt.status == AttemptStatus.COMPLETED:
+        return list(db.scalars(select(Question).where(Question.id.in_(answered)).options(*opts).order_by(*order)))
+    q = select(Question).where(*live_question_filter(attempt.assessment_id)).options(*opts).order_by(*order)
     if attempt.scope == AttemptScope.COMPETENCY and attempt.scope_competency_id:
         q = q.where(
             Question.id.in_(
@@ -74,14 +99,48 @@ def questions_for(db: Session, attempt: AssessmentAttempt) -> list[Question]:
                 )
             )
         )
-    return list(db.scalars(q))
+    live = list(db.scalars(q))
+    if attempt.id is None:
+        return live
+    live_ids = {x.id for x in live}
+    stale = set(db.scalars(answered)) - live_ids
+    if not stale:
+        return live
+    # Map each replaced version to its successor, then swap the newest live version for the answered one.
+    successor = {
+        prev: qid
+        for qid, prev in db.execute(
+            select(Question.id, Question.previous_id).where(
+                Question.assessment_id == attempt.assessment_id, Question.previous_id.is_not(None)
+            )
+        )
+    }
+    swap: dict[int, int] = {}
+    for old in stale:
+        cur, seen = old, set()
+        while cur in successor and cur not in seen:
+            seen.add(cur)
+            cur = successor[cur]
+            if cur in live_ids:
+                swap[cur] = old
+                break
+    if not swap:
+        return live
+    olds = {x.id: x for x in db.scalars(select(Question).where(Question.id.in_(swap.values())).options(*opts))}
+    return [olds[swap[x.id]] if x.id in swap else x for x in live]
 
 
 def scope_competency_ids(db: Session, attempt: AssessmentAttempt, questions: list[Question]) -> list[int]:
     if attempt.scope == AttemptScope.COMPETENCY and attempt.scope_competency_id:
         return [attempt.scope_competency_id]
     ids = {link.competency_id for q in questions for link in q.competency_links}
-    return [c.id for c in db.scalars(select(Competency).order_by(Competency.sort_order)) if c.id in ids]
+    return [
+        c.id
+        for c in db.scalars(
+            select(Competency).where(Competency.status == ContentStatus.PUBLISHED).order_by(Competency.sort_order)
+        )
+        if c.id in ids
+    ]
 
 
 def in_progress_attempt(db: Session, user_id: int) -> AssessmentAttempt | None:
@@ -97,7 +156,8 @@ def start_attempt(
 ) -> tuple[AssessmentAttempt, bool]:
     """Start a new attempt or resume the matching in-progress one. Returns (attempt, resumed)."""
     if scope == AttemptScope.COMPETENCY:
-        if competency_id is None or db.get(Competency, competency_id) is None:
+        comp = db.get(Competency, competency_id) if competency_id is not None else None
+        if comp is None or comp.status != ContentStatus.PUBLISHED:
             raise ValidationError(
                 "A valid competency is required for a competency reassessment.", "COMPETENCY_REQUIRED"
             )

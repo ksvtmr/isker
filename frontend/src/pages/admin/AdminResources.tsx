@@ -1,35 +1,58 @@
-import { Button, Card, Checkbox, InlineAlert, Input, Modal, Select, StatusBadge, Tabs, Textarea } from "@isker/design-system";
-import { useState } from "react";
+import { Button, Card, Input, Modal, Select, Tabs, Textarea } from "@isker/design-system";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { adminApi, useAdminCompetencies, useAdminMutation, useAdminResources, useAdminTasks, type AdminResource, type AdminTask, type ResourceInput, type TaskInput } from "../../api/admin";
-import { errorMessage } from "../../api/client";
+import { adminApi, useAdminCompetencies, useAdminMutation, useAdminResources, useAdminTasks, type AdminResource, type AdminTask, type ContentStatus, type ResourceInput, type TaskInput } from "../../api/admin";
 import { ErrorState, PageSkeleton } from "../../components/States";
-import { useConfirmAction } from "./common";
 import { useToast } from "../../components/Toaster";
 import type { Difficulty, ResourceType } from "../../types/api";
 import { difficultyLabel, formatNumber, resourceTypeLabel } from "../../utils/format";
+import { ContentStatusBadge, EditorFooter, SaveError, TranslationFields, fromTranslationForm, toTranslationForm, useStatusActions, useStatusOptions, type TranslationField, type TranslationForm } from "./contentSync";
 
 const RESOURCE_TYPES: ResourceType[] = ["article", "video", "course", "exercise", "case_study", "template"];
 const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"];
 
-const R_BLANK: ResourceInput = { slug: "", competency_id: 0, title: "", description: "", type: "article", difficulty: "beginner", duration_minutes: 10, content: "", url: null, is_published: true };
-const T_BLANK: TaskInput = { slug: "", competency_id: 0, title: "", description: "", instructions: "", difficulty: "beginner", duration_minutes: 20, rubric: [], min_length: 80, is_published: true };
+type RForm = ResourceInput & { id?: number; lock_version?: number; tr: TranslationForm };
+type TForm = TaskInput & { id?: number; lock_version?: number; rubricText: string; tr: TranslationForm };
+
+const R_BLANK: ResourceInput = { slug: "", competency_id: 0, title: "", description: "", type: "article", difficulty: "beginner", duration_minutes: 10, content: "", url: null, status: "draft" };
+const T_BLANK: TaskInput = { slug: "", competency_id: 0, title: "", description: "", instructions: "", difficulty: "beginner", duration_minutes: 20, rubric: [], min_length: 80, status: "draft" };
+
+const R_KEYS = ["slug", "competency_id", "title", "description", "type", "difficulty", "duration_minutes", "content", "url"] as const;
+const T_KEYS = ["slug", "competency_id", "title", "description", "instructions", "difficulty", "duration_minutes", "min_length"] as const;
+const pick = <T extends object, K extends keyof T>(o: T, keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, o[k]])) as Pick<T, K>;
 
 export function AdminResources() {
   const { t } = useTranslation("adminContent");
   const [tab, setTab] = useState("resources");
+  const [filter, setFilter] = useState("");
   const comps = useAdminCompetencies();
   const res = useAdminResources();
   const tasks = useAdminTasks();
   const toast = useToast();
-  const [r, setR] = useState<(ResourceInput & { id?: number }) | null>(null);
-  const [task, setTask] = useState<(TaskInput & { id?: number; rubricText: string }) | null>(null);
+  const [r, setR] = useState<RForm | null>(null);
+  const [task, setTask] = useState<TForm | null>(null);
+  const [initial, setInitial] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
-  const saveR = useAdminMutation((v: ResourceInput & { id?: number }) => { const { id, ...body } = v; return id ? adminApi.updateResource(id, body) : adminApi.createResource(body); });
-  const saveT = useAdminMutation((v: TaskInput & { id?: number }) => { const { id, ...body } = v; return id ? adminApi.updateTask(id, body) : adminApi.createTask(body); });
-  const unpubR = useAdminMutation(adminApi.unpublishResource);
-  const unpubT = useAdminMutation(adminApi.unpublishTask);
-  const confirm = useConfirmAction();
+  const invalidJson = (lang: string, field: string) => t("sync.translations.invalidJson", { lang, field });
+  const rFields: TranslationField[] = useMemo(() => [
+    { key: "title", label: t("content.form.title") }, { key: "description", label: t("content.form.description"), multiline: true },
+    { key: "content", label: t("resources.form.content"), multiline: true, rows: 6 },
+  ], [t]);
+  const tFields: TranslationField[] = useMemo(() => [
+    { key: "title", label: t("content.form.title") }, { key: "description", label: t("content.form.description"), multiline: true },
+    { key: "instructions", label: t("tasks.form.instructions"), multiline: true, rows: 4 },
+    { key: "rubric", label: t("sync.translations.rubric"), json: true, hint: t("sync.translations.rubricHint") },
+  ], [t]);
+  const saveR = useAdminMutation((v: RForm) => {
+    const body: ResourceInput = { ...pick(v, R_KEYS), translations: fromTranslationForm(v.tr, rFields, invalidJson) };
+    return v.id ? adminApi.updateResource(v.id, { ...body, expected_version: v.lock_version }) : adminApi.createResource({ ...body, status: v.status });
+  });
+  const saveT = useAdminMutation((v: TForm) => {
+    const body: TaskInput = { ...pick(v, T_KEYS), rubric: JSON.parse(v.rubricText), translations: fromTranslationForm(v.tr, tFields, invalidJson) };
+    return v.id ? adminApi.updateTask(v.id, { ...body, expected_version: v.lock_version }) : adminApi.createTask({ ...body, status: v.status });
+  });
+  const status = useStatusActions();
+  const statusOpts = useStatusOptions();
 
   if (comps.isLoading || res.isLoading || tasks.isLoading) return <PageSkeleton chart={false} />;
   if (res.error || tasks.error || !res.data || !tasks.data) return <ErrorState error={res.error ?? tasks.error} onRetry={() => { res.refetch(); tasks.refetch(); }} />;
@@ -37,47 +60,59 @@ export function AdminResources() {
   const compName = (id: number) => comps.data?.find((c) => c.id === id)?.name ?? "—";
   const typeOpts = RESOURCE_TYPES.map((value) => ({ value, label: resourceTypeLabel(value) }));
   const diffOpts = DIFFICULTIES.map((value) => ({ value, label: difficultyLabel(value) }));
-  const err = localError ?? (saveR.error || saveT.error ? errorMessage(saveR.error ?? saveT.error) : null);
 
+  const openR = (x?: AdminResource) => {
+    const f: RForm = x ? { ...pick(x, R_KEYS), id: x.id, lock_version: x.lock_version, status: x.status, tr: toTranslationForm(x.translations, rFields) }
+      : { ...R_BLANK, competency_id: comps.data?.[0]?.id ?? 0, tr: toTranslationForm(null, rFields) };
+    setLocalError(null); saveR.reset(); setR(f); setInitial(JSON.stringify(f));
+  };
+  const openT = (x?: AdminTask) => {
+    const f: TForm = x ? { ...pick(x, T_KEYS), rubric: x.rubric, id: x.id, lock_version: x.lock_version, status: x.status, rubricText: JSON.stringify(x.rubric, null, 2), tr: toTranslationForm(x.translations, tFields) }
+      : { ...T_BLANK, competency_id: comps.data?.[0]?.id ?? 0, rubricText: "[]", tr: toTranslationForm(null, tFields) };
+    setLocalError(null); saveT.reset(); setTask(f); setInitial(JSON.stringify(f));
+  };
+  const reloadR = async () => { const fresh = await res.refetch(); const row = fresh.data?.find((x) => x.id === r?.id); if (row) { openR(row); toast({ title: t("sync.conflict.reloaded") }); } };
+  const reloadT = async () => { const fresh = await tasks.refetch(); const row = fresh.data?.find((x) => x.id === task?.id); if (row) { openT(row); toast({ title: t("sync.conflict.reloaded") }); } };
+  const submitR = () => {
+    if (!r) return;
+    setLocalError(null);
+    try { fromTranslationForm(r.tr, rFields, invalidJson); } catch (e) { setLocalError((e as Error).message); return; }
+    saveR.mutate(r, { onSuccess: () => { setR(null); toast({ title: t("resources.saved") }); } });
+  };
   const submitT = () => {
     if (!task) return;
-    try {
-      setLocalError(null);
-      const { rubricText, ...rest } = task;
-      saveT.mutate({ ...rest, rubric: JSON.parse(rubricText) }, { onSuccess: () => { setTask(null); toast({ title: t("tasks.saved") }); } });
-    } catch { setLocalError(t("content.rubricInvalid")); }
+    setLocalError(null);
+    try { JSON.parse(task.rubricText); } catch { setLocalError(t("content.rubricInvalid")); return; }
+    try { fromTranslationForm(task.tr, tFields, invalidJson); } catch (e) { setLocalError((e as Error).message); return; }
+    saveT.mutate(task, { onSuccess: () => { setTask(null); toast({ title: t("tasks.saved") }); } });
   };
-
-  const status = (p: boolean) => (p ? <StatusBadge status="done">{t("content.published")}</StatusBadge> : <StatusBadge status="todo">{t("content.unpublished")}</StatusBadge>);
+  const rRows = res.data.filter((x) => !filter || x.status === filter);
+  const tRows = tasks.data.filter((x) => !filter || x.status === filter);
   return (
     <>
-      {confirm.dialog}
+      {status.dialog}
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <Tabs ariaLabel={t("resources.tabsLabel")} value={tab} onChange={setTab} tabs={[{ value: "resources", label: t("resources.tabResources", { n: formatNumber(res.data.length) }) }, { value: "tasks", label: t("resources.tabTasks", { n: formatNumber(tasks.data.length) }) }]} />
-        <Button iconLeft="plus" onClick={() => {
-          setLocalError(null);
-          const competency_id = comps.data?.[0]?.id ?? 0;
-          if (tab === "resources") setR({ ...R_BLANK, competency_id });
-          else setTask({ ...T_BLANK, competency_id, rubricText: "[]" });
-        }}>
-          {tab === "resources" ? t("resources.new") : t("tasks.new")}
-        </Button>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ width: 200 }}><Select aria-label={t("sync.filterStatus")} placeholder={t("sync.allStatuses")} value={filter} onChange={(e) => setFilter(e.target.value)} options={statusOpts} /></div>
+          <Button iconLeft="plus" onClick={() => (tab === "resources" ? openR() : openT())}>{tab === "resources" ? t("resources.new") : t("tasks.new")}</Button>
+        </div>
       </div>
       <Card style={{ overflow: "hidden" }}>
         <div className="ik-table-wrap">
           <table className="ik-table">
             <thead><tr><th>{t("content.form.title")}</th><th>{t("content.form.competency")}</th><th>{tab === "resources" ? t("resources.columns.type") : t("tasks.columns.rubric")}</th><th>{t("content.form.difficulty")}</th><th className="num">{t("resources.columns.minutes")}</th><th>{t("content.status")}</th><th><span className="isk-sr-only">{t("content.actions")}</span></th></tr></thead>
             <tbody>
-              {tab === "resources" ? res.data.map((x: AdminResource) => (
+              {tab === "resources" ? rRows.map((x: AdminResource) => (
                 <tr key={x.id}><td><b style={{ fontWeight: 500 }}>{x.title}</b><div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{x.slug}</div></td><td>{compName(x.competency_id)}</td>
-                  <td>{resourceTypeLabel(x.type)}</td><td>{difficultyLabel(x.difficulty)}</td><td className="num">{x.duration_minutes}</td><td>{status(x.is_published)}</td>
-                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}><Button size="sm" variant="ghost" onClick={() => { setLocalError(null); setR(x); }}>{t("common:actions.edit")}</Button>
-                    {x.is_published && <Button size="sm" variant="ghost" onClick={() => confirm.ask({ title: t("content.unpublishTitle", { title: x.title }), description: t("resources.unpublishText"), confirmLabel: t("content.unpublish"), success: t("resources.unpublished"), run: () => unpubR.mutateAsync(x.id) })}>{t("content.unpublish")}</Button>}</td></tr>
-              )) : tasks.data.map((x: AdminTask) => (
+                  <td>{resourceTypeLabel(x.type)}</td><td>{difficultyLabel(x.difficulty)}</td><td className="num">{x.duration_minutes}</td><td><ContentStatusBadge status={x.status} /></td>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}><Button size="sm" variant="ghost" onClick={() => openR(x)}>{t("common:actions.edit")}</Button>
+                    {status.buttons({ entity: "resources", id: x.id, status: x.status as ContentStatus, lock_version: x.lock_version, title: x.title })}</td></tr>
+              )) : tRows.map((x: AdminTask) => (
                 <tr key={x.id}><td><b style={{ fontWeight: 500 }}>{x.title}</b><div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{x.slug}</div></td><td>{compName(x.competency_id)}</td>
-                  <td>{t("tasks.criteria", { count: x.rubric.length })}</td><td>{difficultyLabel(x.difficulty)}</td><td className="num">{x.duration_minutes}</td><td>{status(x.is_published)}</td>
-                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}><Button size="sm" variant="ghost" onClick={() => { setLocalError(null); setTask({ ...x, rubricText: JSON.stringify(x.rubric, null, 2) }); }}>{t("common:actions.edit")}</Button>
-                    {x.is_published && <Button size="sm" variant="ghost" onClick={() => confirm.ask({ title: t("content.unpublishTitle", { title: x.title }), description: t("tasks.unpublishText"), confirmLabel: t("content.unpublish"), success: t("tasks.unpublished"), run: () => unpubT.mutateAsync(x.id) })}>{t("content.unpublish")}</Button>}</td></tr>
+                  <td>{t("tasks.criteria", { count: x.rubric.length })}</td><td>{difficultyLabel(x.difficulty)}</td><td className="num">{x.duration_minutes}</td><td><ContentStatusBadge status={x.status} /></td>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}><Button size="sm" variant="ghost" onClick={() => openT(x)}>{t("common:actions.edit")}</Button>
+                    {status.buttons({ entity: "tasks", id: x.id, status: x.status as ContentStatus, lock_version: x.lock_version, title: x.title })}</td></tr>
               ))}
             </tbody>
           </table>
@@ -85,10 +120,10 @@ export function AdminResources() {
       </Card>
 
       <Modal open={!!r} onClose={() => setR(null)} title={r?.id ? t("resources.edit") : t("resources.new")}
-        footer={<><Button variant="secondary" onClick={() => setR(null)}>{t("common:actions.cancel")}</Button><Button loading={saveR.isPending} onClick={() => r && saveR.mutate(r, { onSuccess: () => { setR(null); toast({ title: t("resources.saved") }); } })}>{t("common:actions.save")}</Button></>}>
+        footer={<EditorFooter dirty={!!r && JSON.stringify(r) !== initial} saving={saveR.isPending} onCancel={() => setR(null)} onReset={() => setR(JSON.parse(initial))} onSave={submitR} />}>
         {r && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", paddingRight: 4 }}>
-            {err && <InlineAlert>{err}</InlineAlert>}
+            <SaveError error={saveR.error} local={localError} onReload={reloadR} />
             <Input label={t("content.form.title")} value={r.title} onChange={(e) => setR({ ...r, title: e.target.value })} />
             <Input label={t("content.form.slug")} hint={t("content.form.slugHint")} value={r.slug} onChange={(e) => setR({ ...r, slug: e.target.value })} />
             <Select label={t("content.form.competency")} value={String(r.competency_id)} onChange={(e) => setR({ ...r, competency_id: Number(e.target.value) })} options={compOpts} />
@@ -100,15 +135,16 @@ export function AdminResources() {
             <Textarea label={t("content.form.description")} rows={2} value={r.description} onChange={(e) => setR({ ...r, description: e.target.value })} />
             <Textarea label={t("resources.form.content")} rows={8} value={r.content} onChange={(e) => setR({ ...r, content: e.target.value })} />
             <Input label={t("resources.form.url")} value={r.url ?? ""} onChange={(e) => setR({ ...r, url: e.target.value || null })} />
-            <Checkbox label={t("content.published")} checked={r.is_published} onChange={(e) => setR({ ...r, is_published: e.target.checked })} />
+            <TranslationFields fields={rFields} value={r.tr} onChange={(tr) => setR({ ...r, tr })} />
+            {!r.id && <p className="isk-hint">{t("sync.draftHint")}</p>}
           </div>
         )}
       </Modal>
       <Modal open={!!task} onClose={() => setTask(null)} title={task?.id ? t("tasks.edit") : t("tasks.new")}
-        footer={<><Button variant="secondary" onClick={() => setTask(null)}>{t("common:actions.cancel")}</Button><Button loading={saveT.isPending} onClick={submitT}>{t("common:actions.save")}</Button></>}>
+        footer={<EditorFooter dirty={!!task && JSON.stringify(task) !== initial} saving={saveT.isPending} onCancel={() => setTask(null)} onReset={() => setTask(JSON.parse(initial))} onSave={submitT} />}>
         {task && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", paddingRight: 4 }}>
-            {err && <InlineAlert>{err}</InlineAlert>}
+            <SaveError error={saveT.error} local={localError} onReload={reloadT} />
             <Input label={t("content.form.title")} value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} />
             <Input label={t("content.form.slug")} value={task.slug} onChange={(e) => setTask({ ...task, slug: e.target.value })} />
             <Select label={t("content.form.competency")} value={String(task.competency_id)} onChange={(e) => setTask({ ...task, competency_id: Number(e.target.value) })} options={compOpts} />
@@ -120,7 +156,8 @@ export function AdminResources() {
             <Textarea label={t("tasks.form.instructions")} rows={4} value={task.instructions} onChange={(e) => setTask({ ...task, instructions: e.target.value })} />
             <Input label={t("tasks.form.minLength")} type="number" min="0" value={String(task.min_length)} onChange={(e) => setTask({ ...task, min_length: Number(e.target.value) })} />
             <Textarea label={t("content.form.rubric")} rows={6} value={task.rubricText} onChange={(e) => setTask({ ...task, rubricText: e.target.value })} />
-            <Checkbox label={t("content.published")} checked={task.is_published} onChange={(e) => setTask({ ...task, is_published: e.target.checked })} />
+            <TranslationFields fields={tFields} value={task.tr} onChange={(tr) => setTask({ ...task, tr })} />
+            {!task.id && <p className="isk-hint">{t("sync.draftHint")}</p>}
           </div>
         )}
       </Modal>

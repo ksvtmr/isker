@@ -17,11 +17,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.content_i18n import Translatable
-from app.core.database import Base, TimestampMixin, utcnow
+from app.core.database import Base, TimestampMixin, Versioned, utcnow
+from app.models.content import Publishable
 from app.models.enums import AssessmentKind, AttemptScope, AttemptStatus, QuestionType, db_enum
 
 
-class Assessment(Translatable, TimestampMixin, Base):
+class Assessment(Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "assessments"
     __translatable__ = ("title", "description")
 
@@ -39,8 +40,12 @@ class Assessment(Translatable, TimestampMixin, Base):
     )
 
 
-class Question(Translatable, TimestampMixin, Base):
+class Question(Publishable, Versioned, Translatable, TimestampMixin, Base):
+    """An assessment item. Once answered, its wording and scoring are frozen: an edit creates a new version (a new
+    row with `previous_id` pointing here) and archives this one, so completed attempts stay reproducible."""
+
     __tablename__ = "questions"
+    __status_flag__ = "is_active"
     __translatable__ = ("section", "text", "help_text")
     __translatable_rubric__ = True
 
@@ -55,7 +60,11 @@ class Question(Translatable, TimestampMixin, Base):
     rubric: Mapped[list | None] = mapped_column(JSON)
     reverse_scored: Mapped[bool] = mapped_column(Boolean, default=False)
     min_length: Mapped[int] = mapped_column(Integer, default=0)
+    # Mirrors `status == published` for older clients (see models/content.py).
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Content version of this item (1, 2, …) and the version it replaced.
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    previous_id: Mapped[int | None] = mapped_column(ForeignKey("questions.id", ondelete="SET NULL"), index=True)
 
     assessment: Mapped[Assessment] = relationship(back_populates="questions")
     options: Mapped[list[QuestionOption]] = relationship(

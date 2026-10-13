@@ -23,18 +23,18 @@
     },
     "assessmentsPage": {
       "title": "Assessments",
-      "subtitle": "Assessment versions and the question bank. Questions with answers can't change type; deactivate and replace them instead.",
+      "subtitle": "Assessment versions and the question bank. Editing an answered question saves a new version, so completed results never change.",
       "tabsLabel": "Assessment content",
       "tabAssessments": "Assessments",
       "tabQuestions": "Question bank"
     },
     "competenciesPage": {
       "title": "Competencies",
-      "subtitle": "The 15 EntreComp competencies, their descriptions, priorities and default targets."
+      "subtitle": "EntreComp competencies, their descriptions, priorities, default targets and translations. Only published competencies are offered to learners."
     },
     "learningPage": {
       "title": "Learning content",
-      "subtitle": "Learning resources and practical tasks. Unpublishing keeps learners' history."
+      "subtitle": "Learning resources and practical tasks. Drafts and archived items are hidden from learners; their history is kept."
     },
     "aiPage": {
       "title": "AI governance",
@@ -231,7 +231,9 @@
       "code": "Code",
       "codeHint": "Lowercase letters, numbers and dashes",
       "minutes": "Estimated minutes"
-    }
+    },
+    "edit": "Edit assessment",
+    "saved": "Assessment saved"
   },
   "questions": {
     "new": "New question",
@@ -318,8 +320,15 @@
     "form": {
       "name": "Name",
       "shortName": "Short name",
-      "importance": "Importance (0–1)"
-    }
+      "importance": "Importance (0–1)",
+      "code": "Code",
+      "codeHint": "Lowercase letters, numbers, dashes and underscores; can't be changed later",
+      "hint": "Hint for learners",
+      "reflectionPrompt": "Reflection prompt",
+      "learningPriority": "Learning priority (0–1)"
+    },
+    "new": "New competency",
+    "created": "Competency created"
   },
   "ai": {
     "tabEvaluations": "Evaluation log",
@@ -372,6 +381,61 @@
       "placeholder": "Placeholder: {{list}}",
       "notes": "Notes",
       "activateNow": "Activate immediately"
+    }
+  },
+  "sync": {
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "actions": {
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "archive": "Archive"
+    },
+    "confirm": {
+      "publishTitle": "Publish “{{title}}”?",
+      "publishText": "Learners will see it on the platform right away.",
+      "unpublishTitle": "Move “{{title}}” back to drafts?",
+      "unpublishText": "Learners stop seeing it. Their history is kept and you can publish it again later.",
+      "archiveTitle": "Archive “{{title}}”?",
+      "archiveText": "It is no longer offered in new assessments, catalogues or plans. Learners' history and past results are kept."
+    },
+    "done": {
+      "publish": "Published",
+      "unpublish": "Moved to drafts",
+      "archive": "Archived"
+    },
+    "conflict": {
+      "title": "Someone else changed this record",
+      "text": "Your changes were not saved, so nothing was overwritten. Load the latest version and apply your changes again.",
+      "reload": "Load latest version",
+      "reloaded": "Latest version loaded"
+    },
+    "saving": "Saving…",
+    "unsaved": "Unsaved changes",
+    "reset": "Reset changes",
+    "filterStatus": "Filter by status",
+    "allStatuses": "All statuses",
+    "draftHint": "New content is saved as a draft. Publish it when it is ready for learners.",
+    "version": "Version {{n}}",
+    "newVersion": "Saved as version {{n}}. Completed attempts keep the previous version.",
+    "versionHint_one": "This question already has {{count}} answer. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "versionHint_few": "This question already has {{count}} answers. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "versionHint_many": "This question already has {{count}} answers. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "versionHint_other": "This question already has {{count}} answers. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "translations": {
+      "title": "Translations ({{filled}} of {{total}} filled)",
+      "hint": "English is the base text above. Empty Kazakh texts fall back to Russian, empty Russian texts to English.",
+      "ru": "Russian",
+      "kk": "Kazakh",
+      "fieldLabel": "{{field}} · {{lang}}",
+      "invalidJson": "{{field}} ({{lang}}) must be valid JSON.",
+      "rubric": "Rubric (JSON)",
+      "rubricHint": "Same order as the base rubric: [{\"criterion\": \"…\", \"description\": \"…\", \"keywords\": [\"…\"]}]",
+      "options": "Option labels · {{lang}}",
+      "optionsHint": "One per line, in the same order as the options above."
     }
   }
 }

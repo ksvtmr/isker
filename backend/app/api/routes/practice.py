@@ -8,8 +8,9 @@ from app.ai.service import evaluate_text
 from app.api.deps import DB, CurrentUser
 from app.core.database import utcnow
 from app.core.errors import ConflictError, NotFoundError, ValidationError
+from app.core.ratelimit import enforce
 from app.models import AIEvaluation, Competency, PracticalTask, PracticeSubmission, Recommendation
-from app.models.enums import AIInputType, PracticeStatus, RecommendationStatus
+from app.models.enums import AIInputType, ContentStatus, PracticeStatus, RecommendationStatus
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.learning import FeedbackOut, SubmitIn, TaskDetail, TaskOut
 from app.services import entitlements
@@ -54,7 +55,7 @@ def list_tasks(user: CurrentUser, db: DB, competency: str | None = None) -> list
     stmt = (
         select(PracticalTask)
         .join(Competency)
-        .where(PracticalTask.is_published.is_(True))
+        .where(PracticalTask.status == ContentStatus.PUBLISHED, Competency.status == ContentStatus.PUBLISHED)
         .options(joinedload(PracticalTask.competency))
         .order_by(Competency.sort_order, PracticalTask.id)
     )
@@ -66,13 +67,15 @@ def list_tasks(user: CurrentUser, db: DB, competency: str | None = None) -> list
     return [TaskOut(**_base(t, subs.get(t.id), t.id in recs)) for t in rows]
 
 
-def _get(db, task_id: int) -> PracticalTask:
+def _get(db, task_id: int, history_user_id: int | None = None) -> PracticalTask:
+    """A published task. With `history_user_id`, an unpublished task the user already submitted to stays readable
+    (their submission and feedback history), but nothing new can be started on it."""
     t = db.scalar(
-        select(PracticalTask)
-        .where(PracticalTask.id == task_id, PracticalTask.is_published.is_(True))
-        .options(joinedload(PracticalTask.competency))
+        select(PracticalTask).where(PracticalTask.id == task_id).options(joinedload(PracticalTask.competency))
     )
-    if t is None:
+    if t is None or (t.status != ContentStatus.PUBLISHED and (
+        history_user_id is None or _sub(db, history_user_id, t.id) is None
+    )):
         raise NotFoundError("Practical task not found", "TASK_NOT_FOUND")
     return t
 
@@ -127,7 +130,7 @@ def _detail(db, user_id: int, t: PracticalTask) -> TaskDetail:
 
 @router.get("/tasks/{task_id}", response_model=TaskDetail, summary="Task, your response and AI feedback")
 def get_task(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
-    return _detail(db, user.id, _get(db, task_id))
+    return _detail(db, user.id, _get(db, task_id, user.id))
 
 
 @router.post("/tasks/{task_id}/start", response_model=TaskDetail, summary="Start a task")
@@ -155,6 +158,7 @@ def submit(task_id: int, body: SubmitIn, user: CurrentUser, db: DB) -> TaskDetai
             f"Write at least {t.min_length} characters so the feedback can be specific.", "RESPONSE_TOO_SHORT"
         )
     entitlements.require(db, user, "practice.ai_feedback", consume=0)
+    enforce("ai_user", str(user.id))  # each submission is an AI evaluation (cost control)
     s = _sub(db, user.id, t.id)
     if s is None:
         entitlements.require(db, user, "practice.tasks")

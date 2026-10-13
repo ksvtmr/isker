@@ -24,7 +24,8 @@ const row = (o: object = {}) => ({ id: 5, email: "dana@example.com", full_name: 
 const plans = [{ id: 1, key: "free", name: "Free", description: null, price_cents: 0, currency: "USD", billing_interval: "none", trial_days: 0, is_active: true, is_default: true, sort_order: 0, entitlements: [], subscriber_count: 3 },
   { id: 2, key: "pro", name: "Pro", description: null, price_cents: 900, currency: "USD", billing_interval: "month", trial_days: 0, is_active: true, is_default: false, sort_order: 1, entitlements: [], subscriber_count: 0 }];
 const detail = (o: object = {}) => ({
-  id: 5, email: "dana@example.com", full_name: "Dana Learner", status: "active", status_reason: null, status_changed_at: null, deletion_requested_at: null, roles: ["user"], permissions: [],
+  id: 5, lock_version: 3, language: "ru", email_verified: true, auth_methods: ["email"], entitlements: [], activity: [], change_history: [],
+  email: "dana@example.com", full_name: "Dana Learner", status: "active", status_reason: null, status_changed_at: null, deletion_requested_at: null, roles: ["user"], permissions: [],
   email_verified_at: "2026-09-01T10:00:00Z", terms_accepted_at: "2026-09-01T10:00:00Z", terms_version: "2026-10", onboarding_completed: true, created_at: "2026-09-01T10:00:00Z",
   last_login_at: null, last_seen_at: null, profile: null, goals: [], attempts: [], competencies: [], learning: { completed: 0, in_progress: 0 }, practice: { completed: 0, in_progress: 0 },
   plan_key: "free", plan_name: "Free", subscription: null, subscription_history: [], sessions: [], audit_events: [], can_manage: true, can_assign_roles: true, can_delete: false, ...o,
@@ -85,7 +86,7 @@ describe("admin area", () => {
     await userEvent.click(confirm);
     expect(await screen.findByText("Account suspended")).toBeInTheDocument();
     const post = calls.find((c) => c.method === "POST");
-    expect(post?.body).toEqual({ reason: "Spam" });
+    expect(post?.body).toEqual({ reason: "Spam", expected_version: 3 });
   });
 
   it("keeps the dialog open and shows the server error when an action is refused", async () => {
@@ -115,7 +116,7 @@ describe("admin area", () => {
       "GET /api/admin/users": { json: { items: [], total: 0, page: 1, page_size: 25 } },
     });
     renderApp("/admin/users/5");
-    await userEvent.click(await screen.findByRole("tab", { name: "Roles & security" }));
+    await userEvent.click(await screen.findByRole("tab", { name: "Profile" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
     const dialog = await screen.findByRole("dialog");
     const confirm = within(dialog).getByRole("button", { name: "Delete permanently" });

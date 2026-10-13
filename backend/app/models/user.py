@@ -6,11 +6,15 @@ from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Te
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.content_i18n import Translatable
-from app.core.database import Base, TimestampMixin, utcnow
+from app.core.database import Base, TimestampMixin, Versioned, utcnow
 from app.models.enums import AccountStatus, ExperienceLevel, LearningFormat, db_enum
 
 
-class User(TimestampMixin, Base):
+class User(Versioned, TimestampMixin, Base):
+    """An account. `lock_version` (optimistic locking) changes on every edit of the account row; activity
+    timestamps (`last_seen_at`, `last_login_at`) are written with plain UPDATEs that neither bump nor check it,
+    so a learner using the platform never makes an administrator's open edit form stale."""
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)

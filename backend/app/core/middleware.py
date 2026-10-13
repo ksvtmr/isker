@@ -56,6 +56,24 @@ CONTENT_EDITOR_PATHS = tuple(
 )
 
 
+def client_ip(request: Request) -> str | None:
+    """The address of the client as seen by our own proxy.
+
+    X-Forwarded-For is client-controlled except for the entries appended by trusted proxies, so the address is taken
+    TRUSTED_PROXY_HOPS entries from the right (default 1: Render / nginx in front of the API). With 0 hops (direct
+    exposure) the header is ignored. Never use the left-most entry: anyone can set it and dodge rate limits.
+    """
+    hops = get_settings().trusted_proxy_hops
+    direct = request.client.host if request.client else None
+    if hops <= 0:
+        return direct
+    raw = request.headers.get("x-forwarded-for", "")
+    chain = [p.strip() for p in raw.split(",") if p.strip()]
+    if not chain:
+        return direct
+    return chain[-hops] if len(chain) >= hops else chain[0]
+
+
 def localizes_content(path: str) -> bool:
     return path.startswith("/api/") and not path.startswith(CONTENT_EDITOR_PATHS)
 
@@ -65,7 +83,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         incoming = request.headers.get("x-request-id", "")
         rid = incoming if _RID.match(incoming) else uuid.uuid4().hex
         request_id_var.set(rid)
-        client_ip_var.set(request.client.host if request.client else None)
+        client_ip_var.set(client_ip(request))
         user_agent_var.set((request.headers.get("user-agent") or "")[:255] or None)
         language_var.set(parse_language(request.headers.get("accept-language")))
         content_localization_var.set(localizes_content(request.url.path))

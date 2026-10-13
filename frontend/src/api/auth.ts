@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AuthResponse, SessionInfo, User } from "../types/api";
-import { ApiError, api } from "./client";
+import { ApiError, api, clearSignOutReason } from "./client";
 import { keys } from "./keys";
 import i18n from "../i18n";
 import type { Language } from "../i18n/config";
@@ -74,7 +74,10 @@ export function useGoogleUnlink() {
   return useMutation({ mutationFn: authApi.googleUnlink, onSuccess: (u) => qc.setQueryData(keys.me, u) });
 }
 
-/** Current user, or null when signed out. */
+/**
+ * Current user, or null when signed out. Refetched when the tab regains focus and every minute while signed in, so
+ * role, status and language changes made by an administrator reach open tabs (the API re-checks every request).
+ */
 export function useMe() {
   return useQuery({
     queryKey: keys.me,
@@ -86,7 +89,9 @@ export function useMe() {
         throw e;
       }
     },
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: "always",
+    refetchInterval: (q) => (q.state.data ? 60_000 : false),
     retry: (n, e) => !(e instanceof ApiError && e.status < 500) && n < 2,
   });
 }
@@ -96,6 +101,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
+      clearSignOutReason();
       qc.clear();
       qc.setQueryData(keys.me, data.user);
     },
@@ -107,6 +113,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: (data) => {
+      clearSignOutReason();
       qc.clear();
       qc.setQueryData(keys.me, data.user);
     },

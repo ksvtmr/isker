@@ -1,34 +1,39 @@
 import { Badge, Button, Card, CardHeader, Checkbox, ConfirmActionDialog, EmptyState, InlineAlert, Input, KeyValueList, LevelBadge, Select, Tabs } from "@isker/design-system";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAdminMutation } from "../../api/admin";
-import { humanize, manageApi, useAdminPlans, useAdminUser, useRoles, type AdminUserDetail } from "../../api/adminManage";
+import { humanize, manageApi, useAdminPlans, useAdminUser, useRoles, type AdminUserDetail, type AuditEntry, type UserUpdateInput } from "../../api/adminManage";
+import { featureLabel } from "../../api/billing";
 import { can, useMe } from "../../api/auth";
-import { errorMessage } from "../../api/client";
+import { ApiError, errorMessage } from "../../api/client";
 import { ErrorState, PageSkeleton } from "../../components/States";
 import { useToast } from "../../components/Toaster";
+import { LANGUAGE_NAMES, LANGUAGES, isLanguage } from "../../i18n/config";
 import type { SubscriptionStatus } from "../../types/api";
 import { formatDate, formatNumber } from "../../utils/format";
 import { AdminPageHeader, formatDateTime, Muted, RoleBadges, StatusPill, useAuditLabels, useStatusLabel } from "./common";
 
 type Dialog =
-  | { kind: "edit" } | { kind: "suspend" } | { kind: "reactivate" } | { kind: "deactivate" } | { kind: "sessions" }
+  | { kind: "suspend" } | { kind: "reactivate" } | { kind: "deactivate" } | { kind: "sessions" } | { kind: "verify" }
   | { kind: "reset" } | { kind: "grant" } | { kind: "revoke"; role: string } | { kind: "delete" }
   | { kind: "assign" } | { kind: "extend" } | { kind: "cancel" } | { kind: "status" };
 
-const TAB_IDS = ["overview", "learning", "subscription", "security", "activity"] as const;
+const TAB_IDS = ["profile", "subscription", "progress", "activity", "history"] as const;
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 function Section({ title, description, action, children }: { title: string; description?: string; action?: ReactNode; children: ReactNode }) {
   return <Card><CardHeader title={title} description={description} action={action} /><div style={{ padding: "0 24px 24px" }}>{children}</div></Card>;
 }
+
+const languageName = (code: string | null | undefined, none: string) => (code && isLanguage(code) ? LANGUAGE_NAMES[code] : none);
 
 export function AdminUserDetailPage() {
   const { t } = useTranslation("admin");
   const id = Number(useParams().id);
   const { data: me } = useMe();
   const { data: u, isLoading, error, refetch } = useAdminUser(id);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("profile");
   const [dialog, setDialog] = useState<Dialog | null>(null);
   if (isLoading) return <PageSkeleton chart={false} />;
   if (error || !u) {
@@ -39,15 +44,14 @@ export function AdminUserDetailPage() {
   const canSubs = can(me, "subscriptions.manage");
   const open = (d: Dialog) => setDialog(d);
   const tabLabels: Record<(typeof TAB_IDS)[number], string> = {
-    overview: t("userDetail.tabs.overview"), learning: t("userDetail.tabs.learning"), subscription: t("userDetail.tabs.subscription"),
-    security: t("userDetail.tabs.security"), activity: t("userDetail.tabs.activity"),
+    profile: t("userDetail.tabs.profile"), subscription: t("userDetail.tabs.subscription"), progress: t("userDetail.tabs.progress"),
+    activity: t("userDetail.tabs.activity"), history: t("userDetail.tabs.history"),
   };
   const tabs = TAB_IDS.map((value) => ({ value, label: tabLabels[value] }));
   const close = () => setDialog(null);
 
   const actions = (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {u.can_manage && <Button size="sm" variant="secondary" iconLeft="pencil" onClick={() => open({ kind: "edit" })}>{t("common:actions.edit")}</Button>}
       {u.can_manage && u.status === "active" && <Button size="sm" variant="secondary" iconLeft="ban" onClick={() => open({ kind: "suspend" })}>{t("userDetail.actions.suspend")}</Button>}
       {u.can_manage && u.status !== "active" && <Button size="sm" variant="secondary" iconLeft="undo-2" onClick={() => open({ kind: "reactivate" })}>{t("userDetail.actions.reactivate")}</Button>}
     </div>
@@ -68,51 +72,171 @@ export function AdminUserDetailPage() {
       )}
       <div style={{ marginBottom: 20, overflowX: "auto" }}><Tabs variant="line" ariaLabel={t("userDetail.tabsAria")} tabs={tabs} value={tab} onChange={setTab} /></div>
       <div role="tabpanel" aria-label={tabs.find((x) => x.value === tab)?.label} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {tab === "overview" && <Overview u={u} />}
-        {tab === "learning" && <Learning u={u} />}
+        {tab === "profile" && <ProfileTab u={u} canSupport={canSupport} open={open} onReload={() => refetch()} />}
         {tab === "subscription" && <SubscriptionTab u={u} canManage={canSubs} open={open} />}
-        {tab === "security" && <Security u={u} canSupport={canSupport} open={open} />}
-        {tab === "activity" && <Activity u={u} />}
+        {tab === "progress" && <Progress u={u} />}
+        {tab === "activity" && <Activity u={u} canSupport={canSupport} open={open} />}
+        {tab === "history" && <History u={u} />}
       </div>
       <UserDialogs u={u} dialog={dialog} close={close} />
     </>
   );
 }
 
-function Overview({ u }: { u: AdminUserDetail }) {
+function ProfileTab({ u, canSupport, open, onReload }: { u: AdminUserDetail; canSupport: boolean; open: (d: Dialog) => void; onReload: () => void }) {
   const { t } = useTranslation("admin");
   const p = u.profile;
   const none = t("common:state.none");
+  const roleName = (r: string) => t(`common:roles.${r}`, { defaultValue: humanize(r) });
+  const methods = (u.auth_methods ?? []).map((m) => t(`userDetail.authMethods.${m}`)).join(", ") || t("userDetail.authMethods.none");
   return (
-    <div className="ik-grid2" style={{ alignItems: "start" }}>
-      <Section title={t("userDetail.sections.account")}>
-        <KeyValueList items={[
-          { label: t("userDetail.fields.email"), value: <>{u.email} {u.email_verified_at ? <Badge tone="success">{t("userDetail.emailConfirmed")}</Badge> : <Badge tone="warning">{t("userDetail.emailNotConfirmed")}</Badge>}</> },
-          { label: t("userDetail.fields.roles"), value: <RoleBadges roles={u.roles} /> },
-          { label: t("userDetail.fields.plan"), value: u.plan_name },
-          { label: t("userDetail.fields.onboarding"), value: u.onboarding_completed ? t("userDetail.onboardingDone") : t("userDetail.onboardingNotDone") },
-          { label: t("userDetail.fields.terms"), value: u.terms_accepted_at ? t("userDetail.termsAccepted", { date: formatDate(u.terms_accepted_at), version: u.terms_version ?? none }) : none },
-          { label: t("userDetail.fields.lastSignIn"), value: formatDateTime(u.last_login_at) },
-          { label: t("userDetail.fields.lastActive"), value: formatDateTime(u.last_seen_at) },
-        ]} />
-      </Section>
-      <Section title={t("userDetail.sections.profile")}>
-        {!p ? <Muted>{t("userDetail.noProfile")}</Muted> : (
+    <>
+      <div className="ik-grid2" style={{ alignItems: "start" }}>
+        <Section title={t("userDetail.sections.account")}>
           <KeyValueList items={[
-            { label: t("userDetail.fields.education"), value: p.education ?? none },
-            { label: t("userDetail.fields.experience"), value: p.entrepreneurial_experience ? t(`admin:userDetail.experience.${p.entrepreneurial_experience}`, { defaultValue: humanize(String(p.entrepreneurial_experience)) }) : none },
-            { label: t("userDetail.fields.format"), value: p.preferred_learning_format ? t(`admin:userDetail.format.${p.preferred_learning_format}`, { defaultValue: humanize(String(p.preferred_learning_format)) }) : none },
-            { label: t("userDetail.fields.weeklyTime"), value: p.weekly_learning_minutes ? t("common:time.minutes", { count: Number(p.weekly_learning_minutes) }) : none },
-            { label: t("userDetail.fields.goals"), value: u.goals.length ? u.goals.join(", ") : none },
-            { label: t("userDetail.fields.background"), value: p.background ?? none },
+            { label: t("userDetail.fields.id"), value: `#${u.id}` },
+            { label: t("userDetail.fields.registered"), value: formatDateTime(u.created_at) },
+            { label: t("userDetail.fields.email"), value: <>{u.email} {u.email_verified ? <Badge tone="success">{t("userDetail.emailConfirmed")}</Badge> : <Badge tone="warning">{t("userDetail.emailNotConfirmed")}</Badge>}</> },
+            { label: t("userDetail.fields.language"), value: languageName(u.language, t("userDetail.languageNotChosen")) },
+            { label: t("userDetail.fields.signIn"), value: methods },
+            { label: t("userDetail.fields.status"), value: <StatusPill status={u.status} kind="account" /> },
+            { label: t("userDetail.fields.roles"), value: <RoleBadges roles={u.roles} /> },
+            { label: t("userDetail.fields.plan"), value: u.plan_name },
+            { label: t("userDetail.fields.onboarding"), value: u.onboarding_completed ? t("userDetail.onboardingDone") : t("userDetail.onboardingNotDone") },
+            { label: t("userDetail.fields.terms"), value: u.terms_accepted_at ? t("userDetail.termsAccepted", { date: formatDate(u.terms_accepted_at), version: u.terms_version ?? none }) : none },
           ]} />
+          {!u.email_verified && canSupport && u.status === "active" && (
+            <div style={{ marginTop: 12 }}><Button size="sm" variant="secondary" iconLeft="mail" onClick={() => open({ kind: "verify" })}>{t("userDetail.actions.resendVerification")}</Button></div>
+          )}
+        </Section>
+        {u.can_manage ? <EditForm u={u} onReload={onReload} /> : (
+          <Section title={t("userDetail.sections.profile")}>
+            {!p ? <Muted>{t("userDetail.noProfile")}</Muted> : <QuestionnaireList u={u} />}
+          </Section>
         )}
+      </div>
+      {u.can_manage && p && <Section title={t("userDetail.sections.profile")}><QuestionnaireList u={u} /></Section>}
+      <Section title={t("userDetail.sections.roles")} description={t("userDetail.rolesDesc")}
+        action={u.can_assign_roles ? <Button size="sm" variant="secondary" iconLeft="plus" onClick={() => open({ kind: "grant" })}>{t("userDetail.actions.grantRole")}</Button> : undefined}>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {u.roles.map((r) => (
+            <li key={r} className="ik-list-row">
+              <span>{roleName(r)}</span>
+              {u.can_assign_roles && <Button size="sm" variant="ghost" aria-label={t("userDetail.revokeRoleAria", { role: roleName(r) })} onClick={() => open({ kind: "revoke", role: r })}>{t("userDetail.actions.revoke")}</Button>}
+            </li>
+          ))}
+        </ul>
+        <p style={{ marginTop: 12 }}><Muted>{u.permissions.length ? t("userDetail.permissionsList", { list: u.permissions.join(", ") }) : t("userDetail.noPermissions")}</Muted></p>
       </Section>
-    </div>
+      <Section title={t("userDetail.sections.lifecycle")}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {canSupport && <Button size="sm" variant="secondary" iconLeft="key-round" onClick={() => open({ kind: "reset" })}>{t("userDetail.actions.sendReset")}</Button>}
+          {u.can_manage && u.status !== "deactivated" && <Button size="sm" variant="secondary" iconLeft="user-x" onClick={() => open({ kind: "deactivate" })}>{t("userDetail.actions.deactivate")}</Button>}
+          {u.can_delete && <Button size="sm" variant="danger" iconLeft="trash-2" onClick={() => open({ kind: "delete" })}>{t("userDetail.actions.delete")}</Button>}
+        </div>
+        <p style={{ marginTop: 12 }}><Muted>{t("userDetail.lifecycleNote")}</Muted></p>
+      </Section>
+    </>
   );
 }
 
-function Learning({ u }: { u: AdminUserDetail }) {
+function QuestionnaireList({ u }: { u: AdminUserDetail }) {
+  const { t } = useTranslation("admin");
+  const p = u.profile;
+  const none = t("common:state.none");
+  if (!p) return null;
+  return (
+    <KeyValueList items={[
+      { label: t("userDetail.fields.education"), value: p.education ?? none },
+      { label: t("userDetail.fields.experience"), value: p.entrepreneurial_experience ? t(`admin:userDetail.experience.${p.entrepreneurial_experience}`, { defaultValue: humanize(String(p.entrepreneurial_experience)) }) : none },
+      { label: t("userDetail.fields.format"), value: p.preferred_learning_format ? t(`admin:userDetail.format.${p.preferred_learning_format}`, { defaultValue: humanize(String(p.preferred_learning_format)) }) : none },
+      { label: t("userDetail.fields.weeklyTime"), value: p.weekly_learning_minutes ? t("common:time.minutes", { count: Number(p.weekly_learning_minutes) }) : none },
+      { label: t("userDetail.fields.goals"), value: u.goals.length ? u.goals.join(", ") : none },
+      { label: t("userDetail.fields.background"), value: p.background ?? none },
+    ]} />
+  );
+}
+
+interface FormValues { full_name: string; email: string; language: string; reason: string }
+const fromUser = (u: AdminUserDetail): FormValues => ({ full_name: u.full_name, email: u.email, language: u.language ?? "", reason: "" });
+
+/**
+ * Inline profile editor with optimistic locking: the version loaded with the form is sent as expected_version, so an
+ * edit based on stale data is refused (409 VERSION_CONFLICT) instead of silently overwriting another admin's change.
+ */
+function EditForm({ u, onReload }: { u: AdminUserDetail; onReload: () => void }) {
+  const { t } = useTranslation("admin");
+  const toast = useToast();
+  const [values, setValues] = useState<FormValues>(() => fromUser(u));
+  const [baseVersion, setBaseVersion] = useState(u.lock_version);
+  const [base, setBase] = useState<FormValues>(() => fromUser(u));
+  const [submitted, setSubmitted] = useState(false);
+  const m = useAdminMutation((body: UserUpdateInput) => manageApi.updateUser(u.id, body));
+  const dirty = values.full_name !== base.full_name || values.email !== base.email || values.language !== base.language;
+  // A refetch (focus, live sync, another dialog) brings newer data: adopt it unless the form has unsaved edits.
+  useEffect(() => {
+    if (u.lock_version === baseVersion || dirty) return;
+    const next = fromUser(u);
+    setValues(next); setBase(next); setBaseVersion(u.lock_version); m.reset();
+  }, [u.lock_version]); // eslint-disable-line react-hooks/exhaustive-deps
+  const staleWhileEditing = dirty && u.lock_version !== baseVersion;
+  const conflict = m.error instanceof ApiError && m.error.code === "VERSION_CONFLICT";
+  const errors = {
+    full_name: values.full_name.trim().length < 2 ? t("userDetail.form.nameInvalid") : undefined,
+    email: !EMAIL_RE.test(values.email.trim()) ? t("userDetail.form.emailInvalid") : undefined,
+    reason: values.reason.trim().length < 3 ? t("userDetail.form.reasonInvalid") : undefined,
+  };
+  const server = m.error instanceof ApiError ? m.error.fieldErrors() : {};
+  const show = (k: keyof typeof errors) => (submitted || (k !== "reason" && values[k] !== base[k]) ? errors[k] : undefined) ?? server[k];
+  const set = (k: keyof FormValues) => (e: { target: { value: string } }) => setValues((v) => ({ ...v, [k]: e.target.value }));
+  const reset = () => { setValues(base); setSubmitted(false); m.reset(); };
+  const reload = () => { const next = fromUser(u); setValues(next); setBase(next); setBaseVersion(u.lock_version); setSubmitted(false); m.reset(); onReload(); };
+  const save = (e: FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+    if (!dirty || errors.full_name || errors.email || errors.reason) return;
+    const body: UserUpdateInput = { reason: values.reason.trim(), expected_version: baseVersion };
+    if (values.full_name.trim() !== base.full_name) body.full_name = values.full_name.trim();
+    if (values.email.trim().toLowerCase() !== base.email) body.email = values.email.trim();
+    if (values.language && values.language !== base.language) body.language = values.language;
+    m.mutate(body, {
+      onSuccess: (fresh) => {
+        const next = fromUser(fresh);
+        setValues(next); setBase(next); setBaseVersion(fresh.lock_version); setSubmitted(false);
+        toast({ title: t("userDetail.toasts.updated") });
+      },
+      onError: (err) => { if (!(err instanceof ApiError && err.code === "VERSION_CONFLICT")) toast({ title: t("userDetail.toasts.saveFailed"), description: errorMessage(err), variant: "error" }); },
+    });
+  };
+  return (
+    <Section title={t("userDetail.form.title")} description={t("userDetail.form.description")}>
+      <form onSubmit={save} noValidate aria-label={t("userDetail.form.title")} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {conflict && (
+          <InlineAlert tone="warning" title={t("userDetail.conflict.title")}>
+            {t("userDetail.conflict.text")}{" "}
+            <Button type="button" size="sm" variant="secondary" onClick={reload}>{t("userDetail.conflict.reload")}</Button>
+          </InlineAlert>
+        )}
+        {!conflict && staleWhileEditing && <InlineAlert tone="info">{t("userDetail.conflict.changedMeanwhile")}</InlineAlert>}
+        {m.error && !conflict && <InlineAlert>{errorMessage(m.error)}</InlineAlert>}
+        <Input label={t("userDetail.dialogs.edit.fullName")} value={values.full_name} onChange={set("full_name")} error={show("full_name")} maxLength={120} />
+        <Input label={t("userDetail.dialogs.edit.email")} type="email" value={values.email} onChange={set("email")} error={show("email")}
+          hint={values.email.trim().toLowerCase() !== base.email ? t("userDetail.dialogs.edit.description") : undefined} />
+        <Select label={t("userDetail.fields.language")} value={values.language} onChange={set("language")}
+          placeholder={base.language ? undefined : t("userDetail.languageNotChosen")}
+          options={LANGUAGES.map((l) => ({ value: l, label: LANGUAGE_NAMES[l] }))} />
+        <Input label={t("userDetail.form.reason")} value={values.reason} onChange={set("reason")} error={show("reason")} maxLength={500} hint={t("userDetail.form.reasonHint")} />
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <Button type="submit" loading={m.isPending} disabled={!dirty || m.isPending}>{m.isPending ? t("common:state.saving") : t("common:actions.saveChanges")}</Button>
+          <Button type="button" variant="ghost" onClick={reset} disabled={(!dirty && !values.reason) || m.isPending}>{t("userDetail.form.reset")}</Button>
+          {dirty && !m.isPending && <Muted>{t("userDetail.form.unsaved")}</Muted>}
+        </div>
+      </form>
+    </Section>
+  );
+}
+
+function Progress({ u }: { u: AdminUserDetail }) {
   const { t } = useTranslation("admin");
   const statusLabel = useStatusLabel();
   return (
@@ -175,6 +299,18 @@ function SubscriptionTab({ u, canManage, open }: { u: AdminUserDetail; canManage
           ]} />
         ) : <Muted>{t("userDetail.freeByDefault")}</Muted>}
       </Section>
+      <Section title={t("userDetail.sections.entitlements")} description={t("userDetail.entitlementsDesc")}>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {(u.entitlements ?? []).map((e) => (
+            <li key={e.key} className="ik-list-row">
+              <span>{featureLabel(e.key)}</span>
+              {!e.enabled ? <Badge tone="neutral">{t("userDetail.entitlementOff")}</Badge>
+                : e.kind === "limit" && e.limit !== null ? <Badge tone="info">{t("userDetail.entitlementLimit", { count: e.limit, days: e.window_days ?? 30 })}</Badge>
+                : <Badge tone="success">{t("userDetail.entitlementOn")}</Badge>}
+            </li>
+          ))}
+        </ul>
+      </Section>
       <Section title={t("userDetail.sections.subscriptionHistory")}>
         {!u.subscription_history.length ? <Muted>{t("userDetail.noSubscriptionEvents")}</Muted> : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -194,62 +330,86 @@ function SubscriptionTab({ u, canManage, open }: { u: AdminUserDetail; canManage
   );
 }
 
-function Security({ u, canSupport, open }: { u: AdminUserDetail; canSupport: boolean; open: (d: Dialog) => void }) {
+function Activity({ u, canSupport, open }: { u: AdminUserDetail; canSupport: boolean; open: (d: Dialog) => void }) {
   const { t } = useTranslation("admin");
-  const roleName = (r: string) => t(`common:roles.${r}`, { defaultValue: humanize(r) });
   return (
     <>
-      <Section title={t("userDetail.sections.roles")} description={t("userDetail.rolesDesc")}
-        action={u.can_assign_roles ? <Button size="sm" variant="secondary" iconLeft="plus" onClick={() => open({ kind: "grant" })}>{t("userDetail.actions.grantRole")}</Button> : undefined}>
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {u.roles.map((r) => (
-            <li key={r} className="ik-list-row">
-              <span>{roleName(r)}</span>
-              {u.can_assign_roles && <Button size="sm" variant="ghost" aria-label={t("userDetail.revokeRoleAria", { role: roleName(r) })} onClick={() => open({ kind: "revoke", role: r })}>{t("userDetail.actions.revoke")}</Button>}
-            </li>
-          ))}
-        </ul>
-      </Section>
-      <Section title={t("userDetail.sections.sessions")} description={t("userDetail.sessionsCount", { count: u.sessions.length })}
-        action={canSupport && u.sessions.length ? <Button size="sm" variant="secondary" iconLeft="log-out" onClick={() => open({ kind: "sessions" })}>{t("userDetail.actions.revokeSessions")}</Button> : undefined}>
-        {!u.sessions.length ? <Muted>{t("userDetail.noSessions")}</Muted> : (
-          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {u.sessions.map((s) => <li key={s.id} className="ik-list-row"><span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{s.user_agent ?? t("userDetail.unknownDevice")}</span><Muted>{t("userDetail.since", { date: formatDateTime(s.created_at) })}</Muted></li>)}
-          </ul>
-        )}
-      </Section>
-      <Section title={t("userDetail.sections.lifecycle")}>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {canSupport && <Button size="sm" variant="secondary" iconLeft="key-round" onClick={() => open({ kind: "reset" })}>{t("userDetail.actions.sendReset")}</Button>}
-          {u.can_manage && u.status !== "deactivated" && <Button size="sm" variant="secondary" iconLeft="user-x" onClick={() => open({ kind: "deactivate" })}>{t("userDetail.actions.deactivate")}</Button>}
-          {u.can_delete && <Button size="sm" variant="danger" iconLeft="trash-2" onClick={() => open({ kind: "delete" })}>{t("userDetail.actions.delete")}</Button>}
-        </div>
-        <p style={{ marginTop: 12 }}><Muted>{t("userDetail.lifecycleNote")}</Muted></p>
-      </Section>
+      <div className="ik-grid2" style={{ alignItems: "start" }}>
+        <Section title={t("userDetail.sections.lastActivity")} description={t("userDetail.lastActivityDesc")}>
+          <KeyValueList items={[
+            { label: t("userDetail.fields.lastSignIn"), value: u.last_login_at ? formatDateTime(u.last_login_at) : t("common:state.never") },
+            { label: t("userDetail.fields.lastActive"), value: u.last_seen_at ? formatDateTime(u.last_seen_at) : t("common:state.never") },
+          ]} />
+        </Section>
+        <Section title={t("userDetail.sections.sessions")} description={t("userDetail.sessionsCount", { count: u.sessions.length })}
+          action={canSupport && u.sessions.length ? <Button size="sm" variant="secondary" iconLeft="log-out" onClick={() => open({ kind: "sessions" })}>{t("userDetail.actions.revokeSessions")}</Button> : undefined}>
+          {!u.sessions.length ? <Muted>{t("userDetail.noSessions")}</Muted> : (
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {u.sessions.map((s) => <li key={s.id} className="ik-list-row"><span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{s.user_agent ?? t("userDetail.unknownDevice")}</span><Muted>{t("userDetail.since", { date: formatDateTime(s.created_at) })}</Muted></li>)}
+            </ul>
+          )}
+        </Section>
+      </div>
+      {u.activity == null ? <EmptyState icon="lock" title={t("userDetail.auditRestrictedTitle")} description={t("userDetail.auditRestrictedText")} /> : (
+        <Section title={t("userDetail.sections.recentActivity")} description={t("userDetail.activityDesc", { count: 50 })}>
+          <AuditList rows={u.activity} userId={u.id} empty={t("userDetail.noEvents")} />
+        </Section>
+      )}
     </>
   );
 }
 
-function Activity({ u }: { u: AdminUserDetail }) {
+function History({ u }: { u: AdminUserDetail }) {
+  const { t } = useTranslation("admin");
+  if (u.change_history == null) return <EmptyState icon="lock" title={t("userDetail.auditRestrictedTitle")} description={t("userDetail.auditRestrictedText")} />;
+  return (
+    <Section title={t("userDetail.sections.history")} description={t("userDetail.historyDesc")}>
+      <AuditList rows={u.change_history} userId={u.id} empty={t("userDetail.noChanges")} withChanges />
+    </Section>
+  );
+}
+
+type Change = { from?: unknown; to?: unknown; changed?: boolean };
+
+function ChangeValue({ v }: { v: unknown }) {
+  const { t } = useTranslation("admin");
+  if (v === null || v === undefined || v === "") return <Muted>{t("common:state.none")}</Muted>;
+  if (typeof v === "boolean") return <>{v ? t("common:state.yes") : t("common:state.no")}</>;
+  if (Array.isArray(v)) return <>{v.map(String).join(", ") || t("common:state.none")}</>;
+  return <>{String(v)}</>;
+}
+
+/** Audit rows; with `withChanges`, each changed field is listed old → new (secrets are only reported as changed). */
+function AuditList({ rows, userId, empty, withChanges = false }: { rows: AuditEntry[]; userId: number; empty: string; withChanges?: boolean }) {
   const { t } = useTranslation("admin");
   const labels = useAuditLabels();
-  if (u.audit_events === null) return <EmptyState icon="lock" title={t("userDetail.auditRestrictedTitle")} description={t("userDetail.auditRestrictedText")} />;
+  if (!rows.length) return <Muted>{empty}</Muted>;
+  const actor = (e: AuditEntry) => (e.actor_id === userId ? t("userDetail.byTheUser") : e.actor_id ? (e.actor_email ?? t("userDetail.byUser", { id: e.actor_id })) : t("userDetail.bySystem"));
   return (
-    <Section title={t("userDetail.sections.audit")} description={t("userDetail.auditDesc", { count: 50 })}>
-      {!u.audit_events.length ? <Muted>{t("userDetail.noEvents")}</Muted> : (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {u.audit_events.map((e) => (
-            <li key={e.id} className="ik-list-row" style={{ alignItems: "flex-start" }}>
-              <span>
-                <b style={{ fontWeight: 500 }}>{labels.action(e.action)}</b>
-                <span style={{ display: "block" }}><Muted>{e.actor_id === u.id ? t("userDetail.byTheUser") : e.actor_id ? t("userDetail.byUser", { id: e.actor_id }) : t("userDetail.bySystem")}{e.reason ? ` · ${e.reason}` : ""} · {e.action}</Muted></span>
-              </span>
-              <span style={{ textAlign: "right" }}><StatusPill status={e.outcome} kind="outcome" /><span style={{ display: "block", marginTop: 4 }}><Muted>{formatDateTime(e.created_at)}</Muted></span></span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Section>
+    <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+      {rows.map((e) => {
+        const ch = (withChanges && e.details && typeof e.details.changes === "object" ? e.details.changes : null) as Record<string, Change> | null;
+        return (
+          <li key={e.id} className="ik-list-row" style={{ alignItems: "flex-start" }}>
+            <span style={{ minWidth: 0 }}>
+              <b style={{ fontWeight: 500 }}>{labels.action(e.action)}</b>
+              <span style={{ display: "block" }}><Muted>{actor(e)}{e.reason ? ` · ${t("userDetail.reasonShort", { reason: e.reason })}` : ""} · {e.action}</Muted></span>
+              {ch && Object.keys(ch).length > 0 && (
+                <ul aria-label={t("userDetail.changedFields")} style={{ margin: "6px 0 0", paddingLeft: 18, fontSize: 13 }}>
+                  {Object.entries(ch).map(([field, c]) => (
+                    <li key={field}>
+                      <span style={{ fontWeight: 500 }}>{t(`userDetail.historyFields.${field}`, { defaultValue: humanize(field) })}</span>:{" "}
+                      {c.changed ? t("userDetail.valueChanged") : <><ChangeValue v={c.from} /> → <ChangeValue v={c.to} /></>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </span>
+            <span style={{ textAlign: "right" }}><StatusPill status={e.outcome} kind="outcome" /><span style={{ display: "block", marginTop: 4 }}><Muted>{formatDateTime(e.created_at)}</Muted></span></span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -261,8 +421,6 @@ function UserDialogs({ u, dialog, close }: { u: AdminUserDetail; dialog: Dialog 
   const navigate = useNavigate();
   const roles = useRoles();
   const plans = useAdminPlans();
-  const [name, setName] = useState(u.full_name);
-  const [email, setEmail] = useState(u.email);
   const [roleKey, setRoleKey] = useState("");
   const [planKey, setPlanKey] = useState("");
   const [days, setDays] = useState("");
@@ -271,8 +429,8 @@ function UserDialogs({ u, dialog, close }: { u: AdminUserDetail; dialog: Dialog 
   const [newStatus, setNewStatus] = useState<SubscriptionStatus>("active");
   useEffect(() => {
     if (!dialog) return;
-    setName(u.full_name); setEmail(u.email); setRoleKey(""); setPlanKey(""); setDays(""); setTrial(false); setAtPeriodEnd(false); setNewStatus("active");
-  }, [dialog]); // eslint-disable-line react-hooks/exhaustive-deps
+    setRoleKey(""); setPlanKey(""); setDays(""); setTrial(false); setAtPeriodEnd(false); setNewStatus("active");
+  }, [dialog]);
   const m = useAdminMutation(async ({ run }: { run: () => Promise<{ message?: string } | unknown> }) => run());
   const done = (title: string, description?: string) => { toast({ title, description }); close(); m.reset(); };
   const run = (fn: () => Promise<unknown>, title: string, after?: () => void) =>
@@ -287,34 +445,30 @@ function UserDialogs({ u, dialog, close }: { u: AdminUserDetail; dialog: Dialog 
 
   return (
     <>
-      <ConfirmActionDialog open={k === "edit"} title={t("userDetail.dialogs.edit.title")} confirmLabel={t("common:actions.saveChanges")} tone="primary" requireReason busy={m.isPending} error={err} onCancel={cancel}
-        confirmDisabled={name.trim().length < 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())}
-        description={t("userDetail.dialogs.edit.description")}
-        onConfirm={(reason) => run(() => manageApi.updateUser(u.id, { reason, ...(name.trim() !== u.full_name ? { full_name: name.trim() } : {}), ...(email.trim().toLowerCase() !== u.email ? { email: email.trim() } : {}) }), t("userDetail.toasts.updated"))}>
-        <Input label={t("userDetail.dialogs.edit.fullName")} value={name} onChange={(e) => setName(e.target.value)} />
-        <Input label={t("userDetail.dialogs.edit.email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      </ConfirmActionDialog>
       <ConfirmActionDialog open={k === "suspend"} title={t("userDetail.dialogs.suspend.title", { name: u.full_name })} confirmLabel={t("userDetail.dialogs.suspend.confirm")} requireReason busy={m.isPending} error={err} onCancel={cancel}
         description={t("userDetail.dialogs.suspend.description")}
-        onConfirm={(reason) => run(() => manageApi.suspend(u.id, reason), t("userDetail.toasts.suspended"))} />
+        onConfirm={(reason) => run(() => manageApi.suspend(u.id, reason, u.lock_version), t("userDetail.toasts.suspended"))} />
       <ConfirmActionDialog open={k === "deactivate"} title={t("userDetail.dialogs.deactivate.title", { name: u.full_name })} confirmLabel={t("userDetail.dialogs.deactivate.confirm")} requireReason busy={m.isPending} error={err} onCancel={cancel}
         description={t("userDetail.dialogs.deactivate.description")}
-        onConfirm={(reason) => run(() => manageApi.deactivate(u.id, reason), t("userDetail.toasts.deactivated"))} />
+        onConfirm={(reason) => run(() => manageApi.deactivate(u.id, reason, u.lock_version), t("userDetail.toasts.deactivated"))} />
       <ConfirmActionDialog open={k === "reactivate"} title={t("userDetail.dialogs.reactivate.title", { name: u.full_name })} confirmLabel={t("userDetail.dialogs.reactivate.confirm")} tone="primary" requireReason busy={m.isPending} error={err} onCancel={cancel}
-        onConfirm={(reason) => run(() => manageApi.reactivate(u.id, reason), t("userDetail.toasts.reactivated"))} />
+        onConfirm={(reason) => run(() => manageApi.reactivate(u.id, reason, u.lock_version), t("userDetail.toasts.reactivated"))} />
       <ConfirmActionDialog open={k === "sessions"} title={t("userDetail.dialogs.sessions.title")} confirmLabel={t("userDetail.dialogs.sessions.confirm")} requireReason busy={m.isPending} error={err} onCancel={cancel}
         description={t("userDetail.dialogs.sessions.description")}
         onConfirm={(reason) => run(() => manageApi.revokeSessions(u.id, reason), t("userDetail.toasts.sessionsRevoked"))} />
       <ConfirmActionDialog open={k === "reset"} title={t("userDetail.dialogs.reset.title")} confirmLabel={t("userDetail.dialogs.reset.confirm")} tone="primary" requireReason busy={m.isPending} error={err} onCancel={cancel}
         description={t("userDetail.dialogs.reset.description", { email: u.email })}
         onConfirm={(reason) => run(() => manageApi.sendPasswordReset(u.id, reason), t("userDetail.toasts.resetSent"))} />
+      <ConfirmActionDialog open={k === "verify"} title={t("userDetail.dialogs.verify.title")} confirmLabel={t("userDetail.dialogs.verify.confirm")} tone="primary" requireReason busy={m.isPending} error={err} onCancel={cancel}
+        description={t("userDetail.dialogs.verify.description", { email: u.email })}
+        onConfirm={(reason) => run(() => manageApi.resendVerification(u.id, reason), t("userDetail.toasts.verificationSent"))} />
       <ConfirmActionDialog open={k === "grant"} title={t("userDetail.dialogs.grant.title")} confirmLabel={t("userDetail.dialogs.grant.confirm")} tone="primary" requireReason busy={m.isPending} error={err} onCancel={cancel} confirmDisabled={!roleKey}
-        onConfirm={(reason) => run(() => manageApi.grantRole(u.id, roleKey, reason), t("userDetail.toasts.roleGranted"), () => setRoleKey(""))}>
+        onConfirm={(reason) => run(() => manageApi.grantRole(u.id, roleKey, reason, u.lock_version), t("userDetail.toasts.roleGranted"), () => setRoleKey(""))}>
         <Select label={t("userDetail.dialogs.grant.role")} value={roleKey} onChange={(e) => setRoleKey(e.target.value)} placeholder={t("userDetail.dialogs.grant.placeholder")}
           options={grantable.map((r) => ({ value: r.key, label: t("userDetail.dialogs.grant.option", { role: roleName(r.key, r.name), count: r.permissions.length }) }))} />
       </ConfirmActionDialog>
       <ConfirmActionDialog open={k === "revoke"} title={t("userDetail.dialogs.revoke.title", { role: dialog?.kind === "revoke" ? roleName(dialog.role) : "" })} confirmLabel={t("userDetail.dialogs.revoke.confirm")} requireReason busy={m.isPending} error={err} onCancel={cancel}
-        onConfirm={(reason) => dialog?.kind === "revoke" && run(() => manageApi.revokeRole(u.id, dialog.role, reason), t("userDetail.toasts.roleRevoked"))} />
+        onConfirm={(reason) => dialog?.kind === "revoke" && run(() => manageApi.revokeRole(u.id, dialog.role, reason, u.lock_version), t("userDetail.toasts.roleRevoked"))} />
       <ConfirmActionDialog open={k === "delete"} title={t("userDetail.dialogs.delete.title")} confirmLabel={t("userDetail.dialogs.delete.confirm")} requireReason confirmText={u.email} busy={m.isPending} error={err} onCancel={cancel}
         description={t("userDetail.dialogs.delete.description")}
         onConfirm={(reason) => m.mutate({ run: () => manageApi.deleteUser(u.id, u.email, reason) }, { onSuccess: () => { done(t("userDetail.toasts.deleted")); navigate("/admin/users", { replace: true }); } })} />

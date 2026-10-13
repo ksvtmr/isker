@@ -48,11 +48,19 @@ export function csrfToken(): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-let onUnauthorized: (() => void) | null = null;
-/** Registered by the auth layer so an expired session sends the user to /login. */
-export function setUnauthorizedHandler(fn: (() => void) | null) {
+/** 401 codes that end a signed-in session: the person is sent to sign-in with this code as the explanation. */
+export const SIGN_OUT_CODES: ReadonlySet<string> = new Set(["ACCOUNT_SUSPENDED", "ACCOUNT_DEACTIVATED", "SESSION_REVOKED", "SESSION_EXPIRED"]);
+
+let onUnauthorized: ((err: ApiError, path: string) => void) | null = null;
+/** Registered by the auth layer so an expired, revoked or blocked session sends the user to /login. */
+export function setUnauthorizedHandler(fn: ((err: ApiError, path: string) => void) | null) {
   onUnauthorized = fn;
 }
+
+let signOutReason: string | null = null;
+/** Why the last signed-in session ended (ACCOUNT_SUSPENDED, …), for the sign-in page; cleared by a new sign-in. */
+export const lastSignOutReason = () => signOutReason;
+export const clearSignOutReason = () => { signOutReason = null; };
 
 export async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let res: Response;
@@ -92,7 +100,11 @@ export async function request<T>(method: Method, path: string, body?: unknown, s
       message: res.status >= 500 ? "Something went wrong on our side. Please try again." : "The request could not be completed.",
     };
     const apiErr = new ApiError(res.status, err);
-    if (res.status === 401 && !path.startsWith("/api/auth/")) onUnauthorized?.();
+    if (res.status === 401) {
+      if (SIGN_OUT_CODES.has(apiErr.code)) signOutReason = apiErr.code;
+      // Sign-in endpoints report their own errors; /me ends the session only for a session-ending code.
+      if (!path.startsWith("/api/auth/") || (path === "/api/auth/me" && SIGN_OUT_CODES.has(apiErr.code))) onUnauthorized?.(apiErr, path);
+    }
     throw apiErr;
   }
   return data as T;

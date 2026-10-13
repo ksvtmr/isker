@@ -4,7 +4,8 @@ from sqlalchemy import Float, ForeignKey, Integer, String, Text, UniqueConstrain
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.content_i18n import Translatable
-from app.core.database import Base, TimestampMixin
+from app.core.database import Base, TimestampMixin, Versioned
+from app.models.content import Publishable
 
 
 class CompetencyArea(Translatable, Base):
@@ -22,7 +23,7 @@ class CompetencyArea(Translatable, Base):
     competencies: Mapped[list[Competency]] = relationship(back_populates="area", order_by="Competency.sort_order")
 
 
-class Competency(Translatable, TimestampMixin, Base):
+class Competency(Publishable, Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "competencies"
     __translatable__ = ("name", "short_name", "description", "hint", "reflection_prompt")
 

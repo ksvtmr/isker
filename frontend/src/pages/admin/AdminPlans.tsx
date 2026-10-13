@@ -1,7 +1,7 @@
 import { Badge, Button, Card, Checkbox, ConfirmActionDialog, Input, Select, Textarea } from "@isker/design-system";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAdminMutation } from "../../api/admin";
+import { adminApi, isVersionConflict, useAdminMutation, type PlanWithVersion } from "../../api/admin";
 import { manageApi, useAdminPlans, type PlanAdmin, type PlanEntitlementInput } from "../../api/adminManage";
 import { can, useMe } from "../../api/auth";
 import { errorMessage } from "../../api/client";
@@ -9,38 +9,50 @@ import { ErrorState, PageSkeleton } from "../../components/States";
 import { useToast } from "../../components/Toaster";
 import { formatCurrency, formatNumber } from "../../utils/format";
 import { AdminPageHeader, Muted } from "./common";
+import { SaveError, TranslationFields, fromTranslationForm, toTranslationForm, type TranslationField, type TranslationForm } from "./contentSync";
 
 const FEATURE_KEYS = ["assessment.full", "assessment.reassessment", "plan.personalized", "learning.advanced_resources", "practice.tasks", "practice.ai_feedback", "progress.history", "export.data"] as const;
 const LIMIT_FEATURES = new Set<string>(["assessment.full", "practice.tasks"]);
-type Form = { key: string; name: string; description: string; price: string; currency: string; billing_interval: "none" | "month" | "year"; trial_days: string; is_active: boolean; sort_order: string; ents: Record<string, { enabled: boolean; limit: string }> };
+type Form = { key: string; name: string; description: string; price: string; currency: string; billing_interval: "none" | "month" | "year"; trial_days: string; is_active: boolean; sort_order: string; ents: Record<string, { enabled: boolean; limit: string }>; tr: TranslationForm };
 
-function toForm(p?: PlanAdmin): Form {
+function toForm(p: PlanWithVersion | undefined, trFields: TranslationField[]): Form {
   const ents: Form["ents"] = {};
   for (const k of FEATURE_KEYS) {
     const e = p?.entitlements.find((x) => x.feature_key === k);
     ents[k] = { enabled: e ? e.enabled : true, limit: e?.limit_value != null ? String(e.limit_value) : "" };
   }
   return { key: p?.key ?? "", name: p?.name ?? "", description: p?.description ?? "", price: p ? (p.price_cents / 100).toFixed(2) : "0.00", currency: p?.currency ?? "USD",
-    billing_interval: p?.billing_interval ?? "month", trial_days: String(p?.trial_days ?? 0), is_active: p?.is_active ?? true, sort_order: String(p?.sort_order ?? 10), ents };
+    billing_interval: p?.billing_interval ?? "month", trial_days: String(p?.trial_days ?? 0), is_active: p?.is_active ?? true, sort_order: String(p?.sort_order ?? 10), ents,
+    tr: toTranslationForm(p?.translations, trFields) };
 }
 
 export function AdminPlans() {
   const { t } = useTranslation("adminContent");
   const { data: me } = useMe();
   const plans = useAdminPlans();
-  const [editing, setEditing] = useState<PlanAdmin | "new" | null>(null);
-  const [form, setForm] = useState<Form>(toForm());
+  const [editing, setEditing] = useState<PlanWithVersion | "new" | null>(null);
+  const trFields: TranslationField[] = useMemo(() => [
+    { key: "name", label: t("plans.form.name") }, { key: "description", label: t("plans.form.description"), multiline: true },
+  ], [t]);
+  const [form, setForm] = useState<Form>(() => toForm(undefined, trFields));
   const toast = useToast();
   const save = useAdminMutation(async (v: { reason: string }) => {
     const entitlements: PlanEntitlementInput[] = Object.entries(form.ents).map(([feature_key, e]) => ({ feature_key, enabled: e.enabled, limit_value: LIMIT_FEATURES.has(feature_key) && e.limit !== "" ? Number(e.limit) : null }));
     const base = { name: form.name.trim(), description: form.description.trim() || null, price_cents: Math.round(Number(form.price) * 100), currency: form.currency.toUpperCase(),
       billing_interval: form.billing_interval, trial_days: Number(form.trial_days) || 0, is_active: form.is_active, sort_order: Number(form.sort_order) || 0, entitlements };
-    if (editing === "new") return manageApi.createPlan({ key: form.key.trim(), ...base });
-    return manageApi.updatePlan((editing as PlanAdmin).id, { ...base, reason: v.reason });
+    const translations = fromTranslationForm(form.tr, trFields, (lang, field) => t("sync.translations.invalidJson", { lang, field }));
+    if (editing === "new") return manageApi.createPlan({ key: form.key.trim(), ...base, translations } as Parameters<typeof manageApi.createPlan>[0]);
+    const plan = editing as PlanWithVersion;
+    return adminApi.updatePlan(plan.id, { ...base, translations, expected_version: plan.lock_version, reason: v.reason });
   });
+  const reload = async () => {
+    const fresh = await plans.refetch();
+    const row = fresh.data?.find((p) => editing !== "new" && p.id === editing?.id) as PlanWithVersion | undefined;
+    if (row) { setForm(toForm(row, trFields)); setEditing(row); save.reset(); toast({ title: t("sync.conflict.reloaded") }); }
+  };
   const canManage = can(me, "plans.manage");
   const header = <AdminPageHeader crumbs={[{ label: t("plans.title") }]} title={t("plans.title")} subtitle={t("plans.subtitle")}
-    action={canManage ? <Button iconLeft="plus" onClick={() => { setForm(toForm()); setEditing("new"); save.reset(); }}>{t("plans.newPlan")}</Button> : undefined} />;
+    action={canManage ? <Button iconLeft="plus" onClick={() => { setForm(toForm(undefined, trFields)); setEditing("new"); save.reset(); }}>{t("plans.newPlan")}</Button> : undefined} />;
   if (plans.isLoading) return <>{header}<PageSkeleton cards={3} chart={false} /></>;
   if (plans.error || !plans.data) return <>{header}<ErrorState error={plans.error} onRetry={() => plans.refetch()} /></>;
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -71,15 +83,16 @@ export function AdminPlans() {
                 return <li key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>{featureLabel(k)}</span><b style={{ fontWeight: 500 }}>{!e?.enabled ? t("common:state.no") : e.limit_value != null ? t("plans.limitPer30Days", { limit: formatNumber(e.limit_value) }) : t("common:state.yes")}</b></li>;
               })}
             </ul>
-            {canManage && <div style={{ marginTop: 16 }}><Button size="sm" variant="secondary" iconLeft="pencil" onClick={() => { setForm(toForm(p)); setEditing(p); save.reset(); }}>{t("plans.editPlan")}</Button></div>}
+            {canManage && <div style={{ marginTop: 16 }}><Button size="sm" variant="secondary" iconLeft="pencil" onClick={() => { setForm(toForm(p, trFields)); setEditing(p); save.reset(); }}>{t("plans.editPlan")}</Button></div>}
           </Card>
         ))}
       </div>
       <ConfirmActionDialog open={!!editing} title={editing === "new" ? t("plans.newPlan") : t("plans.editTitle", { name: form.name })} confirmLabel={editing === "new" ? t("plans.createPlan") : t("plans.savePlan")} tone="primary"
-        requireReason={editing !== "new"} busy={save.isPending} error={save.error ? errorMessage(save.error) : undefined} onCancel={() => setEditing(null)}
+        requireReason={editing !== "new"} busy={save.isPending} error={save.error && !isVersionConflict(save.error) ? errorMessage(save.error) : undefined} onCancel={() => setEditing(null)}
         confirmDisabled={form.name.trim().length < 2 || !priceValid || (editing === "new" && !/^[a-z0-9_-]{2,48}$/.test(form.key))}
         onConfirm={(reason) => save.mutate({ reason }, { onSuccess: () => { toast({ title: editing === "new" ? t("plans.created") : t("plans.saved") }); setEditing(null); } })}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "55vh", overflowY: "auto", paddingRight: 4 }}>
+          {isVersionConflict(save.error) && <SaveError error={save.error} onReload={reload} />}
           {editing === "new" && <Input label={t("plans.form.key")} hint={t("plans.form.keyHint")} value={form.key} onChange={(e) => set("key", e.target.value)} />}
           <Input label={t("plans.form.name")} value={form.name} onChange={(e) => set("name", e.target.value)} />
           <Textarea label={t("plans.form.description")} rows={2} maxLength={1000} value={form.description} onChange={(e) => set("description", e.target.value)} />
@@ -101,6 +114,7 @@ export function AdminPlans() {
               </div>
             ))}
           </fieldset>
+          <TranslationFields fields={trFields} value={form.tr} onChange={(tr) => set("tr", tr)} />
         </div>
       </ConfirmActionDialog>
     </>

@@ -33,6 +33,7 @@ from app.models import (
 from app.models.enums import (
     ActivityKind,
     ActivityStatus,
+    ContentStatus,
     Difficulty,
     LearningFormat,
     PracticeStatus,
@@ -168,13 +169,15 @@ def _create(
     resources = list(
         db.scalars(
             select(LearningResource).where(
-                LearningResource.competency_id == comp.id, LearningResource.is_published.is_(True)
+                LearningResource.competency_id == comp.id, LearningResource.status == ContentStatus.PUBLISHED
             )
         )
     )
     tasks = list(
         db.scalars(
-            select(PracticalTask).where(PracticalTask.competency_id == comp.id, PracticalTask.is_published.is_(True))
+            select(PracticalTask).where(
+                PracticalTask.competency_id == comp.id, PracticalTask.status == ContentStatus.PUBLISHED
+            )
         )
     )
     ranked_res = rank_resources(resources, gap.current_score, ctx)
@@ -242,6 +245,8 @@ def refresh(db: Session, attempt: AssessmentAttempt, gaps: list[CompetencyGap]) 
     has_goals = db.scalar(select(UserGoal.id).where(UserGoal.user_id == user_id).limit(1)) is not None
     ctx = learner_context(db, user_id)
 
+    # Archived or draft competencies keep their scores and gaps (history) but get no new plan steps.
+    gaps = [g for g in gaps if comps[g.competency_id].status == ContentStatus.PUBLISHED]
     ordered = sorted(gaps, key=lambda g: g.priority_rank)
     desired = [g for g in ordered if g.gap > 0][:TOP_N]
     stretch = False

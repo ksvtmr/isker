@@ -167,7 +167,9 @@
       "inactiveFor_many": "Inactive {{count}}+ days",
       "inactiveFor_other": "Inactive {{count}}+ days",
       "registeredFrom": "Registered from",
-      "registeredTo": "Registered to"
+      "registeredTo": "Registered to",
+      "language": "Language",
+      "allLanguages": "All languages"
     },
     "columns": {
       "user": "User",
@@ -177,12 +179,34 @@
       "assessments": "Assessments",
       "latestScore": "Latest score",
       "registered": "Registered",
-      "lastActive": "Last active"
+      "lastActive": "Last active",
+      "language": "Language"
     },
     "emptyTitle": "No users yet",
     "emptyText": "Accounts appear here after people register.",
     "emptyFilteredTitle": "No users match these filters",
-    "emptyFilteredText": "Try removing a filter."
+    "emptyFilteredText": "Try removing a filter.",
+    "languageNotChosen": "Not chosen",
+    "create": {
+      "open": "Create user",
+      "title": "Create a user",
+      "description": "No password is set here: the person receives a link to set their own.",
+      "confirm": "Create account",
+      "success": "User created",
+      "role": "Role",
+      "roleHint": "You can grant only roles ranked below your own.",
+      "status": "Account status",
+      "invite": "Email an invitation to set a password",
+      "inviteHint": "Only for active accounts.",
+      "reason": "Note (optional)",
+      "invitation": {
+        "sent": "An invitation was emailed to {{email}}.",
+        "logged": "Email is in development mode: the link was written to the server log.",
+        "unavailable": "Email is not configured, so no invitation was sent.",
+        "failed": "The invitation email could not be delivered.",
+        "not_requested": "No invitation was sent."
+      }
+    }
   },
   "userDetail": {
     "userId": "User #{{id}}",
@@ -191,11 +215,11 @@
     "thisIsYou": "this is you",
     "tabsAria": "User details",
     "tabs": {
-      "overview": "Overview",
-      "learning": "Assessments & progress",
       "subscription": "Subscription",
-      "security": "Roles & security",
-      "activity": "Activity"
+      "activity": "Activity",
+      "profile": "Profile",
+      "progress": "Progress",
+      "history": "Change history"
     },
     "statusAlert": {
       "suspended": "Account suspended",
@@ -217,7 +241,8 @@
       "revokeSessions": "Sign out everywhere",
       "sendReset": "Send password reset link",
       "deactivate": "Deactivate account",
-      "delete": "Delete permanently"
+      "delete": "Delete permanently",
+      "resendVerification": "Resend confirmation email"
     },
     "sections": {
       "account": "Account",
@@ -229,7 +254,11 @@
       "roles": "Roles",
       "sessions": "Active sessions",
       "lifecycle": "Account recovery and lifecycle",
-      "audit": "Audit trail"
+      "audit": "Audit trail",
+      "lastActivity": "Last activity",
+      "recentActivity": "Actions by the user",
+      "history": "Change history",
+      "entitlements": "Available features"
     },
     "fields": {
       "email": "Email",
@@ -251,7 +280,11 @@
       "tasksInProgress": "Tasks in progress",
       "status": "Status",
       "started": "Started",
-      "ends": "Ends"
+      "ends": "Ends",
+      "id": "ID",
+      "registered": "Registered",
+      "language": "Interface language",
+      "signIn": "Sign-in methods"
     },
     "emailConfirmed": "Confirmed",
     "emailNotConfirmed": "Not confirmed",
@@ -390,6 +423,11 @@
         "confirm": "Change status",
         "description": "Only allowed transitions are accepted (for example active → past due, past due → active).",
         "newStatus": "New status"
+      },
+      "verify": {
+        "title": "Resend the confirmation email?",
+        "confirm": "Send link",
+        "description": "A new confirmation link is sent to {{email}}; earlier links stop working."
       }
     },
     "toasts": {
@@ -405,8 +443,67 @@
       "planUpdated": "Plan updated",
       "extended": "Subscription extended",
       "canceled": "Subscription canceled",
-      "statusChanged": "Status changed"
-    }
+      "statusChanged": "Status changed",
+      "saveFailed": "Changes were not saved",
+      "verificationSent": "Confirmation email requested"
+    },
+    "authMethods": {
+      "email": "Email and password",
+      "google": "Google",
+      "none": "None yet (password not set)"
+    },
+    "languageNotChosen": "Not chosen",
+    "permissionsList": "Permissions: {{list}}",
+    "noPermissions": "No administrative permissions.",
+    "form": {
+      "title": "Edit profile",
+      "description": "Changes apply to the person's account immediately after saving.",
+      "nameInvalid": "Enter a name of at least 2 characters.",
+      "emailInvalid": "Enter a valid email address.",
+      "reasonInvalid": "Give a reason of at least 3 characters.",
+      "reason": "Reason for the change",
+      "reasonHint": "Saved in the change history.",
+      "reset": "Discard changes",
+      "unsaved": "Unsaved changes"
+    },
+    "conflict": {
+      "title": "This account was changed by someone else",
+      "text": "Your changes were not saved, so nothing was overwritten. Reload the latest data and apply your changes again.",
+      "reload": "Load latest data",
+      "changedMeanwhile": "This account has been updated since you started editing. Saving will be refused until you reload."
+    },
+    "lastActivityDesc": "Recorded when the person signs in and uses the platform.",
+    "historyDesc": "Who changed this account and its subscription, when and why, with old and new values.",
+    "noChanges": "No changes recorded yet.",
+    "reasonShort": "reason: {{reason}}",
+    "changedFields": "Changed fields",
+    "valueChanged": "changed (value hidden)",
+    "historyFields": {
+      "full_name": "Name",
+      "email": "Email",
+      "email_verified": "Email confirmed",
+      "language": "Language",
+      "status": "Status",
+      "status_reason": "Status reason",
+      "roles": "Roles",
+      "education": "Education",
+      "entrepreneurial_experience": "Experience",
+      "preferred_learning_format": "Preferred format",
+      "weekly_learning_minutes": "Weekly minutes",
+      "notify_reassessment": "Reassessment reminders",
+      "notify_weekly_summary": "Weekly summary"
+    },
+    "entitlementsDesc": "Calculated from the current plan; the platform checks them on every request.",
+    "entitlementOn": "Included",
+    "entitlementOff": "Not included",
+    "activityDesc_one": "Latest {{count}} action",
+    "activityDesc_few": "Latest {{count}} actions",
+    "activityDesc_many": "Latest {{count}} actions",
+    "activityDesc_other": "Latest {{count}} actions",
+    "entitlementLimit_one": "{{count}} per {{days}} days",
+    "entitlementLimit_few": "{{count}} per {{days}} days",
+    "entitlementLimit_many": "{{count}} per {{days}} days",
+    "entitlementLimit_other": "{{count}} per {{days}} days"
   },
   "roles": {
     "title": "Roles & permissions",
@@ -520,7 +617,9 @@
         "task_updated": "Practical task updated",
         "task_unpublished": "Practical task unpublished",
         "prompt_created": "AI prompt version created",
-        "prompt_activated": "AI prompt version activated"
+        "prompt_activated": "AI prompt version activated",
+        "user_created": "Account created",
+        "verification_sent": "Confirmation email sent"
       },
       "auth": {
         "register": "Registered",

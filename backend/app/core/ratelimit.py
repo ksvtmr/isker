@@ -23,6 +23,7 @@ class SlidingWindowLimiter:
     def __init__(self) -> None:
         self._hits: dict[str, deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
+        self._calls = 0
 
     def hit(self, key: str, limit: int, window_seconds: int) -> tuple[bool, int]:
         """Record a hit; return (allowed, retry_after_seconds)."""
@@ -34,7 +35,16 @@ class SlidingWindowLimiter:
             if len(q) >= limit:
                 return False, max(1, int(window_seconds - (now - q[0])))
             q.append(now)
+            self._calls += 1
+            if self._calls % 1000 == 0:
+                self._prune(now)
             return True, 0
+
+    def _prune(self, now: float) -> None:
+        """Drop keys whose newest hit is older than the longest window (bounded memory under key spraying)."""
+        horizon = now - MAX_WINDOW
+        for key in [k for k, q in self._hits.items() if not q or q[-1] <= horizon]:
+            del self._hits[key]
 
     def reset(self) -> None:
         with self._lock:
@@ -55,7 +65,10 @@ RULES = {
     "resend_user": (3, 3600),
     "password_change_user": (10, 3600),
     "oauth_ip": (30, 600),
+    # AI evaluations (cost control): practice feedback / submissions per user.
+    "ai_user": (30, 3600),
 }
+MAX_WINDOW = max(w for _, w in RULES.values())
 
 
 def enforce(rule: str, subject: str | None) -> None:

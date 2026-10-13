@@ -691,6 +691,10 @@ export function Modal({ open = true, onClose, title, description, children, foot
   const S = useDSStrings();
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // Callers usually pass an inline onClose; keep it in a ref so a re-render (e.g. typing in a field) doesn't re-run
+  // the effect below, which would move focus back to the first field.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!open || inline) return;
     const prev = document.activeElement as HTMLElement | null;
@@ -698,7 +702,7 @@ export function Modal({ open = true, onClose, title, description, children, foot
     const focusables = () => Array.from(box?.querySelectorAll<HTMLElement>("button, [href], input, textarea, select, [tabindex]:not([tabindex='-1'])") ?? []).filter((el) => !el.hasAttribute("disabled"));
     (focusables().find((el) => el.tagName !== "BUTTON" || el.getAttribute("aria-label") !== S.close) ?? box)?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose?.();
+      if (e.key === "Escape") onCloseRef.current?.();
       if (e.key === "Tab") {
         const f = focusables();
         if (!f.length) return;
@@ -709,7 +713,7 @@ export function Modal({ open = true, onClose, title, description, children, foot
     };
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("keydown", onKey); prev?.focus?.(); };
-  }, [open, inline, onClose, S.close]);
+  }, [open, inline, S.close]);
   if (!open) return null;
   const box = (
     <div ref={ref} tabIndex={-1} className="isk-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(e) => e.stopPropagation()}>

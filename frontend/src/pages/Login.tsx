@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLogin } from "../api/auth";
-import { errorMessage } from "../api/client";
+import { errorMessage, SIGN_OUT_CODES } from "../api/client";
 import { AuthFrame } from "../components/AuthFrame";
 import { GoogleButton } from "../components/GoogleButton";
 import { loginSchema, type LoginValues } from "../features/schemas";
@@ -27,6 +27,8 @@ export function LoginPage() {
   const params = new URLSearchParams(location.search);
   const next = safeNext(params.get("next"));
   const oauthError = params.get("oauth_error");
+  // Set when the server ended the session (account suspended/closed, session revoked): explain why.
+  const reason = params.get("reason");
   const { register, handleSubmit, watch, formState: { errors } } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { remember_me: false },
@@ -46,7 +48,8 @@ export function LoginPage() {
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {login.error ? <InlineAlert>{errorMessage(login.error)}</InlineAlert>
-          : oauthError ? <InlineAlert>{t(`errors:${oauthError}`, { defaultValue: t("errors:OAUTH_FAILED") })}</InlineAlert> : null}
+          : oauthError ? <InlineAlert>{t(`errors:${oauthError}`, { defaultValue: t("errors:OAUTH_FAILED") })}</InlineAlert>
+          : reason && SIGN_OUT_CODES.has(reason) ? <InlineAlert tone="warning">{t(`errors:${reason}`)}</InlineAlert> : null}
         <Input label={t("fields.email")} type="email" autoComplete="email" inputMode="email" {...register("email")} error={fe(errors.email?.message)} />
         <PasswordInput label={t("fields.password")} autoComplete="current-password" showLabel={t("password.show")} hideLabel={t("password.hide")}
           {...register("password")} error={fe(errors.password?.message)} />

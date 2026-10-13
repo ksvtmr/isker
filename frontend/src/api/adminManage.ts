@@ -15,6 +15,7 @@ export interface AdminUserRow {
   subscription_status: SubscriptionStatus | null;
   email_verified: boolean;
   onboarding_completed: boolean;
+  language: string | null;
   created_at: string;
   last_login_at: string | null;
   last_seen_at: string | null;
@@ -37,10 +38,17 @@ export interface AuditEntry {
   created_at: string;
 }
 
+export interface EntitlementInfo { key: string; label: string; description: string; kind: "flag" | "limit"; enabled: boolean; limit: number | null; window_days: number | null }
+
 export interface AdminUserDetail {
   id: number;
+  /** Optimistic-locking version: sent back as expected_version so a stale edit is refused (409 VERSION_CONFLICT). */
+  lock_version: number;
   email: string;
   full_name: string;
+  language: string | null;
+  email_verified: boolean;
+  auth_methods: ("email" | "google")[];
   status: AccountStatus;
   status_reason: string | null;
   status_changed_at: string | null;
@@ -65,13 +73,20 @@ export interface AdminUserDetail {
   subscription: Subscription | null;
   subscription_history: SubscriptionEvent[];
   sessions: { id: string; created_at: string; last_seen_at: string | null; expires_at: string; user_agent: string | null }[];
+  entitlements: EntitlementInfo[];
   audit_events: AuditEntry[] | null;
+  activity: AuditEntry[] | null;
+  change_history: AuditEntry[] | null;
   can_manage: boolean;
   can_assign_roles: boolean;
   can_delete: boolean;
 }
 
 export interface ActionResult { message: string; delivered?: boolean | null; backend?: string | null; revoked_sessions?: number | null }
+
+export type InvitationState = "sent" | "logged" | "unavailable" | "failed" | "not_requested";
+export interface CreateUserInput { full_name: string; email: string; roles: string[]; status: "active" | "suspended"; language: string | null; send_invitation: boolean; reason?: string | null }
+export interface UserUpdateInput { full_name?: string; email?: string; language?: string; reason: string; expected_version: number }
 
 export interface RoleInfo {
   id: number;
@@ -118,6 +133,7 @@ export interface UserFilters {
   role?: string;
   status?: string;
   plan?: string;
+  language?: string;
   registered_from?: string;
   registered_to?: string;
   active_within_days?: number | "";
@@ -147,14 +163,16 @@ type F = Record<string, string | number | boolean | null | undefined>;
 export const manageApi = {
   users: (f: UserFilters) => api.get<Page<AdminUserRow>>(`/api/admin/users${qs(f as F)}`),
   user: (id: number) => api.get<AdminUserDetail>(`/api/admin/users/${id}`),
-  updateUser: (id: number, body: { full_name?: string; email?: string; reason: string }) => api.patch<AdminUserDetail>(`/api/admin/users/${id}`, body),
-  suspend: (id: number, reason: string) => api.post<ActionResult>(`/api/admin/users/${id}/suspend`, { reason }),
-  deactivate: (id: number, reason: string) => api.post<ActionResult>(`/api/admin/users/${id}/deactivate`, { reason }),
-  reactivate: (id: number, reason: string) => api.post<ActionResult>(`/api/admin/users/${id}/reactivate`, { reason }),
+  createUser: (body: CreateUserInput) => api.post<{ user: AdminUserDetail; invitation: InvitationState; message: string }>("/api/admin/users", body),
+  updateUser: (id: number, body: UserUpdateInput) => api.patch<AdminUserDetail>(`/api/admin/users/${id}`, body),
+  suspend: (id: number, reason: string, expected_version?: number) => api.post<ActionResult>(`/api/admin/users/${id}/suspend`, { reason, expected_version }),
+  deactivate: (id: number, reason: string, expected_version?: number) => api.post<ActionResult>(`/api/admin/users/${id}/deactivate`, { reason, expected_version }),
+  reactivate: (id: number, reason: string, expected_version?: number) => api.post<ActionResult>(`/api/admin/users/${id}/reactivate`, { reason, expected_version }),
+  resendVerification: (id: number, reason: string) => api.post<ActionResult>(`/api/admin/users/${id}/resend-verification`, { reason }),
   revokeSessions: (id: number, reason: string) => api.post<ActionResult>(`/api/admin/users/${id}/revoke-sessions`, { reason }),
   sendPasswordReset: (id: number, reason: string) => api.post<ActionResult>(`/api/admin/users/${id}/password-reset`, { reason }),
-  grantRole: (id: number, role_key: string, reason: string) => api.post<AdminUserDetail>(`/api/admin/users/${id}/roles`, { role_key, reason }),
-  revokeRole: (id: number, role_key: string, reason: string) => api.del<AdminUserDetail>(`/api/admin/users/${id}/roles/${role_key}${qs({ reason })}`),
+  grantRole: (id: number, role_key: string, reason: string, expected_version?: number) => api.post<AdminUserDetail>(`/api/admin/users/${id}/roles`, { role_key, reason, expected_version }),
+  revokeRole: (id: number, role_key: string, reason: string, expected_version?: number) => api.del<AdminUserDetail>(`/api/admin/users/${id}/roles/${role_key}${qs({ reason, expected_version })}`),
   deleteUser: (id: number, confirm_email: string, reason: string) => api.del<ActionResult>(`/api/admin/users/${id}`, { confirm_email, reason }),
   roles: () => api.get<RoleInfo[]>("/api/admin/roles"),
   permissions: () => api.get<{ key: string; description: string }[]>("/api/admin/permissions"),
@@ -175,10 +193,12 @@ export const manageApi = {
   settings: () => api.get<SettingsStatus>("/api/admin/settings"),
 };
 
+// Admin views refetch when the tab regains focus, so they show what other staff and learners changed meanwhile.
 export const useAdminUserList = (f: UserFilters) =>
-  useQuery({ queryKey: keys.admin("users", f), queryFn: () => manageApi.users(f), placeholderData: keepPreviousData });
-export const useAdminUser = (id: number) => useQuery({ queryKey: keys.admin("user", id), queryFn: () => manageApi.user(id), enabled: Number.isFinite(id) });
-export const useRoles = () => useQuery({ queryKey: keys.admin("roles"), queryFn: manageApi.roles });
+  useQuery({ queryKey: keys.admin("users", f), queryFn: () => manageApi.users(f), placeholderData: keepPreviousData, refetchOnWindowFocus: true });
+export const useAdminUser = (id: number) =>
+  useQuery({ queryKey: keys.admin("user", id), queryFn: () => manageApi.user(id), enabled: Number.isFinite(id), refetchOnWindowFocus: true });
+export const useRoles = (enabled = true) => useQuery({ queryKey: keys.admin("roles"), queryFn: manageApi.roles, enabled });
 export const usePermissionCatalog = () => useQuery({ queryKey: keys.admin("permissions"), queryFn: manageApi.permissions, staleTime: Infinity });
 export const useAdminPlans = () => useQuery({ queryKey: keys.admin("plans"), queryFn: manageApi.plans });
 export const useAdminSubscriptions = (f: Parameters<typeof manageApi.subscriptions>[0]) =>

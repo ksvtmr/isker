@@ -1,5 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { can, hasAdminAccess, useMe } from "../api/auth";
+import { lastSignOutReason } from "../api/client";
+import { useLiveSync } from "../api/sync";
 import { ErrorState } from "../components/States";
 import { EmptyState, SkeletonCard } from "@isker/design-system";
 import { useTranslation } from "react-i18next";
@@ -14,13 +16,20 @@ function FullPageLoading() {
   );
 }
 
+/** Sign-in URL that returns to `next` and, when a session was ended by the server, says why. */
+export function loginUrl(next: string): string {
+  const reason = lastSignOutReason();
+  return `/login?next=${encodeURIComponent(next)}${reason ? `&reason=${reason}` : ""}`;
+}
+
 /** Protected routes: requires a session; sends new users to onboarding first. */
 export function RequireAuth({ allowIncompleteOnboarding = false }: { allowIncompleteOnboarding?: boolean }) {
   const { data: user, isLoading, error, refetch } = useMe();
   const location = useLocation();
+  useLiveSync(!!user);
   if (isLoading) return <FullPageLoading />;
   if (error) return <div style={{ maxWidth: 560, margin: "15vh auto 0", padding: 16 }}><ErrorState error={error} onRetry={() => refetch()} /></div>;
-  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  if (!user) return <Navigate to={loginUrl(location.pathname + location.search)} replace />;
   if (!allowIncompleteOnboarding && !user.onboarding_completed && !hasAdminAccess(user)) return <Navigate to="/onboarding" replace />;
   return <Outlet />;
 }
@@ -29,8 +38,9 @@ export function RequireAuth({ allowIncompleteOnboarding = false }: { allowIncomp
 export function RequireAdmin() {
   const { data: user, isLoading } = useMe();
   const location = useLocation();
+  useLiveSync(!!user);
   if (isLoading) return <FullPageLoading />;
-  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />;
+  if (!user) return <Navigate to={loginUrl(location.pathname)} replace />;
   if (!hasAdminAccess(user)) return <Navigate to="/dashboard" replace />;
   return <Outlet />;
 }

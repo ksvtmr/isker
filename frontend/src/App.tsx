@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { setUnauthorizedHandler } from "./api/client";
+import { useEffect, useRef } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { SIGN_OUT_CODES, setUnauthorizedHandler } from "./api/client";
 import { keys } from "./api/keys";
 import { AppShell } from "./layouts/AppShell";
 import { FocusLayout } from "./layouts/FocusLayout";
@@ -45,11 +45,20 @@ import { SettingsPage } from "./pages/Settings";
 export function App() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
+  const here = useRef(location.pathname);
+  here.current = location.pathname;
   useEffect(() => {
-    // An expired/revoked session anywhere in the app returns the user to sign-in.
-    setUnauthorizedHandler(() => {
+    // An expired, revoked or blocked session anywhere in the app returns the user to sign-in with the reason.
+    setUnauthorizedHandler((err, path) => {
+      const wasSignedIn = !!qc.getQueryData(keys.me);
+      if (path === "/api/auth/me" && !wasSignedIn) return; // anonymous visitor: nothing to end
+      // Drop every cached private response (another person may sign in next), keep the signed-out state.
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "me" });
       qc.setQueryData(keys.me, null);
-      navigate(`/login?next=${encodeURIComponent(window.location.pathname)}`, { replace: true });
+      const reason = SIGN_OUT_CODES.has(err.code) ? `&reason=${err.code}` : "";
+      const next = here.current.startsWith("/login") ? "/" : here.current;
+      navigate(`/login?next=${encodeURIComponent(next)}${reason}`, { replace: true });
     });
     return () => setUnauthorizedHandler(null);
   }, [qc, navigate]);

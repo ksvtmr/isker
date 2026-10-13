@@ -10,7 +10,7 @@ from app.api.deps import DB, CurrentUser
 from app.core.database import utcnow
 from app.core.errors import NotFoundError
 from app.models import Competency, LearningResource, Recommendation, UserLearningProgress
-from app.models.enums import Difficulty, ProgressStatus, RecommendationStatus, ResourceType
+from app.models.enums import ContentStatus, Difficulty, ProgressStatus, RecommendationStatus, ResourceType
 from app.schemas.common import ERROR_RESPONSES, Page
 from app.schemas.learning import ProgressIn, ResourceDetail, ResourceOut
 from app.services import entitlements
@@ -66,7 +66,11 @@ def list_resources(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 24,
 ) -> Page[ResourceOut]:
-    stmt = select(LearningResource).join(Competency).where(LearningResource.is_published.is_(True))
+    stmt = (
+        select(LearningResource)
+        .join(Competency)
+        .where(LearningResource.status == ContentStatus.PUBLISHED, Competency.status == ContentStatus.PUBLISHED)
+    )
     if competency:
         stmt = stmt.where(Competency.code == competency)
     if type:
@@ -105,20 +109,22 @@ def list_resources(
     )
 
 
-def _get(db, rid: int) -> LearningResource:
+def _get(db, rid: int, history_user_id: int | None = None) -> LearningResource:
+    """A published resource. With `history_user_id`, an unpublished one the user already worked on is readable too
+    (their progress history stays reachable), but nothing new can be started on it."""
     r = db.scalar(
-        select(LearningResource)
-        .where(LearningResource.id == rid, LearningResource.is_published.is_(True))
-        .options(joinedload(LearningResource.competency))
+        select(LearningResource).where(LearningResource.id == rid).options(joinedload(LearningResource.competency))
     )
-    if r is None:
+    if r is None or (r.status != ContentStatus.PUBLISHED and (
+        history_user_id is None or _progress(db, history_user_id, r.id) is None
+    )):
         raise NotFoundError("Learning resource not found", "RESOURCE_NOT_FOUND")
     return r
 
 
-def _get_for(db, user, rid: int) -> LearningResource:
+def _get_for(db, user, rid: int, read_only: bool = False) -> LearningResource:
     """Load a resource the user's plan allows (advanced resources need learning.advanced_resources)."""
-    r = _get(db, rid)
+    r = _get(db, rid, user.id if read_only else None)
     if r.difficulty == Difficulty.ADVANCED:
         entitlements.require(db, user, "learning.advanced_resources", consume=0)
     return r
@@ -145,7 +151,7 @@ def _detail(db, user_id: int, r: LearningResource) -> ResourceDetail:
 
 @router.get("/resources/{resource_id}", response_model=ResourceDetail, summary="Resource content and progress")
 def get_resource(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
-    r = _get_for(db, user, resource_id)
+    r = _get_for(db, user, resource_id, read_only=True)
     p = _progress(db, user.id, r.id)
     if p is not None:
         p.last_accessed_at = utcnow()

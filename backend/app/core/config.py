@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     # Exact URI registered in Google Cloud. Empty = {APP_BASE_URL}/api/auth/google/callback.
     google_redirect_uri: str = ""
     auth_cookie_name: str = "isker_session"
+    # Number of trusted reverse proxies that append to X-Forwarded-For (Render, nginx). 0 = API exposed directly.
+    trusted_proxy_hops: int = 1
     csrf_cookie_name: str = "isker_csrf"
     # None = automatic: Secure cookies in production, plain cookies in development (http://localhost).
     cookie_secure: bool | None = None
@@ -110,6 +112,11 @@ class Settings(BaseSettings):
             raise ValueError("CORS_ORIGINS must list explicit origins; '*' is not allowed with credentials")
         if self.is_production and self.email_backend == "console":
             raise ValueError("EMAIL_BACKEND=console is for development only")
+        if self.is_production and self.cookie_secure is False:
+            raise ValueError("COOKIE_SECURE=false is not allowed in production (session cookies need HTTPS)")
+        if self.is_production:
+            # Development origins are never trusted in production.
+            self.cors_origins = [o for o in self.cors_origins if "localhost" not in o and "127.0.0.1" not in o]
         # Render (and similar hosts) expose the public URL; use it for email links unless APP_BASE_URL is set.
         if "app_base_url" not in self.model_fields_set and os.environ.get("RENDER_EXTERNAL_URL"):
             self.app_base_url = os.environ["RENDER_EXTERNAL_URL"].rstrip("/")

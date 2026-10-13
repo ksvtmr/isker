@@ -43,6 +43,8 @@ class PlanOut(ORM):
 
 class PlanAdminOut(PlanOut):
     subscriber_count: int = 0
+    lock_version: int
+    translations: dict | None = None
 
 
 class PlanEntitlementIn(BaseModel):
@@ -62,6 +64,7 @@ class PlanIn(BaseModel):
     is_active: bool = True
     sort_order: int = Field(default=0, ge=0, le=1000)
     entitlements: list[PlanEntitlementIn] = Field(default_factory=list)
+    translations: dict[str, dict] | None = None
 
 
 class PlanUpdate(BaseModel):
@@ -74,6 +77,10 @@ class PlanUpdate(BaseModel):
     is_active: bool | None = None
     sort_order: int | None = Field(default=None, ge=0, le=1000)
     entitlements: list[PlanEntitlementIn] | None = None
+    # {"ru": {"name": "…", "description": "…"}, "kk": {…}}
+    translations: dict[str, dict] | None = None
+    # The lock_version the editor loaded; a stale value is refused with 409 VERSION_CONFLICT.
+    expected_version: int | None = Field(default=None, ge=1)
     reason: str = Field(min_length=3, max_length=500)
 
 

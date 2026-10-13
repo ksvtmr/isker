@@ -17,7 +17,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.content_i18n import Translatable
-from app.core.database import Base, TimestampMixin, utcnow
+from app.core.database import Base, TimestampMixin, Versioned, utcnow
+from app.models.content import Publishable
 from app.models.enums import (
     ActivityKind,
     ActivityStatus,
@@ -30,8 +31,9 @@ from app.models.enums import (
 )
 
 
-class LearningResource(Translatable, TimestampMixin, Base):
+class LearningResource(Publishable, Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "learning_resources"
+    __status_flag__ = "is_published"
     __translatable__ = ("title", "description", "content")
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -49,8 +51,9 @@ class LearningResource(Translatable, TimestampMixin, Base):
     competency = relationship("Competency")
 
 
-class PracticalTask(Translatable, TimestampMixin, Base):
+class PracticalTask(Publishable, Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "practical_tasks"
+    __status_flag__ = "is_published"
     __translatable__ = ("title", "description", "instructions")
     __translatable_rubric__ = True
 

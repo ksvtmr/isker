@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import set_committed_value
 
 from app.core.config import get_settings
 from app.core.context import client_ip_var, user_agent_var
@@ -178,11 +179,22 @@ def consume_reset_token(db: Session, raw: str) -> User:
     return user
 
 
+def _write_activity(db: Session, user: User, **values: datetime) -> None:
+    """Activity timestamps bypass optimistic locking: a plain UPDATE that neither checks nor bumps lock_version."""
+    db.execute(update(User).where(User.id == user.id).values(**values).execution_options(synchronize_session=False))
+    for k, v in values.items():
+        set_committed_value(user, k, v)
+
+
+def record_login(db: Session, user: User) -> None:
+    _write_activity(db, user, last_login_at=utcnow())
+
+
 def touch_last_seen(db: Session, user: User, sess: UserSession | None, now: datetime) -> bool:
     """Update last-seen at most every 5 minutes (keeps writes low). Returns True if something changed."""
     stale = user.last_seen_at is None or (now - as_utc(user.last_seen_at)) > timedelta(minutes=5)
     if stale:
-        user.last_seen_at = now
+        _write_activity(db, user, last_seen_at=now)
         if sess is not None:
             sess.last_seen_at = now
     return stale

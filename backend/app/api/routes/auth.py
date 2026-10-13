@@ -107,7 +107,7 @@ def login(body: LoginIn, response: Response, db: DB) -> AuthOut:
     if get_settings().require_email_verification and user.email_verified_at is None:
         raise AuthenticationError("Confirm your email address before signing in. Check your inbox for the link.",
                                   "EMAIL_NOT_VERIFIED")
-    user.last_login_at = utcnow()
+    accounts.record_login(db, user)
     audit(db, user.id, "auth.login", "user", user.id, remember=body.remember_me)
     verified = "verified" if user.email_verified_at else "not_verified"
     out = _issue(db, response, user, verified, remember=body.remember_me)

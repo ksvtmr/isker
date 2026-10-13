@@ -137,7 +137,7 @@ def test_suspended_user_session_stops_working(client, db):
     u.status = AccountStatus.SUSPENDED
     db.commit()
     r = client.get("/api/auth/me")
-    assert r.status_code == 401 and r.json()["error"]["code"] == "ACCOUNT_INACTIVE"
+    assert r.status_code == 401 and r.json()["error"]["code"] == "ACCOUNT_SUSPENDED"
 
 
 # --- Password reset -----------------------------------------------------------------------------------

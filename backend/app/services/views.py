@@ -18,7 +18,7 @@ from app.models import (
     PracticalTask,
     Recommendation,
 )
-from app.models.enums import ActivityKind, AIInputType, AttemptStatus
+from app.models.enums import ActivityKind, AIInputType, AttemptStatus, ContentStatus
 from app.schemas.assessment import AttemptSummary, CompetencyRef
 from app.schemas.competency import CompetencyScoreOut
 from app.schemas.results import ActivityOut, AreaScore, InsightOut, ProfileOverview, RecommendationOut
@@ -34,8 +34,12 @@ def type_label(value: str) -> str:
     return tr(f"type.{value}")
 
 
-def competencies(db: Session) -> list[Competency]:
-    return list(db.scalars(select(Competency).options(joinedload(Competency.area)).order_by(Competency.sort_order)))
+def competencies(db: Session, published_only: bool = False) -> list[Competency]:
+    """All competencies (for lookups by id), or only the published ones the learner platform offers."""
+    stmt = select(Competency).options(joinedload(Competency.area)).order_by(Competency.sort_order)
+    if published_only:
+        stmt = stmt.where(Competency.status == ContentStatus.PUBLISHED)
+    return list(db.scalars(stmt))
 
 
 def attempt_summary(db: Session, att: AssessmentAttempt, total: int | None = None) -> AttemptSummary:
@@ -136,7 +140,7 @@ def score_out(
 def profile_overview(db: Session, user_id: int, as_of_attempt: AssessmentAttempt | None = None) -> ProfileOverview:
     attempts = completed_attempts(db, user_id)
     areas = list(db.scalars(select(CompetencyArea).order_by(CompetencyArea.sort_order)))
-    comps = competencies(db)
+    comps = competencies(db, published_only=True)
     if not attempts:
         return ProfileOverview(
             has_profile=False,
@@ -162,6 +166,8 @@ def profile_overview(db: Session, user_id: int, as_of_attempt: AssessmentAttempt
     }
     if not gaps and as_of_attempt is None:
         gaps = {g.competency_id: g for g in gap_service.latest_gaps(db, user_id)}
+    # Unpublished competencies appear only where the learner has a measurement (history is never hidden).
+    comps = [c for c in competencies(db) if c.status == ContentStatus.PUBLISHED or c.id in scores]
     a_scores = area_scores(db, scores)
     overall = current_att.overall_score if current_att.overall_score is not None else overall_score(scores)
     prev_overall = prev_att.overall_score if prev_att else None

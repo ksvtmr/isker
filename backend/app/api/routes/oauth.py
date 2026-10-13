@@ -191,7 +191,7 @@ def google_callback(request: Request, db: DB, code: str | None = None, state: st
         audit(db, user.id, "auth.login_blocked", "user", user.id, outcome="denied", reason=user.status.value)
         db.commit()
         return _fail(code)
-    user.last_login_at = utcnow()
+    accounts.record_login(db, user)
     sess = accounts.create_session(db, user, remember=req.remember, method=PROVIDER)
     audit(db, user.id, "auth.register" if created else "auth.login", "user", user.id, method=PROVIDER,
           remember=req.remember)

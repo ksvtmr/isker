@@ -42,6 +42,14 @@ class AuthContext:
     via_cookie: bool
 
 
+def account_blocked_error(user: User) -> AuthenticationError:
+    """401 for a suspended or deactivated account; checked on every authenticated request (not only at sign-in)."""
+    if user.status == AccountStatus.SUSPENDED:
+        return AuthenticationError("This account is suspended. Contact support if you think this is a mistake.",
+                                   "ACCOUNT_SUSPENDED")
+    return AuthenticationError("This account has been closed. Contact support to restore it.", "ACCOUNT_DEACTIVATED")
+
+
 def token_from_request(request: Request, creds: HTTPAuthorizationCredentials | None) -> tuple[str | None, bool]:
     if creds and creds.scheme.lower() == "bearer":
         return creds.credentials, False
@@ -63,6 +71,10 @@ def get_auth(
         raise AuthenticationError("Invalid session. Please sign in again.", "INVALID_TOKEN") from e
     sess = db.get(UserSession, claims["jti"])
     if not session_is_valid(sess):
+        # Blocking revokes every session: tell the person why instead of a generic "session ended".
+        owner = db.get(User, sess.user_id) if sess is not None else None
+        if owner is not None and owner.status != AccountStatus.ACTIVE:
+            raise account_blocked_error(owner)
         raise AuthenticationError("Your session has ended. Please sign in again.", "SESSION_REVOKED")
     assert sess is not None
     version = int(claims.get("ver", 0))
@@ -81,8 +93,7 @@ def get_auth(
     if user is None or user.id != sess.user_id:
         raise AuthenticationError("Invalid session.", "INVALID_TOKEN")
     if user.status != AccountStatus.ACTIVE:
-        raise AuthenticationError("This account is not active. Contact support if you think this is a mistake.",
-                                  "ACCOUNT_INACTIVE")
+        raise account_blocked_error(user)
     if via_cookie and request.method in UNSAFE and not request.url.path.endswith("/auth/logout"):
         if not csrf_matches(request.cookies.get(s.csrf_cookie_name), request.headers.get("x-csrf-token")):
             raise AuthorizationError("Security check failed. Reload the page and try again.", "CSRF_FAILED")

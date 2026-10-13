@@ -41,6 +41,9 @@
   "CONFIRMATION_MISMATCH": "The confirmation does not match this account's email.",
   "NO_CHANGES": "Nothing to change.",
   "VERSION_CONFLICT": "Someone else changed this record. Reload it and apply your changes again.",
+  "INVALID_TRANSLATIONS": "Translations can be given for Russian and Kazakh only, for the fields of this item that can be translated.",
+  "COMPETENCY_CODE_TAKEN": "A competency with this code already exists.",
+  "INVALID_AREA": "Choose one of the competency areas.",
   "SESSION_NOT_FOUND": "Session not found.",
   "UPGRADE_REQUIRED": "This feature isn't included in your plan, or the limit has been reached.",
   "PLAN_NOT_FOUND": "Plan not found.",
@@ -105,5 +108,6 @@
   "CANNOT_UNLINK_LAST_METHOD": "You can't remove your only sign-in method. Set a password first.",
   "PASSWORD_NOT_SET": "This account has no password yet. Sign in with Google or reset your password.",
   "PASSWORD_ALREADY_SET": "A password is already set. Change it under Security.",
-  "REAUTH_REQUIRED": "For your security, sign in again and repeat this action."
+  "REAUTH_REQUIRED": "For your security, sign in again and repeat this action.",
+  "ALREADY_VERIFIED": "This email address is already confirmed."
 }
