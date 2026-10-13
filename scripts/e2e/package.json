@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "description": "Browser end-to-end journey and axe-core accessibility run against a running Isker instance.",
-  "scripts": { "journey": "node journey.mjs" },
+  "scripts": { "journey": "node journey.mjs", "languages": "node languages.mjs" },
   "dependencies": { "axe-core": "4.14.0", "playwright": "1.49.1" }
 }
