@@ -9,6 +9,7 @@ import { LinkButton, useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import type { Difficulty, RecommendedItem } from "../types/api";
 import { confidenceLabel, difficultyLabel, formatDate, gapLabel, shortMonth, signed } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 /** Badge tone and translation key per progress/submission status. */
 const STATUS_LABEL: Record<string, [Parameters<typeof StatusBadge>[0]["status"], string]> = {
@@ -27,7 +28,7 @@ function ItemList({ items, base, recommendedId }: { items: RecommendedItem[]; ba
         const [st, labelKey] = STATUS_LABEL[it.status ?? "not_started"] ?? STATUS_LABEL.not_started;
         return (
           <li key={it.id}>
-            <a className="ik-list-row" href={`${base}/${it.id}`} onClick={spa(`${base}/${it.id}`)} style={{ textDecoration: "none" }}>
+            <a className="ik-list-row" href={appHref(`${base}/${it.id}`)} onClick={spa(`${base}/${it.id}`)} style={{ textDecoration: "none" }}>
               <span style={{ minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: 14, fontWeight: 500 }}>{it.title}</span>
                 <span style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{it.type} · {t("common:time.minutes", { count: it.duration_minutes })} · {difficultyLabel(it.difficulty as Difficulty)}</span>
@@ -60,7 +61,7 @@ export function CompetencyDetailPage() {
   }
 
   const c = d.competency, cur = d.current;
-  const back = { label: t("common:nav.competencies"), href: "/competencies", onClick: () => navigate("/competencies") };
+  const back = { label: t("common:nav.competencies"), href: appHref("/competencies"), onClick: () => navigate("/competencies") };
   const reassess = () => start.mutate({ scope: "competency", competency_id: c.id }, { onSuccess: (r) => navigate(`/assessment/${r.attempt.id}`) });
   const reassessBtn = <Button variant="secondary" iconLeft="refresh-cw" loading={start.isPending} onClick={reassess}>{t("competencyDetail.reassess")}</Button>;
 

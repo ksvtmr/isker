@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ApiError } from "./api/client";
 import { App } from "./App";
 import { ToastProvider } from "./components/Toaster";
+import { BASE_PATH } from "./utils/appHref";
 import "./i18n";
 import { I18nDSProvider } from "./i18n/DSBridge";
 import "./styles/app.css";
@@ -23,7 +24,7 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={BASE_PATH || "/"}>
         <I18nDSProvider>
           <ToastProvider>
             <App />

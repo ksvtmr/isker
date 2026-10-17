@@ -7,6 +7,7 @@ import { can, useMe } from "../../api/auth";
 import { ErrorState } from "../../components/States";
 import { formatDate } from "../../utils/format";
 import { AdminPageHeader, Muted, StatusPill } from "./common";
+import { appHref } from "../../utils/appHref";
 
 export function AdminSubscriptions() {
   const [params, setParams] = useSearchParams();
@@ -59,7 +60,7 @@ export function AdminSubscriptions() {
         {list.error ? <div style={{ padding: 16 }}><ErrorState error={list.error} onRetry={() => list.refetch()} /></div> : (
           <>
             <DataTable caption={t("subscriptions.title")} columns={columns} rows={list.data?.items ?? []} rowKey={(s) => s.id} loading={list.isLoading || list.isFetching}
-              rowHref={canOpenUser ? (s) => `/admin/users/${s.user_id}` : undefined} onRowOpen={canOpenUser ? (s) => navigate(`/admin/users/${s.user_id}`) : undefined}
+              rowHref={canOpenUser ? (s) => appHref(`/admin/users/${s.user_id}`) : undefined} onRowOpen={canOpenUser ? (s) => navigate(`/admin/users/${s.user_id}`) : undefined}
               empty={<EmptyState icon="credit-card" title={t("subscriptions.emptyTitle")} description={t("subscriptions.emptyText")} />} />
             {list.data && <Pagination page={f.page} pageSize={list.data.page_size} total={list.data.total} onChange={(p) => update({ page: p }, false)} label={t("subscriptions.pagesLabel")} />}
           </>

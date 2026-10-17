@@ -2,6 +2,7 @@
  * Thin fetch wrapper. All server calls go through here (never from components directly).
  * Auth uses the httpOnly session cookie set by the API; no token is stored in JS. Unsafe requests echo the readable
  * `isker_csrf` cookie in the X-CSRF-Token header (double-submit CSRF protection, enforced by the API).
+ * Exception: a cross-site build (see CROSS_SITE) sends the session token as a Bearer header instead.
  */
 
 export interface ApiErrorBody {
@@ -90,7 +91,48 @@ export function translateFieldError(d: FieldErrorDetail): string {
 
 import i18n, { currentLanguage } from "../i18n";
 
-const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
+const BASE = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "").replace(/\/$/, "");
+
+/**
+ * True when the interface is served from another site than the API (GitHub Pages + Render). Browsers may refuse the
+ * API's cookies there (Safari, private windows), so the token returned by sign-in is kept for this tab
+ * (sessionStorage, or localStorage with "Remember me") and sent as `Authorization: Bearer`; Bearer requests need no
+ * CSRF token. The token is revoked by sign-out like a cookie session.
+ */
+export const CROSS_SITE = BASE !== "";
+const TOKEN_KEY = "isker_session";
+
+function storages(): Storage[] {
+  try {
+    return [window.sessionStorage, window.localStorage];
+  } catch {
+    return [];
+  }
+}
+
+export function sessionToken(): string | null {
+  for (const st of storages()) {
+    try {
+      const v = st.getItem(TOKEN_KEY);
+      if (v) return v;
+    } catch { /* storage blocked: signed out */ }
+  }
+  return null;
+}
+
+/** Stores (or with null, forgets) the cross-site session token. No-op for same-site builds, which use cookies. */
+export function setSessionToken(token: string | null, remember = false) {
+  if (!CROSS_SITE) return;
+  const [session, local] = storages();
+  for (const st of [session, local]) {
+    try { st?.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+  }
+  if (!token) return;
+  try { (remember ? local : session)?.setItem(TOKEN_KEY, token); } catch { /* storage blocked: stays signed out */ }
+}
+
+/** Codes that mean the stored cross-site token is no longer usable. */
+const DEAD_TOKEN_CODES: ReadonlySet<string> = new Set(["INVALID_TOKEN"]);
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -122,14 +164,16 @@ export async function request<T>(method: Method, path: string, body?: unknown, s
   if (body !== undefined) headers["Content-Type"] = "application/json";
   // Content (questions, competencies, emails) is localized by the API for the interface language.
   headers["Accept-Language"] = currentLanguage();
-  if (method !== "GET") {
+  const bearer = CROSS_SITE ? sessionToken() : null;
+  if (bearer) headers["Authorization"] = `Bearer ${bearer}`;
+  else if (method !== "GET") {
     const token = csrfToken();
     if (token) headers["X-CSRF-Token"] = token;
   }
   try {
     res = await fetch(BASE + path, {
       method,
-      credentials: "include",
+      credentials: CROSS_SITE ? "omit" : "include",
       headers: Object.keys(headers).length ? headers : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal,
@@ -156,6 +200,7 @@ export async function request<T>(method: Method, path: string, body?: unknown, s
     const apiErr = new ApiError(res.status, err);
     if (res.status === 401) {
       if (SIGN_OUT_CODES.has(apiErr.code)) signOutReason = apiErr.code;
+      if (bearer && (SIGN_OUT_CODES.has(apiErr.code) || DEAD_TOKEN_CODES.has(apiErr.code))) setSessionToken(null);
       // Sign-in endpoints report their own errors; /me ends the session only for a session-ending code.
       if (!path.startsWith("/api/auth/") || (path === "/api/auth/me" && SIGN_OUT_CODES.has(apiErr.code))) onUnauthorized?.(apiErr, path);
     }

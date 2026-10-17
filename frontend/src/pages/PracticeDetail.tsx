@@ -9,6 +9,7 @@ import { LinkButton } from "../components/RouterLink";
 import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { useToast } from "../components/Toaster";
 import { confidenceLabel, difficultyLabel } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 export function PracticeDetailPage() {
   const { t } = useTranslation("learning");
@@ -34,7 +35,7 @@ export function PracticeDetailPage() {
 
   return (
     <>
-      <PageHeader back={{ label: t("common:nav.practice"), href: "/practice", onClick: () => navigate("/practice") }}
+      <PageHeader back={{ label: t("common:nav.practice"), href: appHref("/practice"), onClick: () => navigate("/practice") }}
         eyebrow={`${t("practiceDetail.practicalTask")} · ${t("common:time.minutes", { count: task.duration_minutes })} · ${difficultyLabel(task.difficulty)}`} title={task.title} subtitle={task.description} />
       {mutationError && <div style={{ marginBottom: 16 }}><ApiErrorAlert error={mutationError} /></div>}
       <div className="ik-grid3" style={{ alignItems: "start" }}>

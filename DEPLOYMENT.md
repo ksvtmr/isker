@@ -88,6 +88,34 @@ These steps can only be done by the account owner; nothing in the repository can
    `PRODUCTION_URL` = your Render URL.
 6. **Preview environments** need a Render workspace plan that includes Preview Environments. With it, add
    `[render preview]` to a pull request title to get a preview; without it, test pull requests locally.
+7. **GitHub Pages address** (optional, see below): Settings → Pages → *Build and deployment* → Source: **GitHub
+   Actions**; then Settings → Secrets and variables → Actions → *Variables* → `PAGES_API_URL` = your Render URL
+   (e.g. `https://isker.onrender.com`). The next green CI run on `main` publishes https://ksvtmr.github.io/isker/ ;
+   or run it now: Actions → *GitHub Pages* → *Run workflow*.
+
+### GitHub Pages (second address for the same platform)
+
+GitHub Pages serves static files only, so it hosts the **interface**; sign-in, data and the database stay on the
+Render API. `.github/workflows/pages.yml` runs after CI passes on `main` and builds the interface with
+`VITE_API_BASE_URL` = `PAGES_API_URL` and the `/isker/` path; `render.yaml` allows that origin
+(`CORS_ORIGINS=https://ksvtmr.github.io`).
+
+How sign-in works there: browsers may refuse the API's cookies on another site (Safari, private windows), so the
+Pages build keeps the session token from sign-in in the tab (`sessionStorage`; `localStorage` with "Remember me")
+and sends it as `Authorization: Bearer` (no CSRF token needed). Sign-out revokes it on the server, and an
+administrator blocking an account ends it at the next request, as on Render. Differences from the Render address:
+
+* Google sign-in is not offered (Google returns to the API's own site); email + password works.
+* Email links (verification, password reset) open the Render address, where the same account works.
+* Every site under `https://ksvtmr.github.io/` (all your repositories' Pages) shares one browser origin, so a
+  script on any of them could read the stored token. Publish only trusted code there, or give Isker a custom
+  domain (Settings → Pages → Custom domain, then update `CORS_ORIGINS` and `PAGES_API_URL`).
+* Security headers come from a `<meta>` Content-Security-Policy (Pages can't send headers); HSTS and
+  `frame-ancestors` protection exist only on the Render address.
+* Free Render services sleep: the first request after 15 idle minutes takes about a minute on both addresses.
+
+Rollback: Actions → *GitHub Pages* → *Run workflow* on an older commit (choose its branch or tag), or revert on
+`main`. To stop publishing: Settings → Pages → *Unpublish site*.
 
 ## 6. Environment variables
 

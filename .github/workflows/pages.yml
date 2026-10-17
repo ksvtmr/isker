@@ -1,0 +1,70 @@
+# Publishes the interface on GitHub Pages: https://ksvtmr.github.io/isker/
+#
+# Pages hosts static files only, so the built interface calls the API on Render (render.yaml). It runs after the CI
+# workflow passes on main (same rule as Render: a red commit is never published), or by hand from the Actions tab.
+#
+# One-time setup (see DEPLOYMENT.md, "GitHub Pages"):
+#   - Settings → Pages → Build and deployment → Source: GitHub Actions
+#   - Settings → Secrets and variables → Actions → Variables → PAGES_API_URL = the Render service URL
+name: GitHub Pages
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_API_BASE_URL: ${{ vars.PAGES_API_URL }}
+      VITE_BASE_PATH: /${{ github.event.repository.name }}/
+      VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
+    steps:
+      - name: Check the API address
+        run: |
+          case "$VITE_API_BASE_URL" in
+            https://*) echo "API: $VITE_API_BASE_URL" ;;
+            *) echo "::error::Set the repository variable PAGES_API_URL to the Render URL (https://...)."; exit 1 ;;
+          esac
+      - uses: actions/checkout@v4
+        with:
+          # The commit CI just passed (workflow_run), or the chosen branch (manual run).
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies (lockfile)
+        run: npm ci --no-audit --no-fund
+      - name: Build the interface for Pages
+        run: npm run build
+      - name: Deep links (/isker/dashboard, page refresh) load the app
+        run: cp frontend/dist/index.html frontend/dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

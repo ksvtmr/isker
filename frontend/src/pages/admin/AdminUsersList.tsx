@@ -11,6 +11,7 @@ import { useToast } from "../../components/Toaster";
 import { LANGUAGE_NAMES, LANGUAGES, isLanguage } from "../../i18n/config";
 import { formatDate, formatNumber } from "../../utils/format";
 import { AdminPageHeader, Muted, RoleBadges, StatusPill, useStatusLabel } from "./common";
+import { appHref } from "../../utils/appHref";
 
 const FILTER_KEYS = ["q", "role", "status", "plan", "language", "registered_from", "registered_to", "activity"] as const;
 
@@ -106,7 +107,7 @@ export function AdminUsersList() {
               loading={list.isLoading || list.isFetching}
               sort={{ key: f.sort ?? "created_at", order: f.order ?? "desc" }}
               onSortChange={(key, order) => update({ sort: key, order }, false)}
-              rowHref={can(me, "users.view_details") ? (u) => `/admin/users/${u.id}` : undefined}
+              rowHref={can(me, "users.view_details") ? (u) => appHref(`/admin/users/${u.id}`) : undefined}
               onRowOpen={can(me, "users.view_details") ? (u) => navigate(`/admin/users/${u.id}`) : undefined}
               empty={<EmptyState icon="search-x" title={anyFilter ? t("users.emptyFilteredTitle") : t("users.emptyTitle")} description={anyFilter ? t("users.emptyFilteredText") : t("users.emptyText")} />}
             />

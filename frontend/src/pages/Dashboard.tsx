@@ -7,6 +7,7 @@ import { LinkButton, useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton } from "../components/States";
 import type { CompetencyScore, Dashboard } from "../types/api";
 import { AREA_COLOR, confidenceLabel, difficultyLabel, formatPercent, gapLabel, greeting, shortMonth, signed } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 function ScoreHero({ d }: { d: Dashboard }) {
   const { t } = useTranslation("dashboard");
@@ -54,7 +55,7 @@ function JourneyStepper({ d }: { d: Dashboard }) {
     { label: t("journey.reassess"), description: nr ? (nr.ready ? t("journey.availableNow") : t("common:time.inDays", { count: nr.days })) : t("journey.afterPlan"), done: false, to: "/assessment" },
   ];
   const current = raw.findIndex((r) => !r.done);
-  const steps: StepperStep[] = raw.map((r, i) => ({ label: r.label, description: r.description, status: r.done ? "done" : i === current ? "current" : "todo", href: r.to, onClick: () => navigate(r.to) }));
+  const steps: StepperStep[] = raw.map((r, i) => ({ label: r.label, description: r.description, status: r.done ? "done" : i === current ? "current" : "todo", href: appHref(r.to), onClick: () => navigate(r.to) }));
   return <div style={{ marginBottom: 24 }}><Stepper label={t("journey.label")} steps={steps} /></div>;
 }
 
@@ -73,7 +74,7 @@ function AreaSummary({ code, name, items, score }: { code: string; name: string;
       <ul style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12, listStyle: "none", padding: 0 }}>
         {items.map((c) => (
           <li key={c.code}>
-            <a href={`/competencies/${c.code}`} onClick={spa(`/competencies/${c.code}`)} className="ik-row-btn" style={{ textDecoration: "none" }}>
+            <a href={appHref(`/competencies/${c.code}`)} onClick={spa(`/competencies/${c.code}`)} className="ik-row-btn" style={{ textDecoration: "none" }}>
               <span style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, marginBottom: 6 }}>
                 <span style={{ color: "var(--color-neutral-700)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
                 <span style={{ color: (c.gap ?? 0) >= 20 ? "var(--gap-high-fg)" : "var(--color-neutral-500)", fontVariantNumeric: "tabular-nums", fontWeight: (c.gap ?? 0) >= 20 ? 600 : 400 }}>{c.score}</span>
@@ -198,7 +199,7 @@ export function DashboardPage() {
             <ul style={{ marginTop: 12, listStyle: "none", padding: 0 }}>
               {priorityGaps.filter((c) => c.code !== rec.competency_code).slice(0, 5).map((c) => (
                 <li key={c.code}>
-                  <a className="ik-list-row" href={`/competencies/${c.code}`} onClick={(e) => { e.preventDefault(); navigate(`/competencies/${c.code}`); }} style={{ textDecoration: "none" }}>
+                  <a className="ik-list-row" href={appHref(`/competencies/${c.code}`)} onClick={(e) => { e.preventDefault(); navigate(`/competencies/${c.code}`); }} style={{ textDecoration: "none" }}>
                     <span style={{ minWidth: 0 }}>
                       <span style={{ display: "block", fontSize: 14, fontWeight: 500, color: "var(--color-neutral-800)" }}>{c.name}</span>
                       <span style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{c.score} → {c.target}</span>
@@ -218,7 +219,7 @@ export function DashboardPage() {
       <SectionTitle title={t("dashboard.strongest")} />
       <div className="ik-grid-cards">
         {p.strengths.map((c) => (
-          <CompetencyCard key={c.code} name={c.name} area={c.area_name} score={c.score ?? 0} target={c.target} gap={gapLabel(c.gap_band)} href={`/competencies/${c.code}`} onClick={() => navigate(`/competencies/${c.code}`)} />
+          <CompetencyCard key={c.code} name={c.name} area={c.area_name} score={c.score ?? 0} target={c.target} gap={gapLabel(c.gap_band)} href={appHref(`/competencies/${c.code}`)} onClick={() => navigate(`/competencies/${c.code}`)} />
         ))}
       </div>
     </>

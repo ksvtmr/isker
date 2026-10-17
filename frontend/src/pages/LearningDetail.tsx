@@ -10,6 +10,7 @@ import { LinkButton } from "../components/RouterLink";
 import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { useToast } from "../components/Toaster";
 import { difficultyLabel, formatDate, resourceTypeLabel } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 export function LearningDetailPage() {
   const { t } = useTranslation("learning");
@@ -46,7 +47,7 @@ export function LearningDetailPage() {
   const started = r.status !== "not_started";
   return (
     <>
-      <PageHeader back={{ label: t("common:nav.learning"), href: "/learning", onClick: () => navigate("/learning") }}
+      <PageHeader back={{ label: t("common:nav.learning"), href: appHref("/learning"), onClick: () => navigate("/learning") }}
         eyebrow={`${resourceTypeLabel(r.type)} · ${t("common:time.minutes", { count: r.duration_minutes })} · ${difficultyLabel(r.difficulty)}`} title={r.title} subtitle={r.description} />
       <div className="ik-grid3" style={{ alignItems: "start" }}>
         <Card padding={32} className="ik-span2">

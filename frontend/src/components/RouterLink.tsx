@@ -1,6 +1,7 @@
 import { ButtonLink, type ButtonLinkProps } from "@isker/design-system";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { appHref } from "../utils/appHref";
 
 /** Returns an onClick that performs client-side navigation (keeps cmd/ctrl-click opening a new tab). */
 export function useSpaClick() {
@@ -15,5 +16,5 @@ export function useSpaClick() {
 /** Design-system ButtonLink with router navigation. */
 export function LinkButton({ to, ...props }: Omit<ButtonLinkProps, "href"> & { to: string }) {
   const spa = useSpaClick();
-  return <ButtonLink href={to} onClick={spa(to)} {...props} />;
+  return <ButtonLink href={appHref(to)} onClick={spa(to)} {...props} />;
 }
