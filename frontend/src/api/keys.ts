@@ -19,6 +19,9 @@ export const keys = {
   task: (id: number) => ["task", id] as const,
   progress: ["progress"] as const,
   notifications: ["notifications"] as const,
+  subscription: ["subscription"] as const,
+  entitlements: ["entitlements"] as const,
+  plans: ["plans"] as const,
   admin: (...parts: unknown[]) => ["admin", ...parts] as const,
 };
 
@@ -26,4 +29,6 @@ export const keys = {
 export const derivedKeys = [
   keys.dashboard, keys.scoreProfile, keys.gaps, keys.recommendations, keys.plan, keys.progress, keys.assessments,
   ["competency"], ["resources"], ["resource"], keys.tasks, ["task"], keys.notifications,
+  // Usage counters and limits (attempts, plan items, AI feedback) are part of the subscription view.
+  keys.subscription, keys.entitlements,
 ];

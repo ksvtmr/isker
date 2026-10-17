@@ -30,7 +30,10 @@ export function useStartAttempt() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (v: { scope?: AttemptScope; competency_id?: number }) => assessmentsApi.start(v.scope, v.competency_id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.assessments }),
+    // A started attempt changes the dashboard ("continue"), the plan banner and the attempt usage counters.
+    onSuccess: () => {
+      for (const k of [keys.assessments, keys.dashboard, keys.plan, keys.subscription, keys.entitlements]) void qc.invalidateQueries({ queryKey: k });
+    },
   });
 }
 
@@ -49,6 +52,8 @@ export function useAbandonAttempt() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: assessmentsApi.abandon,
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.assessments }),
+    onSuccess: () => {
+      for (const k of [keys.assessments, keys.dashboard, keys.plan, keys.subscription, keys.entitlements]) void qc.invalidateQueries({ queryKey: k });
+    },
   });
 }

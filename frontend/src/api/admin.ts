@@ -224,7 +224,7 @@ export const useAdminEvaluations = (status: string, page: number) =>
 export const useAdminPrompts = () => useQuery({ queryKey: keys.admin("prompts"), queryFn: adminApi.prompts });
 
 /** Learner-side queries that show admin-edited content (catalogue, learning, practice, assessments, plans). */
-export const learnerContentKeys: readonly (readonly unknown[])[] = [keys.catalog, ["plans"], ["entitlements"], ...derivedKeys];
+export const learnerContentKeys: readonly (readonly unknown[])[] = [keys.catalog, keys.plans, ...derivedKeys];
 
 /**
  * Admin mutation. After the API confirms, every admin query and every learner query that shows content is

@@ -3,6 +3,7 @@ import type { Entitlement, MySubscription, BillingPlan } from "../types/api";
 import i18n from "../i18n";
 import { formatCurrency } from "../utils/format";
 import { api } from "./client";
+import { keys } from "./keys";
 
 export const billingApi = {
   plans: () => api.get<BillingPlan[]>("/api/plans"),
@@ -10,12 +11,12 @@ export const billingApi = {
   mySubscription: () => api.get<MySubscription>("/api/subscription/me"),
 };
 
-export const usePlans = () => useQuery({ queryKey: ["plans"], queryFn: billingApi.plans, staleTime: 5 * 60_000 });
+export const usePlans = () => useQuery({ queryKey: keys.plans, queryFn: billingApi.plans, staleTime: 5 * 60_000 });
 /** Plan, limits and usage. Refreshed on focus and every minute: an administrator may change the plan at any time. */
 export const useMySubscription = (enabled = true) =>
-  useQuery({ queryKey: ["subscription"], queryFn: billingApi.mySubscription, enabled, refetchOnWindowFocus: "always", refetchInterval: enabled ? 60_000 : false });
+  useQuery({ queryKey: keys.subscription, queryFn: billingApi.mySubscription, enabled, refetchOnWindowFocus: "always", refetchInterval: enabled ? 60_000 : false });
 export const useEntitlements = (enabled = true) =>
-  useQuery({ queryKey: ["entitlements"], queryFn: billingApi.entitlements, enabled, refetchOnWindowFocus: "always", refetchInterval: enabled ? 60_000 : false });
+  useQuery({ queryKey: keys.entitlements, queryFn: billingApi.entitlements, enabled, refetchOnWindowFocus: "always", refetchInterval: enabled ? 60_000 : false });
 
 /** Downloads the user's data export (a JSON file). The API checks the export.data entitlement. */
 export async function downloadExport(): Promise<void> {

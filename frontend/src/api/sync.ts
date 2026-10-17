@@ -44,7 +44,7 @@ export function useLiveSync(enabled: boolean) {
       void qc.invalidateQueries({ queryKey: keys.profile });
     }
     if (plansChanged) {
-      for (const k of [["subscription"], ["entitlements"], ["plans"], ...derivedKeys]) void qc.invalidateQueries({ queryKey: k });
+      for (const k of [keys.plans, ...derivedKeys]) void qc.invalidateQueries({ queryKey: k });
     }
     if (contentChanged) {
       // Content may appear in any learner or admin view: refetch everything except the session and this poll.

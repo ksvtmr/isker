@@ -52,7 +52,11 @@ export function useResourceProgress() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (v: { id: number; pct: number }) => learningApi.progress(v.id, v.pct),
-    onSuccess: (r) => qc.setQueryData(keys.resource(r.id), r),
+    onSuccess: (r) => {
+      qc.setQueryData(keys.resource(r.id), r);
+      // Status/percent shown in the list and in plan items come from the same progress record.
+      for (const k of [["resources"], keys.plan, keys.dashboard, keys.progress]) void qc.invalidateQueries({ queryKey: k });
+    },
   });
 }
 
