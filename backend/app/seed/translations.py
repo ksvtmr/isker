@@ -2535,3 +2535,15 @@ PLANS = {
         "kk": {"name": "Premium", "description": "Жылдық төлемі бар Pro — бағдарламалар мен инкубаторларға арналған."},
     },
 }
+
+# Shared help texts of the Likert and situational questions (set in seed/run.py, not per question).
+HELP_TEXTS = {
+    "Answer for how you usually act, not how you would like to act.": {
+        "ru": "Отвечайте так, как вы обычно поступаете, а не так, как хотели бы поступать.",
+        "kk": "Қалай әрекет еткіңіз келетініне емес, әдетте қалай әрекет ететініңізге сүйеніп жауап беріңіз.",
+    },
+    "Choose what you would most likely do first.": {
+        "ru": "Выберите, что вы, скорее всего, сделаете в первую очередь.",
+        "kk": "Ең алдымен не істейтініңізді таңдаңыз.",
+    },
+}

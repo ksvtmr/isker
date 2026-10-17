@@ -108,8 +108,14 @@ def apply_content_translations(db: Session) -> int:
             n += 1
     for q in db.scalars(select(Question)):
         entry = T.QUESTIONS.get(q.text) or {}
+        shared_help = getattr(T, "HELP_TEXTS", {}).get(q.help_text or "") or {}
         fields = {
-            lang: {**(entry.get(lang) or {}), "section": (T.SECTIONS.get(q.section) or {}).get(lang)} for lang in LANGS
+            lang: {
+                "help_text": shared_help.get(lang),
+                **{k: v for k, v in (entry.get(lang) or {}).items() if v not in (None, "")},
+                "section": (T.SECTIONS.get(q.section) or {}).get(lang),
+            }
+            for lang in LANGS
         }
         _merge(q, _with_rubric(fields, q.rubric))
         n += 1

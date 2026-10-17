@@ -176,3 +176,13 @@ def test_learning_search_matches_the_language_the_learner_sees(client, db):
     params = {"q": en_word, "page_size": 100}
     found_en = client.get("/api/learning/resources", params=params, headers=RU).json()["items"]
     assert any(r["id"] == res.id for r in found_en)
+
+
+def test_all_seeded_content_is_fully_translated(client, db):
+    # The completeness report found 25 questions whose shared help text had no ru/kk translation.
+    make_user(db, "admin@example.com", roles=("user", "super_admin"))
+    login(client, "admin@example.com")
+    r = client.get("/api/admin/translations/status", params={"status": "partial,missing,stale", "page_size": 200})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total"] == 0, [(i["entity"], i["id"], i["missing"]) for i in body["items"][:10]]
