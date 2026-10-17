@@ -8,6 +8,7 @@ import { errorMessage } from "../../api/client";
 import { useToast } from "../../components/Toaster";
 import i18n from "../../i18n";
 import { formatDateTime as formatDateTimeIntl } from "../../utils/format";
+import { appHref } from "../../utils/appHref";
 
 /** Locale-aware date and time; "—" when there is no date. */
 export function formatDateTime(iso: string | null | undefined): string {
@@ -18,7 +19,7 @@ export function formatDateTime(iso: string | null | undefined): string {
 export function AdminPageHeader({ crumbs, title, subtitle, action, docTitle }: { crumbs?: { label: string; to?: string }[]; title: ReactNode; subtitle?: ReactNode; action?: ReactNode; docTitle?: string }) {
   const { t } = useTranslation("admin");
   const navigate = useNavigate();
-  const items: Crumb[] = [{ label: t("crumbs.admin"), href: "/admin", onClick: () => navigate("/admin") }, ...(crumbs ?? []).map((c) => ({ label: c.label, href: c.to, onClick: c.to ? () => navigate(c.to!) : undefined }))];
+  const items: Crumb[] = [{ label: t("crumbs.admin"), href: appHref("/admin"), onClick: () => navigate("/admin") }, ...(crumbs ?? []).map((c) => ({ label: c.label, href: c.to && appHref(c.to), onClick: c.to ? () => navigate(c.to!) : undefined }))];
   return (
     <>
       {crumbs && crumbs.length > 0 && <Breadcrumbs items={items} />}

@@ -150,6 +150,10 @@ git push -u origin feature/my-change
 4. Если какая-то проверка не прошла, Render **ничего не публикует**, а сайт продолжает работать на старой версии.
 5. После публикации проверьте сайт: GitHub → **Actions** → **Smoke check (deployed site)** → **Run workflow**, или
    `bash scripts/smoke.sh https://<ваш-сайт>.onrender.com`.
+6. Если включён GitHub Pages (DEPLOYMENT.md, раздел 5, шаг 7), после тех же зелёных проверок автоматически
+   обновляется и второй адрес: **https://ksvtmr.github.io/isker/**. Там только интерфейс — данные и вход идут через
+   сервер на Render, поэтому без работающего Render этот адрес не работает. Вход через Google там не предлагается
+   (используйте email и пароль). Ход публикации: GitHub → **Actions** → **GitHub Pages**.
 
 ## 11. Читать логи
 

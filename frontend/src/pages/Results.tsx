@@ -9,12 +9,13 @@ import { LinkButton, useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton } from "../components/States";
 import type { CompetencyScore } from "../types/api";
 import { AREA_COLOR, confidenceLabel, formatDate, gapLabel, signed } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 function Row({ c, tone }: { c: CompetencyScore; tone: string }) {
   const spa = useSpaClick();
   return (
     <li>
-      <a className="ik-list-row" href={`/competencies/${c.code}`} onClick={spa(`/competencies/${c.code}`)} style={{ textDecoration: "none" }}>
+      <a className="ik-list-row" href={appHref(`/competencies/${c.code}`)} onClick={spa(`/competencies/${c.code}`)} style={{ textDecoration: "none" }}>
         <span style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</span>
         <span style={{ fontSize: 16, fontWeight: 600, color: tone }}>{c.score}</span>
       </a>
@@ -147,7 +148,7 @@ export function ResultsPage() {
       <div className="ik-grid-cards">
         {sorted.map((c) => (
           <CompetencyCard key={c.code} name={c.name} area={c.area_name} score={c.score ?? 0} target={c.target} gap={gapLabel(c.gap_band)}
-            href={`/competencies/${c.code}`} onClick={() => navigate(`/competencies/${c.code}`)} />
+            href={appHref(`/competencies/${c.code}`)} onClick={() => navigate(`/competencies/${c.code}`)} />
         ))}
       </div>
     </>

@@ -8,6 +8,7 @@ import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import type { User } from "../types/api";
 import { initials } from "../utils/format";
 import { NAV_PATHS, navIdForPath } from "./nav";
+import { appHref } from "../utils/appHref";
 
 const ROLE_PRIORITY = ["super_admin", "admin", "support", "content_manager"] as const;
 
@@ -33,7 +34,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
     setMenu(false);
     navigate(NAV_PATHS[id] ?? "/dashboard");
   };
-  const hrefFor = (id: string) => NAV_PATHS[id] ?? "/dashboard";
+  const hrefFor = (id: string) => appHref(NAV_PATHS[id] ?? "/dashboard");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -45,8 +46,8 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   const footer = (
     <>
       <div style={{ padding: "4px 12px 8px" }}><LanguageSwitcher /></div>
-      <NavItem icon="award" label={t("common:nav.plans")} href="/plans" active={active === "plans"} onClick={() => navigate("/plans")} />
-      {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href="/admin" onClick={() => navigate("/admin")} />}
+      <NavItem icon="award" label={t("common:nav.plans")} href={appHref("/plans")} active={active === "plans"} onClick={() => navigate("/plans")} />
+      {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href={appHref("/admin")} onClick={() => navigate("/admin")} />}
       <NavItem icon="log-out" label={t("common:actions.signOut")} onClick={doLogout} />
     </>
   );
@@ -87,8 +88,8 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
           {[...ISKER_NAV, ...ISKER_NAV_FOOTER].map((it) => (
             <NavItem key={it.id} icon={it.icon} label={t(`common:nav.${it.id}`, { defaultValue: it.label })} active={active === it.id} href={hrefFor(it.id)} onClick={() => go(it.id)} />
           ))}
-          <NavItem icon="award" label={t("common:nav.plans")} href="/plans" active={active === "plans"} onClick={() => { setMenu(false); navigate("/plans"); }} />
-          {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href="/admin" onClick={() => { setMenu(false); navigate("/admin"); }} />}
+          <NavItem icon="award" label={t("common:nav.plans")} href={appHref("/plans")} active={active === "plans"} onClick={() => { setMenu(false); navigate("/plans"); }} />
+          {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href={appHref("/admin")} onClick={() => { setMenu(false); navigate("/admin"); }} />}
           <NavItem icon="log-out" label={t("common:actions.signOut")} onClick={doLogout} />
         </nav>
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-neutral-200)" }}>

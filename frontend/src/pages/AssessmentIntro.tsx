@@ -9,6 +9,7 @@ import { useScoreProfile } from "../api/competencies";
 import { useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { formatDate } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 export function AssessmentIntro() {
   const { t } = useTranslation("assessment");
@@ -122,7 +123,7 @@ export function AssessmentIntro() {
                   {completed.map((a) => (
                     <tr key={a.id}>
                       <td>
-                        <a href={`/results?attempt=${a.id}`} onClick={spa(`/results?attempt=${a.id}`)} className="ik-link">
+                        <a href={appHref(`/results?attempt=${a.id}`)} onClick={spa(`/results?attempt=${a.id}`)} className="ik-link">
                           {a.scope === "competency" ? t("assessmentIntro.history.reassessment", { name: a.competency?.name ?? "" }) : t("assessmentIntro.history.full", { n: a.sequence })}
                         </a>
                       </td>

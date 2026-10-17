@@ -7,6 +7,7 @@ import { useGaps, useScoreProfile } from "../api/competencies";
 import { LinkButton, useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton } from "../components/States";
 import { AREA_COLOR, formatDate, gapLabel } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 function GapTable() {
   const { t } = useTranslation("assessment");
@@ -29,7 +30,7 @@ function GapTable() {
                 <tr key={g.code}>
                   <td className="num" style={{ color: "var(--color-neutral-500)" }}>{g.priority_rank}</td>
                   <td>
-                    <a className="ik-link" href={`/competencies/${g.code}`} onClick={spa(`/competencies/${g.code}`)}>{g.name}</a>
+                    <a className="ik-link" href={appHref(`/competencies/${g.code}`)} onClick={spa(`/competencies/${g.code}`)}>{g.name}</a>
                     <div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{g.area_name}</div>
                   </td>
                   <td className="num" style={{ fontWeight: 600 }}>{g.current}</td>
@@ -117,7 +118,7 @@ export function CompetenciesPage() {
                   c.score === null
                     ? <CompetencyCard key={c.code} name={c.name} score={0} notAssessed description={c.description} />
                     : <CompetencyCard key={c.code} name={c.name} score={c.score} target={c.target} gap={gapLabel(c.gap_band)} description={c.explanation ? undefined : c.description}
-                        href={`/competencies/${c.code}`} onClick={() => navigate(`/competencies/${c.code}`)} />
+                        href={appHref(`/competencies/${c.code}`)} onClick={() => navigate(`/competencies/${c.code}`)} />
                 ))}
               </div>
             </section>

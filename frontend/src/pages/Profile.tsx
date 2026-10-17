@@ -14,6 +14,7 @@ import { educationOptions, experienceOptions, formatOptions, weeklyOptions } fro
 import { onboardingSchema, type OnboardingValues } from "../features/schemas";
 import { useFieldError } from "../i18n/useFieldError";
 import { formatDate } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return <Card><CardHeader title={title} description={description} /><div style={{ padding: "0 24px 24px" }}>{children}</div></Card>;
@@ -99,7 +100,7 @@ export function ProfilePage() {
                   <thead><tr><th>{t("profile.historyAssessment")}</th><th>{t("profile.historyDate")}</th><th className="num">{t("profile.historyScore")}</th></tr></thead>
                   <tbody>{history.data.completed.map((a) => (
                     <tr key={a.id}>
-                      <td><a className="ik-link" href={`/results?attempt=${a.id}`} onClick={spa(`/results?attempt=${a.id}`)}>{a.scope === "competency" ? t("profile.reassessmentOf", { name: a.competency?.name ?? "" }) : t("profile.assessmentNumber", { n: a.sequence })}</a></td>
+                      <td><a className="ik-link" href={appHref(`/results?attempt=${a.id}`)} onClick={spa(`/results?attempt=${a.id}`)}>{a.scope === "competency" ? t("profile.reassessmentOf", { name: a.competency?.name ?? "" }) : t("profile.assessmentNumber", { n: a.sequence })}</a></td>
                       <td>{formatDate(a.completed_at)}</td><td className="num" style={{ fontWeight: 600 }}>{a.overall_score}</td>
                     </tr>))}
                   </tbody>

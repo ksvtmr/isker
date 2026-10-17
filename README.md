@@ -34,6 +34,8 @@ PostgreSQL at `DATABASE_URL` (default `postgresql+psycopg://isker:isker@localhos
   then runs migrations, and switches traffic only when `/api/health` answers. Roll back from Render → Events.
 - **Previews**: a pull request with `[render preview]` in its title gets its own temporary site and database (needs a
   Render plan with Preview Environments).
+- **GitHub Pages** (optional second address, https://ksvtmr.github.io/isker/): the same interface, published after
+  CI passes on `main`, using the Render API for data and sign-in (`.github/workflows/pages.yml`).
 
 Details, one-time account setup and rollback: [DEPLOYMENT.md](DEPLOYMENT.md). Step-by-step guide in Russian:
 [docs/claude-code-workflow.ru.md](docs/claude-code-workflow.ru.md).

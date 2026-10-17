@@ -6,6 +6,7 @@ import { can, useLogout, useMe } from "../api/auth";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import type { User } from "../types/api";
 import { initials } from "../utils/format";
+import { appHref } from "../utils/appHref";
 
 export type AdminSection = Omit<NavEntry, "label"> & { path: string; permission: string; labelKey: string };
 
@@ -61,7 +62,7 @@ export function AdminShell() {
   const footer = (
     <>
       <div style={{ padding: "4px 12px 8px" }}><LanguageSwitcher /></div>
-      <NavItem icon="arrow-left" label={t("shell.backToApp")} href="/dashboard" onClick={() => navigate("/dashboard")} />
+      <NavItem icon="arrow-left" label={t("shell.backToApp")} href={appHref("/dashboard")} onClick={() => navigate("/dashboard")} />
       <NavItem icon="log-out" label={t("shell.signOut")} onClick={doLogout} />
     </>
   );
@@ -69,7 +70,7 @@ export function AdminShell() {
     <AdminLayout
       nav={nav}
       active={activeSection(location.pathname)}
-      hrefFor={pathFor}
+      hrefFor={(id: string) => appHref(pathFor(id))}
       onNavigate={go}
       footer={footer}
       user={user ? { name: user.full_name, role: t(`common:roles.${topRole(user)}`), initials: initials(user.full_name) } : undefined}
@@ -87,7 +88,7 @@ export function AdminShell() {
       <Outlet />
       <Modal open={menu} onClose={() => setMenu(false)} title={t("shell.administration")}>
         <nav aria-label={t("shell.sectionsNav")} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {nav.map((it) => <NavItem key={it.id} icon={it.icon} label={it.label} active={activeSection(location.pathname) === it.id} href={it.path} onClick={() => go(it.id)} />)}
+          {nav.map((it) => <NavItem key={it.id} icon={it.icon} label={it.label} active={activeSection(location.pathname) === it.id} href={appHref(it.path)} onClick={() => go(it.id)} />)}
           {footer}
         </nav>
       </Modal>
