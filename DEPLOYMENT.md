@@ -69,8 +69,9 @@ plans, security headers (CSP, HSTS), translated content in Kazakh. Also availabl
 
 These steps can only be done by the account owner; nothing in the repository can do them.
 
-1. **Merge the work into `main`.** Open PR [#1](https://github.com/ksvtmr/isker/pull/1) on GitHub, wait for the green
-   checks, then *Merge pull request*. From then on `main` is the production branch.
+1. **Merge the CI/CD setup into `main`.** On GitHub open a pull request from `claude/sleepy-darwin-ycx2me` into
+   `main` (*Compare & pull request*), wait for the green checks, then *Merge pull request*. From then on `main` is the
+   production branch.
 2. **Create the Render services from the Blueprint.** Render → *New* → *Blueprint* → connect GitHub and choose
    `ksvtmr/isker` (or use https://render.com/deploy?repo=https://github.com/ksvtmr/isker). Render reads
    `render.yaml`, asks for `ADMIN_PASSWORD` (and optionally `OPENAI_API_KEY`, `GOOGLE_CLIENT_ID`,
