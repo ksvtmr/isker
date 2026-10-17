@@ -16,9 +16,12 @@
     "@hookform/resolvers": "3.9.1",
     "@isker/design-system": "1.0.0",
     "@tanstack/react-query": "5.62.0",
+    "i18next": "24.2.3",
+    "i18next-browser-languagedetector": "8.0.4",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hook-form": "7.54.0",
+    "react-i18next": "15.4.1",
     "react-router-dom": "6.28.0",
     "zod": "3.24.1"
   },

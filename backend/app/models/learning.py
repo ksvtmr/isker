@@ -16,7 +16,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base, TimestampMixin, utcnow
+from app.core.content_i18n import Translatable
+from app.core.database import Base, TimestampMixin, Versioned, utcnow
+from app.models.content import Publishable
 from app.models.enums import (
     ActivityKind,
     ActivityStatus,
@@ -29,8 +31,10 @@ from app.models.enums import (
 )
 
 
-class LearningResource(TimestampMixin, Base):
+class LearningResource(Publishable, Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "learning_resources"
+    __status_flag__ = "is_published"
+    __translatable__ = ("title", "description", "content")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     slug: Mapped[str] = mapped_column(String(120), unique=True)
@@ -47,8 +51,11 @@ class LearningResource(TimestampMixin, Base):
     competency = relationship("Competency")
 
 
-class PracticalTask(TimestampMixin, Base):
+class PracticalTask(Publishable, Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "practical_tasks"
+    __status_flag__ = "is_published"
+    __translatable__ = ("title", "description", "instructions")
+    __translatable_rubric__ = True
 
     id: Mapped[int] = mapped_column(primary_key=True)
     slug: Mapped[str] = mapped_column(String(120), unique=True)
@@ -71,7 +78,7 @@ class PracticeSubmission(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    task_id: Mapped[int] = mapped_column(ForeignKey("practical_tasks.id", ondelete="CASCADE"), index=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("practical_tasks.id", ondelete="RESTRICT"), index=True)
     status: Mapped[PracticeStatus] = mapped_column(db_enum(PracticeStatus, "practice_status"))
     response_text: Mapped[str | None] = mapped_column(Text)
     feedback_score: Mapped[int | None] = mapped_column(Integer)
@@ -91,7 +98,7 @@ class UserLearningProgress(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    resource_id: Mapped[int] = mapped_column(ForeignKey("learning_resources.id", ondelete="CASCADE"), index=True)
+    resource_id: Mapped[int] = mapped_column(ForeignKey("learning_resources.id", ondelete="RESTRICT"), index=True)
     status: Mapped[ProgressStatus] = mapped_column(db_enum(ProgressStatus, "progress_status"))
     progress_pct: Mapped[int] = mapped_column(Integer, default=0)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -110,7 +117,7 @@ class Recommendation(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     attempt_id: Mapped[int] = mapped_column(ForeignKey("assessment_attempts.id", ondelete="CASCADE"), index=True)
     gap_id: Mapped[int] = mapped_column(ForeignKey("competency_gaps.id", ondelete="CASCADE"))
-    competency_id: Mapped[int] = mapped_column(ForeignKey("competencies.id", ondelete="CASCADE"), index=True)
+    competency_id: Mapped[int] = mapped_column(ForeignKey("competencies.id", ondelete="RESTRICT"), index=True)
     goal_id: Mapped[int | None] = mapped_column(ForeignKey("goal_definitions.id", ondelete="SET NULL"))
     resource_id: Mapped[int | None] = mapped_column(ForeignKey("learning_resources.id", ondelete="SET NULL"))
     task_id: Mapped[int | None] = mapped_column(ForeignKey("practical_tasks.id", ondelete="SET NULL"))

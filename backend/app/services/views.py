@@ -5,6 +5,10 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.ai.providers import heuristic_insight
+from app.ai.service import RULE_BASED as AI_RULE_BASED
+from app.core.i18n import lang as tr_lang
+from app.core.i18n import tr
 from app.models import (
     AIEvaluation,
     AssessmentAttempt,
@@ -16,27 +20,28 @@ from app.models import (
     PracticalTask,
     Recommendation,
 )
-from app.models.enums import ActivityKind, AIInputType, AttemptStatus
+from app.models.enums import ActivityKind, AIInputType, AttemptStatus, ContentStatus
 from app.schemas.assessment import AttemptSummary, CompetencyRef
 from app.schemas.competency import CompetencyScoreOut
 from app.schemas.results import ActivityOut, AreaScore, InsightOut, ProfileOverview, RecommendationOut
 from app.services import gaps as gap_service
 from app.services import recommendations as rec_service
+from app.services import scoring
 from app.services.levels import DEFAULT_TARGET, gap_band, level_name_for
 from app.services.profile import area_scores, completed_attempts, current_scores, history, overall_score
 
-TYPE_LABEL = {
-    "article": "Article",
-    "video": "Video",
-    "course": "Course",
-    "exercise": "Exercise",
-    "case_study": "Case study",
-    "template": "Template",
-}
+
+def type_label(value: str) -> str:
+    """Localized label of a resource type (or "task" / "reflection")."""
+    return tr(f"type.{value}")
 
 
-def competencies(db: Session) -> list[Competency]:
-    return list(db.scalars(select(Competency).options(joinedload(Competency.area)).order_by(Competency.sort_order)))
+def competencies(db: Session, published_only: bool = False) -> list[Competency]:
+    """All competencies (for lookups by id), or only the published ones the learner platform offers."""
+    stmt = select(Competency).options(joinedload(Competency.area)).order_by(Competency.sort_order)
+    if published_only:
+        stmt = stmt.where(Competency.status == ContentStatus.PUBLISHED)
+    return list(db.scalars(stmt))
 
 
 def attempt_summary(db: Session, att: AssessmentAttempt, total: int | None = None) -> AttemptSummary:
@@ -60,10 +65,35 @@ def attempt_summary(db: Session, att: AssessmentAttempt, total: int | None = Non
     )
 
 
-def insight_out(ev: AIEvaluation | None) -> InsightOut | None:
+RULE_BASED = AI_RULE_BASED
+
+
+def _rerendered(db: Session, o: dict) -> dict:
+    """Rule-based insights are rebuilt from their stored ids and numbers so they follow the interface language."""
+    refs = o.get("refs") or {}
+    best = db.get(Competency, refs["strongest"]) if refs.get("strongest") else None
+    if best is None:
+        return o
+    gap_c = db.get(Competency, refs["top_gap"]) if refs.get("top_gap") else None
+    res = db.get(LearningResource, refs["top_resource"]) if refs.get("top_resource") else None
+    facts = {
+        "strongest": {"name": best.name, "score": refs.get("strongest_score")},
+        "top_gap": (
+            {"name": gap_c.name, "score": refs.get("gap_score"), "target": refs.get("gap_target")} if gap_c else None
+        ),
+        "top_resource": res.title if res else None,
+    }
+    return {**o, **heuristic_insight(facts)}
+
+
+def insight_out(ev: AIEvaluation | None, db: Session | None = None) -> InsightOut | None:
     if ev is None or not ev.output:
         return None
     o = ev.output
+    language = ev.language
+    if db is not None and ev.provider in RULE_BASED and o.get("refs"):
+        o = _rerendered(db, o)
+        language = tr_lang()
     return InsightOut(
         headline=o.get("headline", ""),
         body=o.get("body", ""),
@@ -72,6 +102,7 @@ def insight_out(ev: AIEvaluation | None) -> InsightOut | None:
         provider=ev.provider,
         evaluation_id=ev.id,
         generated_at=ev.created_at,
+        language=language,
     )
 
 
@@ -102,10 +133,10 @@ def score_out(
         target=target,
         gap=gap,
         gap_band=gap_band(gap) if gap is not None else None,
-        priority_label=g.priority_label if g else None,
+        priority_label=tr(f"priority.{g.priority_label}") if g else None,
         priority_rank=g.priority_rank if g else None,
         confidence=s.confidence if s else None,
-        explanation=s.explanation if s else None,
+        explanation=scoring.explain_stored(s) if s else None,
         assessed_at=s.created_at if s else None,
         change=change,
     )
@@ -114,7 +145,7 @@ def score_out(
 def profile_overview(db: Session, user_id: int, as_of_attempt: AssessmentAttempt | None = None) -> ProfileOverview:
     attempts = completed_attempts(db, user_id)
     areas = list(db.scalars(select(CompetencyArea).order_by(CompetencyArea.sort_order)))
-    comps = competencies(db)
+    comps = competencies(db, published_only=True)
     if not attempts:
         return ProfileOverview(
             has_profile=False,
@@ -140,6 +171,8 @@ def profile_overview(db: Session, user_id: int, as_of_attempt: AssessmentAttempt
     }
     if not gaps and as_of_attempt is None:
         gaps = {g.competency_id: g for g in gap_service.latest_gaps(db, user_id)}
+    # Unpublished competencies appear only where the learner has a measurement (history is never hidden).
+    comps = [c for c in competencies(db) if c.status == ContentStatus.PUBLISHED or c.id in scores]
     a_scores = area_scores(db, scores)
     overall = current_att.overall_score if current_att.overall_score is not None else overall_score(scores)
     prev_overall = prev_att.overall_score if prev_att else None
@@ -169,7 +202,8 @@ def profile_overview(db: Session, user_id: int, as_of_attempt: AssessmentAttempt
         priority_gaps=pgaps,
         insight=insight_out(
             latest_insight(db, user_id, current_att.id)
-            or (latest_insight(db, user_id) if as_of_attempt is None else None)
+            or (latest_insight(db, user_id) if as_of_attempt is None else None),
+            db,
         ),
     )
 
@@ -185,19 +219,35 @@ def recommendation_out(db: Session, rec: Recommendation) -> RecommendationOut:
     for a in rec.activities:
         dur, typ = None, None
         if a.kind == ActivityKind.LEARN and res:
-            dur, typ = res.duration_minutes, TYPE_LABEL.get(res.type.value, res.type.value)
+            dur, typ = res.duration_minutes, type_label(res.type.value)
         elif a.kind == ActivityKind.PRACTICE and task:
-            dur, typ = task.duration_minutes, "Practical task"
+            dur, typ = task.duration_minutes, type_label("task")
+        # Titles and prompts are rendered now (not the stored copies) so they follow the interface language.
+        if a.kind == ActivityKind.LEARN and res:
+            title = res.title
+        elif a.kind == ActivityKind.PRACTICE and task:
+            title = task.title
+        elif a.kind == ActivityKind.REFLECT:
+            title = tr("step.reflect")
+        elif a.kind == ActivityKind.REASSESS:
+            title = tr("step.reassess", name=comp.name)
+        else:
+            title = a.title
+        prompt = (
+            (comp.reflection_prompt or tr("step.reflect_prompt", name=comp.name))
+            if a.kind == ActivityKind.REFLECT
+            else a.prompt
+        )
         acts.append(
             ActivityOut(
                 id=a.id,
                 kind=a.kind,
-                title=a.title,
+                title=title,
                 status=a.status,
                 locked=a.kind == ActivityKind.REASSESS and not unlocked and a.status.value != "done",
                 resource_id=a.resource_id,
                 task_id=a.task_id,
-                prompt=a.prompt,
+                prompt=prompt,
                 response_text=a.response_text,
                 duration_minutes=dur,
                 type=typ,
@@ -217,14 +267,14 @@ def recommendation_out(db: Session, rec: Recommendation) -> RecommendationOut:
         target=gap.target_score,
         gap=gap.gap,
         band=gap.band,
-        reason=rec.reason,
+        reason=rec_service.localized_reason(rec),
         goal=rec.goal.title if rec.goal else None,
         resource=(
             {
                 "id": res.id,
                 "title": res.title,
                 "description": res.description,
-                "type": TYPE_LABEL.get(res.type.value),
+                "type": type_label(res.type.value),
                 "duration_minutes": res.duration_minutes,
                 "difficulty": res.difficulty.value,
             }

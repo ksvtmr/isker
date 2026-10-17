@@ -90,6 +90,8 @@ Unique: (key, version)
 | `version` | INTEGER | no |  |
 | `estimated_minutes` | INTEGER | no |  |
 | `is_active` | BOOLEAN | no |  |
+| `lock_version` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -118,6 +120,7 @@ Unique: (key, version)
 | `name` | VARCHAR(80) | no |  |
 | `color_token` | VARCHAR(48) | no |  |
 | `sort_order` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 
 ### `competency_levels`
 
@@ -129,6 +132,7 @@ Unique: (key, version)
 | `min_score` | INTEGER | no |  |
 | `max_score` | INTEGER | no |  |
 | `description` | TEXT | no |  |
+| `translations` | JSON | yes |  |
 
 ### `goal_definitions`
 
@@ -139,6 +143,7 @@ Unique: (key, version)
 | `title` | VARCHAR(160) | no |  |
 | `description` | TEXT | yes |  |
 | `sort_order` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 
 ### `payment_webhook_events`
 
@@ -189,6 +194,8 @@ Unique: (provider, event_id)
 | `is_active` | BOOLEAN | no |  |
 | `is_default` | BOOLEAN | no |  |
 | `sort_order` | INTEGER | no |  |
+| `lock_version` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -212,6 +219,7 @@ Checks: `price_cents >= 0`
 | `status_changed_at` | DATETIME | yes |  |
 | `status_reason` | VARCHAR(500) | yes |  |
 | `deletion_requested_at` | DATETIME | yes |  |
+| `lock_version` | INTEGER | no |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -231,6 +239,9 @@ Checks: `price_cents >= 0`
 | `learning_priority` | FLOAT | no |  |
 | `default_target` | INTEGER | no |  |
 | `sort_order` | INTEGER | no |  |
+| `status` | VARCHAR(32) | no | indexed |
+| `lock_version` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -258,6 +269,37 @@ Checks: `price_cents >= 0`
 | `link` | VARCHAR(255) | yes |  |
 | `is_read` | BOOLEAN | no | indexed |
 | `created_at` | DATETIME | no |  |
+
+### `oauth_identities`
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | INTEGER | no | PK |
+| `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
+| `provider` | VARCHAR(32) | no |  |
+| `subject` | VARCHAR(255) | no |  |
+| `email` | VARCHAR(255) | yes |  |
+| `created_at` | DATETIME | no |  |
+| `last_used_at` | DATETIME | yes |  |
+
+Unique: (provider, subject); (user_id, provider)
+
+### `oauth_states`
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | INTEGER | no | PK |
+| `state_hash` | VARCHAR(64) | no | unique |
+| `nonce` | VARCHAR(128) | no |  |
+| `code_verifier` | VARCHAR(128) | no |  |
+| `mode` | VARCHAR(16) | no |  |
+| `user_id` | INTEGER | yes | FK → `users.id` (CASCADE) |
+| `next_path` | VARCHAR(255) | yes |  |
+| `remember` | BOOLEAN | no |  |
+| `language` | VARCHAR(8) | no |  |
+| `created_at` | DATETIME | no |  |
+| `expires_at` | DATETIME | no | indexed |
+| `used_at` | DATETIME | yes |  |
 
 ### `password_reset_tokens`
 
@@ -300,6 +342,11 @@ Checks: `limit_value IS NULL OR limit_value >= 0`
 | `reverse_scored` | BOOLEAN | no |  |
 | `min_length` | INTEGER | no |  |
 | `is_active` | BOOLEAN | no |  |
+| `version` | INTEGER | no |  |
+| `previous_id` | INTEGER | yes | FK → `questions.id` (SET NULL), indexed |
+| `status` | VARCHAR(32) | no | indexed |
+| `lock_version` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -337,7 +384,7 @@ Unique: (user_id, goal_id)
 | `business_experience` | TEXT | yes |  |
 | `preferred_learning_format` | VARCHAR(32) | no |  |
 | `weekly_learning_minutes` | INTEGER | no |  |
-| `language` | VARCHAR(8) | no |  |
+| `language` | VARCHAR(8) | yes |  |
 | `notify_reassessment` | BOOLEAN | no |  |
 | `notify_weekly_summary` | BOOLEAN | no |  |
 | `created_at` | DATETIME | no |  |
@@ -368,6 +415,10 @@ Unique: (user_id, role_id)
 | `revoked_reason` | VARCHAR(64) | yes |  |
 | `user_agent` | VARCHAR(255) | yes |  |
 | `ip_address` | VARCHAR(64) | yes |  |
+| `remember` | BOOLEAN | no |  |
+| `token_version` | INTEGER | no |  |
+| `rotated_at` | DATETIME | yes |  |
+| `auth_method` | VARCHAR(16) | no |  |
 
 ### `user_subscriptions`
 
@@ -434,6 +485,9 @@ Unique: (goal_id, competency_id)
 | `content` | TEXT | no |  |
 | `url` | VARCHAR(500) | yes |  |
 | `is_published` | BOOLEAN | no |  |
+| `status` | VARCHAR(32) | no | indexed |
+| `lock_version` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -452,6 +506,9 @@ Unique: (goal_id, competency_id)
 | `rubric` | JSON | no |  |
 | `min_length` | INTEGER | no |  |
 | `is_published` | BOOLEAN | no |  |
+| `status` | VARCHAR(32) | no | indexed |
+| `lock_version` | INTEGER | no |  |
+| `translations` | JSON | yes |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -461,7 +518,7 @@ Unique: (goal_id, competency_id)
 |---|---|---|---|
 | `id` | INTEGER | no | PK |
 | `question_id` | INTEGER | no | FK → `questions.id` (CASCADE), indexed |
-| `competency_id` | INTEGER | no | FK → `competencies.id` (CASCADE), indexed |
+| `competency_id` | INTEGER | no | FK → `competencies.id` (RESTRICT), indexed |
 | `weight` | FLOAT | no |  |
 
 Unique: (question_id, competency_id)
@@ -478,6 +535,7 @@ Checks: `weight > 0 AND weight <= 1`
 | `label` | TEXT | no |  |
 | `score` | INTEGER | no |  |
 | `value` | INTEGER | yes |  |
+| `translations` | JSON | yes |  |
 
 Checks: `score >= 0 AND score <= 100`
 
@@ -504,7 +562,7 @@ Checks: `score >= 0 AND score <= 100`
 |---|---|---|---|
 | `id` | INTEGER | no | PK |
 | `attempt_id` | INTEGER | no | FK → `assessment_attempts.id` (CASCADE), indexed |
-| `question_id` | INTEGER | no | FK → `questions.id` (CASCADE), indexed |
+| `question_id` | INTEGER | no | FK → `questions.id` (RESTRICT), indexed |
 | `option_id` | INTEGER | yes | FK → `question_options.id` (SET NULL) |
 | `text_response` | TEXT | yes |  |
 | `item_score` | FLOAT | yes |  |
@@ -520,7 +578,7 @@ Unique: (attempt_id, question_id)
 | `id` | INTEGER | no | PK |
 | `attempt_id` | INTEGER | no | FK → `assessment_attempts.id` (CASCADE), indexed |
 | `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
-| `competency_id` | INTEGER | no | FK → `competencies.id` (CASCADE), indexed |
+| `competency_id` | INTEGER | no | FK → `competencies.id` (RESTRICT), indexed |
 | `current_score` | INTEGER | no |  |
 | `target_score` | INTEGER | no |  |
 | `gap` | INTEGER | no |  |
@@ -542,7 +600,7 @@ Unique: (attempt_id, competency_id)
 | `id` | INTEGER | no | PK |
 | `attempt_id` | INTEGER | no | FK → `assessment_attempts.id` (CASCADE), indexed |
 | `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
-| `competency_id` | INTEGER | no | FK → `competencies.id` (CASCADE), indexed |
+| `competency_id` | INTEGER | no | FK → `competencies.id` (RESTRICT), indexed |
 | `raw_score` | FLOAT | no |  |
 | `max_raw_score` | FLOAT | no |  |
 | `score` | INTEGER | no |  |
@@ -564,7 +622,7 @@ Checks: `score >= 0 AND score <= 100`
 |---|---|---|---|
 | `id` | INTEGER | no | PK |
 | `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
-| `task_id` | INTEGER | no | FK → `practical_tasks.id` (CASCADE), indexed |
+| `task_id` | INTEGER | no | FK → `practical_tasks.id` (RESTRICT), indexed |
 | `status` | VARCHAR(32) | no |  |
 | `response_text` | TEXT | yes |  |
 | `feedback_score` | INTEGER | yes |  |
@@ -611,7 +669,7 @@ Unique: (user_id, task_id)
 |---|---|---|---|
 | `id` | INTEGER | no | PK |
 | `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
-| `resource_id` | INTEGER | no | FK → `learning_resources.id` (CASCADE), indexed |
+| `resource_id` | INTEGER | no | FK → `learning_resources.id` (RESTRICT), indexed |
 | `status` | VARCHAR(32) | no |  |
 | `progress_pct` | INTEGER | no |  |
 | `started_at` | DATETIME | yes |  |
@@ -651,6 +709,7 @@ Checks: `progress_pct >= 0 AND progress_pct <= 100`
 | `error` | TEXT | yes |  |
 | `attempts` | INTEGER | no |  |
 | `latency_ms` | INTEGER | yes |  |
+| `language` | VARCHAR(8) | yes |  |
 | `created_at` | DATETIME | no | indexed |
 
 ### `recommendations`
@@ -661,7 +720,7 @@ Checks: `progress_pct >= 0 AND progress_pct <= 100`
 | `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
 | `attempt_id` | INTEGER | no | FK → `assessment_attempts.id` (CASCADE), indexed |
 | `gap_id` | INTEGER | no | FK → `competency_gaps.id` (CASCADE) |
-| `competency_id` | INTEGER | no | FK → `competencies.id` (CASCADE), indexed |
+| `competency_id` | INTEGER | no | FK → `competencies.id` (RESTRICT), indexed |
 | `goal_id` | INTEGER | yes | FK → `goal_definitions.id` (SET NULL) |
 | `resource_id` | INTEGER | yes | FK → `learning_resources.id` (SET NULL) |
 | `task_id` | INTEGER | yes | FK → `practical_tasks.id` (SET NULL) |

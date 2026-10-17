@@ -9,19 +9,24 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base, TimestampMixin, utcnow
+from app.core.content_i18n import Translatable
+from app.core.database import Base, TimestampMixin, Versioned, utcnow
+from app.models.content import Publishable
 from app.models.enums import AssessmentKind, AttemptScope, AttemptStatus, QuestionType, db_enum
 
 
-class Assessment(TimestampMixin, Base):
+class Assessment(Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "assessments"
+    __translatable__ = ("title", "description")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(48), unique=True)
@@ -37,8 +42,14 @@ class Assessment(TimestampMixin, Base):
     )
 
 
-class Question(TimestampMixin, Base):
+class Question(Publishable, Versioned, Translatable, TimestampMixin, Base):
+    """An assessment item. Once answered, its wording and scoring are frozen: an edit creates a new version (a new
+    row with `previous_id` pointing here) and archives this one, so completed attempts stay reproducible."""
+
     __tablename__ = "questions"
+    __status_flag__ = "is_active"
+    __translatable__ = ("section", "text", "help_text")
+    __translatable_rubric__ = True
 
     id: Mapped[int] = mapped_column(primary_key=True)
     assessment_id: Mapped[int] = mapped_column(ForeignKey("assessments.id", ondelete="CASCADE"), index=True)
@@ -51,7 +62,11 @@ class Question(TimestampMixin, Base):
     rubric: Mapped[list | None] = mapped_column(JSON)
     reverse_scored: Mapped[bool] = mapped_column(Boolean, default=False)
     min_length: Mapped[int] = mapped_column(Integer, default=0)
+    # Mirrors `status == published` for older clients (see models/content.py).
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Content version of this item (1, 2, …) and the version it replaced.
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    previous_id: Mapped[int | None] = mapped_column(ForeignKey("questions.id", ondelete="SET NULL"), index=True)
 
     assessment: Mapped[Assessment] = relationship(back_populates="questions")
     options: Mapped[list[QuestionOption]] = relationship(
@@ -62,8 +77,9 @@ class Question(TimestampMixin, Base):
     )
 
 
-class QuestionOption(Base):
+class QuestionOption(Translatable, Base):
     __tablename__ = "question_options"
+    __translatable__ = ("label",)
     __table_args__ = (CheckConstraint("score >= 0 AND score <= 100", name="score_range"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -88,7 +104,8 @@ class QuestionCompetency(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), index=True)
-    competency_id: Mapped[int] = mapped_column(ForeignKey("competencies.id", ondelete="CASCADE"), index=True)
+    # RESTRICT: a competency with mapped questions is archived, never deleted (scores and answers reference it).
+    competency_id: Mapped[int] = mapped_column(ForeignKey("competencies.id", ondelete="RESTRICT"), index=True)
     weight: Mapped[float] = mapped_column(Float, default=1.0)
 
     question: Mapped[Question] = relationship(back_populates="competency_links")
@@ -97,6 +114,16 @@ class QuestionCompetency(Base):
 
 class AssessmentAttempt(TimestampMixin, Base):
     __tablename__ = "assessment_attempts"
+    # At most one open attempt per user: concurrent "start" requests can't both create one.
+    __table_args__ = (
+        Index(
+            "uq_assessment_attempts_user_in_progress",
+            "user_id",
+            unique=True,
+            postgresql_where=text("status = 'in_progress'"),
+            sqlite_where=text("status = 'in_progress'"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
@@ -123,7 +150,8 @@ class Answer(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     attempt_id: Mapped[int] = mapped_column(ForeignKey("assessment_attempts.id", ondelete="CASCADE"), index=True)
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), index=True)
+    # RESTRICT: answered questions are versioned/archived, never deleted (completed attempts stay reproducible).
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="RESTRICT"), index=True)
     option_id: Mapped[int | None] = mapped_column(ForeignKey("question_options.id", ondelete="SET NULL"))
     text_response: Mapped[str | None] = mapped_column(Text)
     # Item score 0..100 after scoring (option score, or rubric-constrained AI score).

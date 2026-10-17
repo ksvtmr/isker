@@ -21,10 +21,12 @@ from app.api.routes import (
     billing,
     competencies,
     learning,
+    oauth,
     plan,
     practice,
     profile,
     progress,
+    sync,
 )
 from app.core.config import get_settings
 from app.core.database import SessionLocal
@@ -78,9 +80,10 @@ def create_app() -> FastAPI:
         version="1.0.0",
         description=DESCRIPTION,
         openapi_tags=TAGS,
-        docs_url="/api/docs",
-        redoc_url="/api/redoc",
-        openapi_url="/api/openapi.json",
+        # Hidden in production unless API_DOCS_ENABLED=true (see core/config.py).
+        docs_url="/api/docs" if settings.docs_enabled else None,
+        redoc_url="/api/redoc" if settings.docs_enabled else None,
+        openapi_url="/api/openapi.json" if settings.docs_enabled else None,
     )
     app.add_middleware(
         CORSMiddleware,
@@ -95,8 +98,8 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestContextMiddleware)
     install_error_handlers(app)
-    for r in (auth, profile, assessments, competencies, plan, learning, practice, progress, billing, admin,
-              admin_users, admin_billing, admin_system):
+    for r in (auth, oauth, profile, assessments, competencies, plan, learning, practice, progress, billing, admin,
+              admin_users, admin_billing, admin_system, sync):
         app.include_router(r.router)
 
     @app.get("/api/health", tags=["progress"], summary="Liveness and database check")

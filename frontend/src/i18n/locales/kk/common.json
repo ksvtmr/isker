@@ -1,0 +1,295 @@
+{
+  "app": {
+    "name": "Isker",
+    "home": "Isker басты беті",
+    "pageTitle": "{{page}} · Isker",
+    "metaDescription": "Isker — EntreComp моделі бойынша кәсіпкерлік құзыреттерді бағалау және дамыту."
+  },
+  "language": {
+    "label": "Тіл",
+    "choose": "Интерфейс тілі",
+    "saveFailed": "Тілді профильде сақтау мүмкін болмады. Ол тек осы құрылғыда қолданылды."
+  },
+  "actions": {
+    "save": "Сақтау",
+    "saveChanges": "Өзгерістерді сақтау",
+    "cancel": "Болдырмау",
+    "close": "Жабу",
+    "back": "Артқа",
+    "next": "Келесі",
+    "continue": "Жалғастыру",
+    "tryAgain": "Қайталау",
+    "edit": "Өзгерту",
+    "delete": "Жою",
+    "search": "Іздеу",
+    "clearFilters": "Сүзгілерді тазалау",
+    "confirm": "Растау",
+    "signOut": "Шығу",
+    "signIn": "Кіру",
+    "open": "Ашу",
+    "start": "Бастау",
+    "viewAll": "Барлығын көру",
+    "details": "Толығырақ",
+    "hide": "Жасыру",
+    "download": "Жүктеп алу",
+    "create": "Құру",
+    "seePlans": "Тарифтерді көру",
+    "goToDashboard": "Басты бетке",
+    "menu": "Мәзір",
+    "openMenu": "Мәзірді ашу"
+  },
+  "state": {
+    "loading": "Жүктелуде…",
+    "saving": "Сақталуда…",
+    "errorTitle": "Бірдеңе дұрыс болмады",
+    "errorLoad": "Бетті жүктеу мүмкін болмады. Қайталап көріңіз.",
+    "notIncluded": "Сіздің тарифіңізге кірмейді",
+    "noAccessTitle": "Бұл бөлімге қолжетімділік жоқ",
+    "noAccessText": "Сіздің рөліңізде бұл құқық жоқ. Қажет болса, супер-әкімшіге хабарласыңыз.",
+    "notFoundTitle": "Бет табылмады",
+    "notFoundText": "Мұндай бет жоқ немесе ол көшірілген.",
+    "adminNotFoundText": "Әкімші панелінде мұндай бөлім жоқ.",
+    "adminDashboard": "Әкімші панелі",
+    "never": "Ешқашан",
+    "none": "—",
+    "yes": "Иә",
+    "no": "Жоқ",
+    "requestFailedCode": "Сұранысты орындау мүмкін болмады (код: {{code}}). Қайталап көріңіз."
+  },
+  "nav": {
+    "dashboard": "Басты бет",
+    "assessment": "Бағалау",
+    "competencies": "Құзыреттер",
+    "development-plan": "Даму жоспары",
+    "learning": "Оқу",
+    "practice": "Практика",
+    "progress": "Прогресс",
+    "profile": "Профиль",
+    "settings": "Баптаулар",
+    "plans": "Тарифтер",
+    "admin": "Әкімші панелі",
+    "allSections": "Барлық бөлімдер",
+    "myProfile": "Менің профилім"
+  },
+  "bottomNav": {
+    "dashboard": "Басты",
+    "assessment": "Бағалау",
+    "competencies": "Профиль",
+    "development-plan": "Даму",
+    "progress": "Прогресс"
+  },
+  "ds": {
+    "close": "Жабу",
+    "dismiss": "Жабу",
+    "loading": "Жүктелуде",
+    "notAssessed": "Бағаланбаған",
+    "notMeasured": "өлшенбеген",
+    "target": "Мақсат {{n}}",
+    "scoreAria": "{{name}}: балл",
+    "outOf": "{{label}}: {{max}} ішінен {{value}}",
+    "questionOf": "{{total}} сұрақтың {{current}}-сі",
+    "aiInsight": "ЖИ қорытындысы",
+    "confidence": "Сенімділік: {{value}}",
+    "gapSuffix": "алшақтық",
+    "prioritySuffix": "басымдық",
+    "targetSuffix": "мақсат",
+    "recommendedFor": "Ұсынылады: {{competency}}",
+    "practice": "Практика",
+    "learn": "Оқу",
+    "startActivity": "Бастау",
+    "mainNavigation": "Негізгі навигация",
+    "primaryNavigation": "Бөлімдер",
+    "breadcrumb": "Навигация тізбегі",
+    "pagination": "Беттер",
+    "noResults": "Ештеңе табылмады.",
+    "previous": "Алдыңғы",
+    "next": "Келесі",
+    "pageOf": "{{pages}} беттің {{page}}-сі",
+    "range": "{{total}} ішінен {{from}}–{{to}}",
+    "sortedAsc": ", сұрыптау: {{column}} өсу ретімен",
+    "sortedDesc": ", сұрыптау: {{column}} кему ретімен",
+    "cancel": "Болдырмау",
+    "reasonLabel": "Себебі (аудит журналында сақталады)",
+    "reasonHint": "Кемінде 3 таңба.",
+    "reasonTooShort": "Себебін қысқаша көрсетіңіз.",
+    "typeToConfirm": "Растау үшін {{text}} енгізіңіз",
+    "progress": "Прогресс",
+    "skipToContent": "Мазмұнға өту",
+    "admin": "Әкімші",
+    "adminNavigation": "Әкімші панелінің навигациясы",
+    "administration": "Әкімшілік",
+    "before": "Бұрын",
+    "after": "Кейін",
+    "scoreHistoryChart": "Балл тарихының графигі",
+    "radarChart": "Құзыреттердің радар диаграммасы",
+    "charCount": "{{count}} / {{max}}",
+    "planSteps": {
+      "gap": "Сіздің алшақтығыңыз",
+      "learn": "Оқу",
+      "practice": "Практика",
+      "reflect": "Рефлексия",
+      "reassess": "Қайта бағалау"
+    },
+    "stepStatus": {
+      "done": "Орындалды",
+      "current": "Ағымдағы қадам",
+      "todo": "Басталмаған",
+      "locked": "Құлыпталған"
+    }
+  },
+  "levels": {
+    "Foundation": "Бастапқы",
+    "Developing": "Дамушы",
+    "Intermediate": "Орта",
+    "Advanced": "Озық",
+    "Proficient": "Кәсіби"
+  },
+  "gaps": {
+    "High": "Жоғары",
+    "Medium": "Орташа",
+    "Low": "Төмен"
+  },
+  "confidence": {
+    "high": "Жоғары",
+    "medium": "Орташа",
+    "low": "Төмен"
+  },
+  "resourceTypes": {
+    "article": "Мақала",
+    "video": "Бейне",
+    "course": "Курс",
+    "exercise": "Жаттығу",
+    "case_study": "Кейс",
+    "template": "Үлгі"
+  },
+  "difficulty": {
+    "beginner": "Бастаушыларға",
+    "intermediate": "Орташа күрделілік",
+    "advanced": "Жоғары күрделілік"
+  },
+  "roles": {
+    "user": "Тыңдаушы",
+    "content_manager": "Контент-менеджер",
+    "support": "Қолдау",
+    "admin": "Әкімші",
+    "super_admin": "Супер-әкімші"
+  },
+  "accountStatus": {
+    "active": "Белсенді",
+    "suspended": "Бұғатталған",
+    "deactivated": "Өшірілген"
+  },
+  "subscriptionStatus": {
+    "trialing": "Сынақ кезеңі",
+    "active": "Белсенді",
+    "past_due": "Төлем мерзімі өтті",
+    "canceled": "Тоқтатылды",
+    "expired": "Мерзімі бітті",
+    "incomplete": "Аяқталмаған"
+  },
+  "subscriptionSource": {
+    "system": "Жүйе",
+    "admin": "Әкімші берген",
+    "payment": "Төлем",
+    "trial": "Сынақ"
+  },
+  "outcome": {
+    "success": "Сәтті",
+    "failure": "Қате",
+    "denied": "Тыйым салынды"
+  },
+  "attemptStatus": {
+    "in_progress": "Орындалуда",
+    "completed": "Аяқталды",
+    "abandoned": "Тоқтатылды"
+  },
+  "progressStatus": {
+    "not_started": "Басталмаған",
+    "in_progress": "Орындалуда",
+    "completed": "Аяқталды"
+  },
+  "validation": {
+    "required": "Бұл өрісті толтырыңыз",
+    "emailRequired": "Электрондық поштаны енгізіңіз",
+    "emailInvalid": "Дұрыс пошта мекенжайын енгізіңіз",
+    "passwordRequired": "Құпиясөзді енгізіңіз",
+    "currentPasswordRequired": "Ағымдағы құпиясөзді енгізіңіз",
+    "passwordMin": "Кемінде 8 таңба",
+    "passwordMax": "128 таңбадан аспауы керек",
+    "passwordLetter": "Кемінде бір әріп қосыңыз",
+    "passwordNumber": "Кемінде бір сан қосыңыз",
+    "passwordsMismatch": "Құпиясөздер сәйкес келмейді",
+    "nameRequired": "Атыңызды енгізіңіз",
+    "nameMax": "120 таңбадан аспауы керек",
+    "termsRequired": "Аккаунт құру үшін Пайдалану шарттары мен Құпиялық саясатын қабылдаңыз",
+    "chooseEducation": "Білім деңгейін таңдаңыз",
+    "chooseExperience": "Тәжірибеңізді таңдаңыз",
+    "chooseGoal": "Кемінде бір мақсат таңдаңыз",
+    "chooseFormat": "Форматты таңдаңыз",
+    "minMinutes": "Кемінде 15 минут",
+    "tooLong": "Мәтін тым ұзын",
+    "server": {
+      "required": "Бұл өрісті толтырыңыз",
+      "email": "Дұрыс электрондық пошта мекенжайын енгізіңіз",
+      "min": "Мән {{value}} кем болмауы керек",
+      "greaterThan": "Мән {{value}} артық болуы керек",
+      "max": "Мән {{value}} артық болмауы керек",
+      "lessThan": "Мән {{value}} кем болуы керек",
+      "number": "Сан енгізіңіз",
+      "pattern": "Мән пішімі дұрыс емес",
+      "choice": "Рұқсат етілген мәндердің бірін таңдаңыз",
+      "invalid": "Жарамсыз мән",
+      "minLength_one": "Кемінде {{count}} таңба",
+      "minLength_few": "Кемінде {{count}} таңба",
+      "minLength_many": "Кемінде {{count}} таңба",
+      "minLength_other": "Кемінде {{count}} таңба",
+      "maxLength_one": "Ең көбі {{count}} таңба",
+      "maxLength_few": "Ең көбі {{count}} таңба",
+      "maxLength_many": "Ең көбі {{count}} таңба",
+      "maxLength_other": "Ең көбі {{count}} таңба",
+      "minItems_one": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "minItems_few": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "minItems_many": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "minItems_other": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "maxItems_one": "Ең көбі {{count}} нұсқаны таңдаңыз",
+      "maxItems_few": "Ең көбі {{count}} нұсқаны таңдаңыз",
+      "maxItems_many": "Ең көбі {{count}} нұсқаны таңдаңыз",
+      "maxItems_other": "Ең көбі {{count}} нұсқаны таңдаңыз"
+    },
+    "backgroundMax": "Ең көбі 1000 таңба",
+    "businessExperienceMax": "Ең көбі 1000 таңба",
+    "goalsMax": "Ең көбі 6 мақсат таңдаңыз",
+    "maxMinutes": "Аптасына ең көбі 600 минут",
+    "wholeNumber": "Бүтін сан енгізіңіз"
+  },
+  "greeting": {
+    "morning": "Қайырлы таң",
+    "afternoon": "Қайырлы күн",
+    "evening": "Қайырлы кеш"
+  },
+  "time": {
+    "minutes_one": "{{count}} мин",
+    "minutes_few": "{{count}} мин",
+    "minutes_many": "{{count}} мин",
+    "minutes_other": "{{count}} мин",
+    "days_one": "{{count}} күн",
+    "days_few": "{{count}} күн",
+    "days_many": "{{count}} күн",
+    "days_other": "{{count}} күн",
+    "inDays_one": "{{count}} күннен кейін",
+    "inDays_few": "{{count}} күннен кейін",
+    "inDays_many": "{{count}} күннен кейін",
+    "inDays_other": "{{count}} күннен кейін"
+  },
+  "toast": {
+    "saved": "Сақталды"
+  },
+  "format": {
+    "id": "№{{id}}",
+    "version": "{{n}}-нұсқа",
+    "numberHeader": "№"
+  },
+  "a11y": {
+    "opensInNewTab": "(жаңа қойындыда ашылады)"
+  }
+}

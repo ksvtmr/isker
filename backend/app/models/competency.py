@@ -3,13 +3,16 @@ from __future__ import annotations
 from sqlalchemy import Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base, TimestampMixin
+from app.core.content_i18n import Translatable
+from app.core.database import Base, TimestampMixin, Versioned
+from app.models.content import Publishable
 
 
-class CompetencyArea(Base):
+class CompetencyArea(Translatable, Base):
     """EntreComp area: Ideas & Opportunities, Resources, Into Action."""
 
     __tablename__ = "competency_areas"
+    __translatable__ = ("name",)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(32), unique=True)
@@ -20,8 +23,9 @@ class CompetencyArea(Base):
     competencies: Mapped[list[Competency]] = relationship(back_populates="area", order_by="Competency.sort_order")
 
 
-class Competency(TimestampMixin, Base):
+class Competency(Publishable, Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "competencies"
+    __translatable__ = ("name", "short_name", "description", "hint", "reflection_prompt")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(48), unique=True, index=True)
@@ -39,10 +43,11 @@ class Competency(TimestampMixin, Base):
     area: Mapped[CompetencyArea] = relationship(back_populates="competencies")
 
 
-class CompetencyLevel(Base):
+class CompetencyLevel(Translatable, Base):
     """Five proficiency levels with score bands (Foundation 0–39 … Proficient 90–100)."""
 
     __tablename__ = "competency_levels"
+    __translatable__ = ("description",)
     __table_args__ = (UniqueConstraint("rank"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)

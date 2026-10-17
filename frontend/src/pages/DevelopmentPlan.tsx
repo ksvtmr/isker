@@ -1,5 +1,7 @@
-import { Button, Card, EmptyState, GapBadge, Modal, PageHeader, PlanStep, ProgressBar, StatusBadge, Textarea, type PlanStepStatus } from "@isker/design-system";
+import { Button, Card, EmptyState, GapBadge, Modal, PlanStep, ProgressBar, StatusBadge, Textarea, type PlanStepStatus } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStartAttempt } from "../api/assessments";
 import { usePlan, useReflect } from "../api/recommendations";
@@ -17,6 +19,7 @@ function stepStatus(a: Activity, acts: Activity[]): PlanStepStatus {
 }
 
 function PlanDetail({ rec }: { rec: Recommendation }) {
+  const { t } = useTranslation("learning");
   const navigate = useNavigate();
   const toast = useToast();
   const reflect = useReflect();
@@ -29,14 +32,14 @@ function PlanDetail({ rec }: { rec: Recommendation }) {
 
   const saveReflection = () =>
     refl && reflect.mutate({ activityId: refl.id, text }, {
-      onSuccess: () => { setOpen(false); setText(""); toast({ title: "Reflection saved" }); },
+      onSuccess: () => { setOpen(false); setText(""); toast({ title: t("plan.reflectionSaved") }); },
     });
   const reassess = () =>
     start.mutate({ scope: "competency", competency_id: rec.competency_id }, { onSuccess: (r) => navigate(`/assessment/${r.attempt.id}`) });
 
   return (
     <Card padding={28}>
-      <PlanStep step="gap" status="done" title={rec.competency_name} meta={`Current ${rec.current} / 100 · Target ${rec.target} / 100`}>
+      <PlanStep step="gap" status="done" title={rec.competency_name} meta={t("plan.gapMeta", { current: rec.current, target: rec.target })}>
         <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <GapBadge gap={gapLabel(rec.band)} />
           <span style={{ fontSize: 13, color: "var(--color-neutral-500)" }}>{rec.reason}</span>
@@ -44,53 +47,54 @@ function PlanDetail({ rec }: { rec: Recommendation }) {
       </PlanStep>
       {learn && (
         <PlanStep step="learn" status={stepStatus(learn, acts)} title={learn.title}
-          meta={[learn.duration_minutes && `${learn.duration_minutes} min`, learn.type].filter(Boolean).join(" · ")}
+          meta={[learn.duration_minutes && t("common:time.minutes", { count: learn.duration_minutes }), learn.type && t(`common:resourceTypes.${learn.type}`, { defaultValue: learn.type })].filter(Boolean).join(" · ")}
           action={learn.resource_id && (learn.status === "done"
-            ? <LinkButton to={`/learning/${learn.resource_id}`} size="sm" variant="ghost">Review</LinkButton>
-            : <LinkButton to={`/learning/${learn.resource_id}`} size="sm" iconLeft="book-open">{learn.status === "in_progress" ? "Continue Learning" : "Start Learning"}</LinkButton>)} />
+            ? <LinkButton to={`/learning/${learn.resource_id}`} size="sm" variant="ghost">{t("plan.review")}</LinkButton>
+            : <LinkButton to={`/learning/${learn.resource_id}`} size="sm" iconLeft="book-open">{learn.status === "in_progress" ? t("plan.continueLearning") : t("plan.startLearning")}</LinkButton>)} />
       )}
       {practice && (
         <PlanStep step="practice" status={stepStatus(practice, acts)} title={practice.title}
-          meta={[practice.duration_minutes && `${practice.duration_minutes} min`, "Practical task"].filter(Boolean).join(" · ")}
+          meta={[practice.duration_minutes && t("common:time.minutes", { count: practice.duration_minutes }), t("plan.practicalTask")].filter(Boolean).join(" · ")}
           action={practice.task_id && (practice.status === "done"
-            ? <LinkButton to={`/practice/${practice.task_id}`} size="sm" variant="ghost">View feedback</LinkButton>
+            ? <LinkButton to={`/practice/${practice.task_id}`} size="sm" variant="ghost">{t("plan.viewFeedback")}</LinkButton>
             : <LinkButton to={`/practice/${practice.task_id}`} size="sm" variant={stepStatus(practice, acts) === "current" ? "primary" : "secondary"} iconLeft="pencil-ruler">
-                {practice.status === "in_progress" ? "Continue Practice" : "Start Practice"}
+                {practice.status === "in_progress" ? t("plan.continuePractice") : t("plan.startPractice")}
               </LinkButton>)} />
       )}
       {refl && (
         <PlanStep step="reflect" status={stepStatus(refl, acts)} title={refl.prompt ?? refl.title}
           action={refl.status === "done"
-            ? <p style={{ fontSize: 14, color: "var(--color-neutral-600)", fontStyle: "italic" }}>“{refl.response_text}”</p>
-            : <Button size="sm" variant={stepStatus(refl, acts) === "current" ? "primary" : "secondary"} iconLeft="message-square-text" onClick={() => setOpen(true)}>Write Reflection</Button>} />
+            ? <p style={{ fontSize: 14, color: "var(--color-neutral-600)", fontStyle: "italic" }}>{t("plan.reflectionQuote", { text: refl.response_text })}</p>
+            : <Button size="sm" variant={stepStatus(refl, acts) === "current" ? "primary" : "secondary"} iconLeft="message-square-text" onClick={() => setOpen(true)}>{t("plan.writeReflection")}</Button>} />
       )}
       {re && (
         <PlanStep step="reassess" last status={stepStatus(re, acts)}
-          title={re.status === "done" ? `Reassessed ${rec.competency_name}` : re.locked ? "Available after completing the activities above" : `Ready to reassess ${rec.competency_name}`}
-          meta={!re.locked && re.status !== "done" ? "About 5 minutes · only this competency" : undefined}
-          action={!re.locked && re.status !== "done" && <Button size="sm" variant="success" iconLeft="refresh-cw" loading={start.isPending} onClick={reassess}>Start Reassessment</Button>} />
+          title={re.status === "done" ? t("plan.reassessed", { competency: rec.competency_name }) : re.locked ? t("plan.reassessLocked") : t("plan.reassessReady", { competency: rec.competency_name })}
+          meta={!re.locked && re.status !== "done" ? t("plan.reassessMeta") : undefined}
+          action={!re.locked && re.status !== "done" && <Button size="sm" variant="success" iconLeft="refresh-cw" loading={start.isPending} onClick={reassess}>{t("plan.startReassessment")}</Button>} />
       )}
       {start.error && <div style={{ marginTop: 12 }}><ApiErrorAlert error={start.error} /></div>}
-      <Modal open={open} onClose={() => setOpen(false)} title="Write reflection" description={refl?.prompt ?? undefined}
-        footer={<><Button variant="secondary" onClick={() => setOpen(false)}>Cancel</Button><Button disabled={text.trim().length < 10} loading={reflect.isPending} onClick={saveReflection}>Save reflection</Button></>}>
+      <Modal open={open} onClose={() => setOpen(false)} title={t("plan.reflectionTitle")} description={refl?.prompt ?? undefined}
+        footer={<><Button variant="secondary" onClick={() => setOpen(false)}>{t("common:actions.cancel")}</Button><Button disabled={text.trim().length < 10} loading={reflect.isPending} onClick={saveReflection}>{t("plan.saveReflection")}</Button></>}>
         {reflect.error && <div style={{ marginBottom: 12 }}><ApiErrorAlert error={reflect.error} /></div>}
-        <Textarea label="Your reflection" rows={5} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} hint="At least 10 characters." placeholder="The assumption I'm least sure about is…" />
+        <Textarea label={t("plan.reflectionLabel")} rows={5} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} hint={t("plan.reflectionHint")} placeholder={t("plan.reflectionPlaceholder")} />
       </Modal>
     </Card>
   );
 }
 
 export function DevelopmentPlanPage() {
+  const { t } = useTranslation("learning");
   const { data: plan, isLoading, error, refetch } = usePlan();
   const [params, setParams] = useSearchParams();
   if (isLoading) return <PageSkeleton />;
-  if (error || !plan) return <><PageHeader title="Your Development Plan" /><ErrorState error={error} onRetry={() => refetch()} /></>;
+  if (error || !plan) return <><PageHeader title={t("plan.title")} /><ErrorState error={error} onRetry={() => refetch()} /></>;
 
   if (!plan.recommendations.length) {
     return (
       <>
-        <PageHeader title="Your Development Plan" />
-        <EmptyState icon="route" title="No plan yet" description="Complete the assessment. Your plan is built from your priority competency gaps." action={<LinkButton to="/assessment">Start Assessment</LinkButton>} />
+        <PageHeader title={t("plan.title")} />
+        <EmptyState icon="route" title={t("plan.emptyTitle")} description={t("plan.emptyText")} action={<LinkButton to="/assessment">{t("plan.startAssessment")}</LinkButton>} />
       </>
     );
   }
@@ -99,26 +103,26 @@ export function DevelopmentPlanPage() {
 
   return (
     <>
-      <PageHeader title="Your Development Plan" subtitle="Personalised from your competency gaps and goals: Learn → Practice → Reflect → Reassess." />
+      <PageHeader title={t("plan.title")} subtitle={t("plan.subtitle")} />
       <Card padding={20} style={{ marginBottom: 24 }}>
-        <ProgressBar label={`Plan progress · ${plan.done} of ${plan.total} activities`} value={plan.progress_pct} color="var(--color-growth-500)" />
+        <ProgressBar label={t("plan.progress", { done: plan.done, count: plan.total })} value={plan.progress_pct} color="var(--color-growth-500)" />
       </Card>
       <div className="ik-plan">
-        <nav aria-label="Priorities" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <nav aria-label={t("plan.prioritiesAria")} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {plan.recommendations.map((r) => (
             <button key={r.id} type="button" onClick={() => setParams({ focus: r.competency_code })} className="ik-plan-item" aria-current={r.id === sel.id || undefined}>
-              <span style={{ fontSize: 12, color: "var(--color-neutral-500)", fontWeight: 500 }}>Priority {r.priority}</span>
+              <span style={{ fontSize: 12, color: "var(--color-neutral-500)", fontWeight: 500 }}>{t("plan.priority", { n: r.priority })}</span>
               <span style={{ marginTop: 4, display: "block", fontSize: 15, fontWeight: 600, color: "var(--color-neutral-900)" }}>{r.competency_name}</span>
               <span style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 <span style={{ fontSize: 13, color: "var(--color-neutral-600)", fontVariantNumeric: "tabular-nums" }}><b style={{ color: "var(--color-neutral-900)" }}>{r.current}</b> → {r.target}</span>
-                <GapBadge gap={gapLabel(r.band)} suffix="priority" />
+                <GapBadge gap={gapLabel(r.band)} suffix={t("common:ds.prioritySuffix")} />
               </span>
-              <span style={{ marginTop: 10, display: "block" }}><ProgressBar value={r.progress_pct} showValue={false} height={4} color="var(--color-growth-500)" ariaLabel={`${r.progress_pct}% complete`} /></span>
+              <span style={{ marginTop: 10, display: "block" }}><ProgressBar value={r.progress_pct} showValue={false} height={4} color="var(--color-growth-500)" ariaLabel={t("plan.percentComplete", { value: r.progress_pct })} /></span>
             </button>
           ))}
           {plan.completed.length > 0 && (
             <Card padding={16}>
-              <p style={{ fontSize: 13, fontWeight: 600 }}>Completed cycles</p>
+              <p style={{ fontSize: 13, fontWeight: 600 }}>{t("plan.completedCycles")}</p>
               <ul style={{ listStyle: "none", padding: 0, marginTop: 8 }}>
                 {plan.completed.map((r) => (
                   <li key={r.id} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, padding: "6px 0" }}>

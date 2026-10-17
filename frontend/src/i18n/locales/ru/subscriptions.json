@@ -1,0 +1,49 @@
+{
+  "plans": {
+    "title": "Тарифы",
+    "subtitle": "Бесплатный тариф «{{name}}» охватывает весь путь: оценка, понимание своего профиля, план развития, обучение, практика и повторная оценка.",
+    "yourPlan": "Ваш тариф: {{name}}",
+    "ends": "Заканчивается {{date}}",
+    "validUntil": "Действует до {{date}}",
+    "unlimited": "без ограничений",
+    "usageLabel_one": "{{label}} (за последний {{count}} день)",
+    "usageLabel_few": "{{label}} (за последние {{count}} дня)",
+    "usageLabel_many": "{{label}} (за последние {{count}} дней)",
+    "usageLabel_other": "{{label}} (за последние {{count}} дня)",
+    "usageAria": "{{label}}: использовано {{used}} из {{limit}}",
+    "currentPlan": "Текущий тариф",
+    "notIncluded": "Не входит:",
+    "subtitleGeneric": "Сравните тарифы: что входит в каждый и какие действуют лимиты.",
+    "createAccountCta": "Создать аккаунт",
+    "startFree": "Начать бесплатно",
+    "trial_one": "Пробный период — {{count}} день",
+    "trial_few": "Пробный период — {{count}} дня",
+    "trial_many": "Пробный период — {{count}} дней",
+    "trial_other": "Пробный период — {{count}} дня"
+  },
+  "features": {
+    "assessmentFull": "Полные оценки",
+    "assessmentReassessment": "Повторная оценка компетенций",
+    "planPersonalized": "Персональный план развития",
+    "learningAdvancedResources": "Расширенные учебные материалы",
+    "practiceTasks": "Практические задания",
+    "practiceAiFeedback": "Обратная связь ИИ по практике",
+    "progressHistory": "Полная история прогресса",
+    "exportData": "Экспорт данных",
+    "unlimitedAssessments": "Неограниченное число полных оценок",
+    "unlimitedTasks": "Неограниченное число практических заданий",
+    "limit_one": "{{label}}: {{count}} за {{period}}",
+    "limit_few": "{{label}}: {{count}} за {{period}}",
+    "limit_many": "{{label}}: {{count}} за {{period}}",
+    "limit_other": "{{label}}: {{count}} за {{period}}"
+  },
+  "upgrade": {
+    "title": "Как перейти на другой тариф",
+    "text": "Онлайн-оплата пока недоступна. Если вы участвуете в программе или инкубаторе, попросите её администратора подключить вам платный тариф."
+  },
+  "price": {
+    "free": "Бесплатно",
+    "perMonth": "{{amount}} / мес",
+    "perYear": "{{amount}} / год"
+  }
+}

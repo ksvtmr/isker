@@ -22,8 +22,20 @@ class Settings(BaseSettings):
 
     jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
-    jwt_expires_minutes: int = 60 * 24
+    # Sessions (see docs/authentication.md). Without "Remember me" the cookie lasts until the browser closes and the
+    # session expires after SESSION_HOURS; with it the cookie and session last REMEMBER_ME_DAYS.
+    session_hours: int = 12
+    remember_me_days: int = 30
+    # The session token is re-issued (rotated) after this many minutes of use; replaying an older token is detected.
+    token_rotate_minutes: int = 60
+    # Google OpenID Connect: client id and secret enable "Continue with Google" (docs/google-oauth-setup.md).
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    # Exact URI registered in Google Cloud. Empty = {APP_BASE_URL}/api/auth/google/callback.
+    google_redirect_uri: str = ""
     auth_cookie_name: str = "isker_session"
+    # Number of trusted reverse proxies that append to X-Forwarded-For (Render, nginx). 0 = API exposed directly.
+    trusted_proxy_hops: int = 1
     csrf_cookie_name: str = "isker_csrf"
     # None = automatic: Secure cookies in production, plain cookies in development (http://localhost).
     cookie_secure: bool | None = None
@@ -44,6 +56,10 @@ class Settings(BaseSettings):
     verification_token_hours: int = 48
     reset_token_minutes: int = 60
     terms_version: str = "2026-10"
+
+    # Interactive API docs (/api/docs, /api/redoc, /api/openapi.json). None = automatic: on outside production,
+    # off in production unless API_DOCS_ENABLED=true.
+    api_docs_enabled: bool | None = None
 
     # Abuse protection
     rate_limit_enabled: bool = True
@@ -68,6 +84,9 @@ class Settings(BaseSettings):
     seed_demo: bool = True
     demo_email: str = "demo@isker.local"
     demo_password: str = ""
+    # The demo account's password is public: block changes to its password, email, sign-in methods and status
+    # through the account itself (see services/accounts.assert_not_demo).
+    demo_read_only: bool = True
     admin_email: str = "admin@isker.local"
     admin_password: str = ""
 
@@ -100,10 +119,23 @@ class Settings(BaseSettings):
             raise ValueError("CORS_ORIGINS must list explicit origins; '*' is not allowed with credentials")
         if self.is_production and self.email_backend == "console":
             raise ValueError("EMAIL_BACKEND=console is for development only")
+        if self.is_production and self.cookie_secure is False:
+            raise ValueError("COOKIE_SECURE=false is not allowed in production (session cookies need HTTPS)")
+        if self.is_production:
+            # Development origins are never trusted in production.
+            self.cors_origins = [o for o in self.cors_origins if "localhost" not in o and "127.0.0.1" not in o]
         # Render (and similar hosts) expose the public URL; use it for email links unless APP_BASE_URL is set.
         if "app_base_url" not in self.model_fields_set and os.environ.get("RENDER_EXTERNAL_URL"):
             self.app_base_url = os.environ["RENDER_EXTERNAL_URL"].rstrip("/")
         return self
+
+    @property
+    def google_enabled(self) -> bool:
+        return bool(self.google_client_id and self.google_client_secret)
+
+    @property
+    def google_callback_url(self) -> str:
+        return self.google_redirect_uri or f"{self.app_base_url.rstrip('/')}/api/auth/google/callback"
 
     @property
     def secure_cookies(self) -> bool:
@@ -116,6 +148,10 @@ class Settings(BaseSettings):
         if self.smtp_host:
             return "smtp"
         return "disabled" if self.is_production else "console"
+
+    @property
+    def docs_enabled(self) -> bool:
+        return not self.is_production if self.api_docs_enabled is None else self.api_docs_enabled
 
     @property
     def is_production(self) -> bool:

@@ -17,6 +17,9 @@ class InsightOut(BaseModel):
     provider: str
     evaluation_id: int
     generated_at: datetime
+    # Language of the texts above ("ru" | "kk" | "en"). Rule-based texts follow the request; model texts keep the
+    # language they were generated in, so the interface can mark them when it differs. None: unknown (older rows).
+    language: str | None = None
 
 
 class AreaScore(BaseModel):

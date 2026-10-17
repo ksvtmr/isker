@@ -29,7 +29,7 @@ describe("login form", () => {
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByText("Enter your email")).toBeInTheDocument();
     expect(screen.getByText("Enter your password")).toBeInTheDocument();
-    expect(calls).toHaveLength(0);
+    expect(calls.filter((c) => c.method !== "GET")).toHaveLength(0);
   });
 
   it("shows the server message on wrong credentials", async () => {
@@ -48,7 +48,7 @@ describe("login form", () => {
     await userEvent.type(screen.getByLabelText("Password"), "Secret123");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     await waitFor(() => expect(screen.getAllByTestId("location")[0]).toHaveTextContent("/dashboard"));
-    expect(calls[0].body).toEqual({ email: "a@b.co", password: "Secret123" });
+    expect(calls.find((c) => c.method === "POST")?.body).toEqual({ email: "a@b.co", password: "Secret123", remember_me: false });
   });
 });
 
@@ -62,7 +62,7 @@ describe("register form", () => {
     await userEvent.type(screen.getByLabelText("Confirm password"), "Secret123");
     await userEvent.click(screen.getByLabelText(/I agree to the/));
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
-    expect(await screen.findByText("An account with this email already exists.")).toBeInTheDocument();
+    expect(await screen.findByText("An account with this email already exists. Sign in or reset your password.")).toBeInTheDocument();
   });
 
   it("requires accepting the terms before calling the API and sends accept_terms", async () => {
@@ -74,11 +74,69 @@ describe("register form", () => {
     await userEvent.type(screen.getByLabelText("Confirm password"), "Secret123");
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     expect(await screen.findByText(/You need to accept the Terms of Use/)).toBeInTheDocument();
-    expect(calls).toHaveLength(0);
+    expect(calls.filter((c) => c.method !== "GET")).toHaveLength(0);
     await userEvent.click(screen.getByLabelText(/I agree to the/));
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     expect(await screen.findByTestId("location")).toBeInTheDocument();
-    await waitFor(() => expect(calls).toHaveLength(1));
-    expect(calls[0].body).toEqual({ full_name: "Dana Learner", email: "a@b.co", password: "Secret123", accept_terms: true });
+    const posts = () => calls.filter((c) => c.method === "POST");
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    // The interface language is sent so emails and the saved preference match what the user sees.
+    expect(posts()[0].body).toEqual({ full_name: "Dana Learner", email: "a@b.co", password: "Secret123", accept_terms: true, language: "en" });
   });
 });
+
+describe("login page: password visibility, remember me, Google", () => {
+  it("toggles password visibility without changing the value and without submitting", async () => {
+    const calls = mockApi({});
+    renderWithProviders(<LoginPage />);
+    const input = screen.getByLabelText("Password") as HTMLInputElement;
+    await userEvent.type(input, "Secret123");
+    expect(input.type).toBe("password");
+    const toggle = screen.getByRole("button", { name: "Show password" });
+    expect(toggle).toHaveAttribute("type", "button");
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(toggle);
+    expect(input.type).toBe("text");
+    expect(input.value).toBe("Secret123");
+    const hide = screen.getByRole("button", { name: "Hide password" });
+    expect(hide).toHaveAttribute("aria-pressed", "true");
+    // Keyboard: focus the control and press Enter/Space.
+    hide.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(input.type).toBe("password");
+    expect(input.value).toBe("Secret123");
+    expect(calls.filter((c) => c.method === "POST")).toHaveLength(0);
+  });
+
+  it("sends remember_me when the checkbox is ticked", async () => {
+    const calls = mockApi({ "POST /api/auth/login": { json: { user, access_token: "t", token_type: "bearer", expires_at: "x" } } });
+    renderWithProviders(<LoginPage />, { route: "/login", path: "/login" });
+    await userEvent.type(screen.getByLabelText("Email"), "a@b.co");
+    await userEvent.type(screen.getByLabelText("Password"), "Secret123");
+    await userEvent.click(screen.getByLabelText(/Remember me/));
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await waitFor(() => expect(calls.find((c) => c.method === "POST")?.body).toEqual({ email: "a@b.co", password: "Secret123", remember_me: true }));
+  });
+
+  it("links to the backend Google flow (with remember and next) when Google is configured", async () => {
+    mockApi({ "GET /api/auth/providers": { json: { password: true, google: true } } });
+    renderWithProviders(<LoginPage />, { route: "/login?next=/learning", path: "/login" });
+    await userEvent.click(screen.getByLabelText(/Remember me/));
+    const link = await screen.findByRole("link", { name: "Continue with Google" });
+    expect(link.getAttribute("href")).toBe("/api/auth/google/start?remember=true&next=%2Flearning");
+  });
+
+  it("disables the Google button and explains why when Google is not configured", async () => {
+    mockApi({ "GET /api/auth/providers": { json: { password: true, google: false } } });
+    renderWithProviders(<LoginPage />);
+    expect(await screen.findByText("Google sign-in isn't set up on this server yet.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeDisabled();
+  });
+
+  it("shows a translated OAuth error from the callback redirect", async () => {
+    mockApi({});
+    renderWithProviders(<LoginPage />, { route: "/login?oauth_error=OAUTH_ACCOUNT_EXISTS", path: "/login" });
+    expect(await screen.findByRole("alert")).toHaveTextContent(/already/i);
+  });
+});
+

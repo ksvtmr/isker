@@ -30,6 +30,11 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      # Optional: "Continue with Google" stays disabled until both are set (docs/google-oauth-setup.md).
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
 
 databases:
   - name: isker-db

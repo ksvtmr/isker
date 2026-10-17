@@ -132,6 +132,22 @@ def active_super_admin_count(db: Session) -> int:
     ) or 0
 
 
+def lock_super_admins(db: Session) -> None:
+    """Lock every super administrator's user row until the transaction ends (PostgreSQL; SQLite serializes writers
+    anyway). Two concurrent demotions/deactivations of different super admins then run one after the other, and
+    the second one counts after the first has committed, so the last-super-admin guard can't be raced."""
+    if db.get_bind().dialect.name != "postgresql":
+        return
+    db.execute(
+        select(User.id)
+        .join(UserRole, UserRole.user_id == User.id)
+        .join(Role, Role.id == UserRole.role_id)
+        .where(Role.key == SUPER_ADMIN)
+        .order_by(User.id)
+        .with_for_update(of=User)
+    ).all()
+
+
 # --- Policies (raise on violation) ----------------------------------------------------------------
 
 def assert_can_act_on(actor: User, target: User) -> None:
@@ -165,6 +181,8 @@ def assert_can_assign_role(actor: User, target: User, role: Role) -> None:
 def assert_keeps_a_super_admin(db: Session, target: User, *, removing_role: Role | None = None,
                                deactivating: bool = False) -> None:
     affects = (removing_role is not None and removing_role.key == SUPER_ADMIN) or deactivating
+    if affects and is_super_admin(target) and target.status == AccountStatus.ACTIVE:
+        lock_super_admins(db)
     if affects and is_super_admin(target) and target.status == AccountStatus.ACTIVE \
             and active_super_admin_count(db) <= 1:
         raise ConflictError("This is the last active super administrator. Assign another super administrator first.",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import timedelta
 
 from fastapi import APIRouter
@@ -9,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.api.deps import DB, CurrentUser
 from app.core.database import as_utc, utcnow
 from app.core.errors import NotFoundError
+from app.core.i18n import tr
 from app.models import (
     AIEvaluation,
     AssessmentAttempt,
@@ -49,8 +51,8 @@ REASSESS_AFTER_DAYS = 30
 
 def _label(att: AssessmentAttempt) -> str:
     if att.scope == AttemptScope.COMPETENCY and att.scope_competency:
-        return f"Reassessment {att.sequence} · {att.scope_competency.short_name}"
-    return f"Assessment {att.sequence}"
+        return tr("reassessment_n", n=att.sequence, name=att.scope_competency.short_name)
+    return tr("assessment_n", n=att.sequence)
 
 
 def _counts(db, user_id: int) -> tuple[int, int, int, int]:
@@ -152,7 +154,7 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
     ).all():
         recent.append(
             ActivityLogItem(
-                title=r.title, competency=r.competency.name, type=views.TYPE_LABEL[r.type.value], date=p.completed_at
+                title=r.title, competency=r.competency.name, type=views.type_label(r.type.value), date=p.completed_at
             )
         )
     for s, t in db.execute(
@@ -162,7 +164,9 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
         .where(PracticeSubmission.user_id == user.id, PracticeSubmission.status == PracticeStatus.COMPLETED)
     ).all():
         recent.append(
-            ActivityLogItem(title=t.title, competency=t.competency.name, type="Practical task", date=s.completed_at)
+            ActivityLogItem(
+                title=t.title, competency=t.competency.name, type=views.type_label("task"), date=s.completed_at
+            )
         )
     for a in db.scalars(
         select(LearningActivity).where(
@@ -174,7 +178,10 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
         comp = comps[a.recommendation.competency_id]
         recent.append(
             ActivityLogItem(
-                title=f"Reflection: {comp.short_name}", competency=comp.name, type="Reflection", date=a.completed_at
+                title=tr("reflection_on", name=comp.short_name),
+                competency=comp.name,
+                type=views.type_label("reflection"),
+                date=a.completed_at,
             )
         )
     recent = sorted([r for r in recent if r.date], key=lambda r: r.date, reverse=True)[:8]
@@ -257,25 +264,33 @@ def dashboard(user: CurrentUser, db: DB) -> DashboardOut:
 
 
 @router.get("/api/notifications", response_model=list[NotificationOut], tags=["notifications"])
-def notifications(user: CurrentUser, db: DB) -> list[Notification]:
-    return list(
-        db.scalars(
-            select(Notification)
-            .where(Notification.user_id == user.id)
-            .order_by(Notification.created_at.desc())
-            .limit(50)
-        )
+def notifications(user: CurrentUser, db: DB) -> list[NotificationOut]:
+    rows = db.scalars(
+        select(Notification).where(Notification.user_id == user.id).order_by(Notification.created_at.desc()).limit(50)
     )
+    return [_notification_out(db, n) for n in rows]
+
+
+def _notification_out(db, n: Notification) -> NotificationOut:
+    """Known notification types are rendered in the request language; the stored text is the fallback."""
+    out = NotificationOut.model_validate(n, from_attributes=True)
+    if n.type == "assessment.completed":
+        m = re.search(r"attempt=(\d+)", n.link or "")
+        att = db.get(AssessmentAttempt, int(m.group(1))) if m else None
+        out.title = tr("notify.profile_ready")
+        if att is not None and att.overall_score is not None:
+            out.body = tr("notify.overall", score=att.overall_score)
+    return out
 
 
 @router.post("/api/notifications/{notification_id}/read", response_model=Message, tags=["notifications"])
 def mark_read(notification_id: int, user: CurrentUser, db: DB) -> Message:
     n = db.scalar(select(Notification).where(Notification.id == notification_id, Notification.user_id == user.id))
     if n is None:
-        raise NotFoundError("Notification not found")
+        raise NotFoundError("Notification not found", "NOTIFICATION_NOT_FOUND")
     n.is_read = True
     db.commit()
-    return Message(message="ok")
+    return Message(message="Notification marked as read.", code="NOTIFICATION_READ")
 
 
 @router.get("/api/ai/status", tags=["ai"], summary="Which AI provider is active (never exposes keys)")

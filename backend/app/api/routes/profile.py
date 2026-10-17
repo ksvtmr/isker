@@ -2,21 +2,35 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import DB, CurrentUser
-from app.core.errors import ValidationError
+from app.core.errors import VERSION_CONFLICT_MESSAGE, ValidationError, VersionConflict
 from app.models import GoalDefinition, User, UserGoal, UserProfile
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.profile import GoalOut, OnboardingIn, ProfileOut, ProfileUpdate
 from app.services.audit import audit
+from app.services.locking import changes, snapshot
 
 router = APIRouter(tags=["profile"], responses=ERROR_RESPONSES)
 
+# Recorded old → new in the audit log (free-text background fields are only reported as changed by length cap).
+PROFILE_AUDIT_FIELDS = ("education", "entrepreneurial_experience", "preferred_learning_format",
+                        "weekly_learning_minutes", "language", "notify_reassessment", "notify_weekly_summary")
+
 
 def _profile(db, user: User) -> UserProfile:
-    if user.profile is None:
-        user.profile = UserProfile()
-        db.flush()
+    """The user's profile, created on first use. Two concurrent first requests can both try to create it: the unique
+    user_id decides, and the loser reads the row the winner created."""
+    if user.profile is not None:
+        return user.profile
+    try:
+        with db.begin_nested():
+            db.add(UserProfile(user_id=user.id))
+            db.flush()
+    except IntegrityError:
+        pass  # created by a concurrent request
+    db.expire(user, ["profile"])
     return user.profile
 
 
@@ -50,9 +64,18 @@ def _set_goals(db, user: User, codes: list[str]) -> None:
     unknown = set(codes) - {g.code for g in goals}
     if unknown:
         raise ValidationError("Unknown goal selected.", "INVALID_GOAL", {"codes": sorted(unknown)})
-    db.execute(delete(UserGoal).where(UserGoal.user_id == user.id))
-    for g in goals:
-        db.add(UserGoal(user_id=user.id, goal_id=g.id))
+    # Replace the selection. A concurrent save of the same user's goals can insert the same rows between our delete
+    # and insert; the (user_id, goal_id) unique constraint then fails our insert, so delete again and retry once.
+    for attempt in range(2):
+        try:
+            with db.begin_nested():
+                db.execute(delete(UserGoal).where(UserGoal.user_id == user.id))
+                db.add_all([UserGoal(user_id=user.id, goal_id=g.id) for g in goals])
+                db.flush()
+            return
+        except IntegrityError:
+            if attempt:
+                raise VersionConflict(VERSION_CONFLICT_MESSAGE) from None
 
 
 @router.get("/api/goals", response_model=list[GoalOut], summary="Goal catalogue for onboarding/profile")
@@ -87,6 +110,7 @@ def onboarding(body: OnboardingIn, user: CurrentUser, db: DB) -> ProfileOut:
 @router.put("/api/profile", response_model=ProfileOut, summary="Update profile, goals and preferences")
 def update_profile(body: ProfileUpdate, user: CurrentUser, db: DB) -> ProfileOut:
     p = _profile(db, user)
+    before = {"full_name": user.full_name, **snapshot(p, PROFILE_AUDIT_FIELDS)}
     data = body.model_dump(exclude_unset=True)
     if "full_name" in data and data["full_name"]:
         user.full_name = " ".join(data.pop("full_name").split())
@@ -99,6 +123,7 @@ def update_profile(body: ProfileUpdate, user: CurrentUser, db: DB) -> ProfileOut
     for k, v in data.items():
         if v is not None or k in ("background", "business_experience", "education"):
             setattr(p, k, v)
-    audit(db, user.id, "profile.updated", "user", user.id, fields=sorted(body.model_fields_set))
+    diff = changes(before, {"full_name": user.full_name, **snapshot(p, PROFILE_AUDIT_FIELDS)})
+    audit(db, user.id, "profile.updated", "user", user.id, fields=sorted(body.model_fields_set), changes=diff)
     db.commit()
     return _out(db, user)

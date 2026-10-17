@@ -55,6 +55,8 @@ class AIEvaluation(Base):
     error: Mapped[str | None] = mapped_column(Text)
     attempts: Mapped[int] = mapped_column(Integer, default=1)
     latency_ms: Mapped[int | None] = mapped_column(Integer)
+    # Language the free texts were generated in ("ru" | "kk" | "en"); NULL for rows written before it was recorded.
+    language: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 
     prompt_version: Mapped[AIPromptVersion | None] = relationship()

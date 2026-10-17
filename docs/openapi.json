@@ -275,6 +275,158 @@
         ]
       }
     },
+    "/api/auth/me/language": {
+      "put": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Save the interface language for this account",
+        "operationId": "set_language_api_auth_me_language_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LanguageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/set-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Add a password to an account created with Google (requires a sign-in in the last 10 minutes)",
+        "operationId": "set_password_api_auth_set_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/auth/password": {
       "post": {
         "tags": [
@@ -917,6 +1069,402 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/auth/providers": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Which sign-in methods this server offers",
+        "operationId": "providers_api_auth_providers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Providers Api Auth Providers Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google/start": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Start \u201cContinue with Google\u201d (redirects to Google)",
+        "operationId": "google_start_api_auth_google_start_get",
+        "parameters": [
+          {
+            "name": "next",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next"
+            }
+          },
+          {
+            "name": "remember",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Remember"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirect to Google, or back to /login with oauth_error"
+          }
+        }
+      }
+    },
+    "/api/auth/google/link": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Start linking Google to the signed-in account (returns the Google URL)",
+        "operationId": "google_link_start_api_auth_google_link_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/google": {
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Unlink Google (only if the account keeps a password)",
+        "operationId": "google_unlink_api_auth_google_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Google redirects here after consent",
+        "operationId": "google_callback_api_auth_google_callback_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Signed in (or linked) and redirected into the app"
+          }
+        }
       }
     },
     "/api/goals": {
@@ -4153,7 +4701,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Competencies",
+        "summary": "Competencies (all statuses)",
         "operationId": "competencies_api_admin_competencies_get",
         "responses": {
           "200": {
@@ -4162,10 +4710,84 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/CompetencyOut"
+                    "$ref": "#/components/schemas/CompetencyAdminOut"
                   },
                   "type": "array",
                   "title": "Response Competencies Api Admin Competencies Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Create a competency (draft unless published explicitly)",
+        "operationId": "create_competency_api_admin_competencies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompetencyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompetencyAdminOut"
                 }
               }
             }
@@ -4257,7 +4879,94 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompetencyOut"
+                  "$ref": "#/components/schemas/CompetencyAdminOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/competencies/{competency_id}/status": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Publish, unpublish or archive",
+        "operationId": "competency_status_api_admin_competencies__competency_id__status_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "competency_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Competency Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompetencyAdminOut"
                 }
               }
             }
@@ -4310,7 +5019,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Question bank",
+        "summary": "Question bank (all versions)",
         "operationId": "questions_api_admin_questions_get",
         "security": [
           {
@@ -4332,6 +5041,22 @@
                 }
               ],
               "title": "Assessment Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
             }
           }
         ],
@@ -4472,7 +5197,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Update Question",
+        "summary": "Edit (versioned once answered)",
+        "description": "An unanswered question is edited in place. Once learners answered it, a content change creates a new version\n(a new question id, `previous_id` \u2192 this one) used by new attempts, and this version is archived so completed\nattempts keep their exact questions and scores.",
         "operationId": "update_question_api_admin_questions__question_id__put",
         "security": [
           {
@@ -4557,8 +5283,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Deactivate (history is preserved)",
-        "operationId": "deactivate_question_api_admin_questions__question_id__delete",
+        "summary": "Archive (history is preserved)",
+        "operationId": "archive_question_api_admin_questions__question_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -4582,6 +5308,93 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/questions/{question_id}/status": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Publish or archive",
+        "operationId": "question_status_api_admin_questions__question_id__status_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "question_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Question Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionAdminOut"
                 }
               }
             }
@@ -4867,16 +5680,39 @@
         ],
         "summary": "Resources",
         "operationId": "resources_api_admin_resources_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ResourceAdminOut"
                   },
-                  "type": "array",
                   "title": "Response Resources Api Admin Resources Get"
                 }
               }
@@ -4922,12 +5758,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       },
       "post": {
         "tags": [
@@ -4935,15 +5766,20 @@
         ],
         "summary": "Create Resource",
         "operationId": "create_resource_api_admin_resources_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ResourceIn"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -4996,12 +5832,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/admin/resources/{resource_id}": {
@@ -5094,8 +5925,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Unpublish a resource",
-        "operationId": "unpublish_resource_api_admin_resources__resource_id__delete",
+        "summary": "Archive a resource (history is kept)",
+        "operationId": "archive_resource_api_admin_resources__resource_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -5166,6 +5997,93 @@
         }
       }
     },
+    "/api/admin/resources/{resource_id}/status": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Publish, unpublish, archive",
+        "operationId": "resource_status_api_admin_resources__resource_id__status_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Resource Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceAdminOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/tasks": {
       "get": {
         "tags": [
@@ -5173,16 +6091,39 @@
         ],
         "summary": "Tasks",
         "operationId": "tasks_api_admin_tasks_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ContentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/TaskAdminOut"
                   },
-                  "type": "array",
                   "title": "Response Tasks Api Admin Tasks Get"
                 }
               }
@@ -5228,12 +6169,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       },
       "post": {
         "tags": [
@@ -5241,15 +6177,20 @@
         ],
         "summary": "Create Task",
         "operationId": "create_task_api_admin_tasks_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TaskIn"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -5302,12 +6243,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/admin/tasks/{task_id}": {
@@ -5400,8 +6336,8 @@
         "tags": [
           "admin"
         ],
-        "summary": "Unpublish a task",
-        "operationId": "unpublish_task_api_admin_tasks__task_id__delete",
+        "summary": "Archive a task (submissions are kept)",
+        "operationId": "archive_task_api_admin_tasks__task_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -5425,6 +6361,93 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/tasks/{task_id}/status": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Publish, unpublish or archive",
+        "operationId": "task_status_api_admin_tasks__task_id__status_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskAdminOut"
                 }
               }
             }
@@ -5816,6 +6839,154 @@
         }
       }
     },
+    "/api/admin/translations/status": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Translation completeness of the content (ru, kk)",
+        "description": "`summary` counts every row of the selected entities per language and status (ignoring the status filter);\n`items` lists the rows whose status, in any selected language, is one of the selected statuses.",
+        "operationId": "translations_status_api_admin_translations_status_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated: area, competency, level, goal, assessment, question, option, resource, task, plan",
+              "title": "Entity"
+            },
+            "description": "Comma-separated: area, competency, level, goal, assessment, question, option, resource, task, plan"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated: ru, kk",
+              "title": "Language"
+            },
+            "description": "Comma-separated: ru, kk"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated: complete, partial, missing, stale",
+              "title": "Status"
+            },
+            "description": "Comma-separated: complete, partial, missing, stale"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Translations Status Api Admin Translations Status Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/users": {
       "get": {
         "tags": [
@@ -5880,6 +7051,30 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ru",
+                    "kk",
+                    "en",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Saved interface language; none = not chosen",
+              "title": "Language"
+            },
+            "description": "Saved interface language; none = not chosen"
           },
           {
             "name": "plan",
@@ -6078,6 +7273,83 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "admin-users"
+        ],
+        "summary": "Create an account (no password: the person sets one through an emailed link)",
+        "operationId": "create_user_api_admin_users_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserCreated"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "EMAIL_TAKEN \u2014 an account with this email exists (repeat requests too)"
+          }
+        }
       }
     },
     "/api/admin/users/{user_id}": {
@@ -6160,7 +7432,7 @@
         "tags": [
           "admin-users"
         ],
-        "summary": "Edit name or email (reason required)",
+        "summary": "Edit name, email or interface language (reason required; send expected_version)",
         "operationId": "update_user_api_admin_users__user_id__patch",
         "security": [
           {
@@ -6238,6 +7510,9 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "EMAIL_TAKEN, or VERSION_CONFLICT when the account changed since it was loaded"
           }
         }
       },
@@ -6355,7 +7630,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReasonIn"
+                "$ref": "#/components/schemas/VersionedReasonIn"
               }
             }
           }
@@ -6442,7 +7717,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReasonIn"
+                "$ref": "#/components/schemas/VersionedReasonIn"
               }
             }
           }
@@ -6529,7 +7804,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReasonIn"
+                "$ref": "#/components/schemas/VersionedReasonIn"
               }
             }
           }
@@ -6765,6 +8040,96 @@
         }
       }
     },
+    "/api/admin/users/{user_id}/resend-verification": {
+      "post": {
+        "tags": [
+          "admin-users"
+        ],
+        "summary": "Send the email confirmation link again",
+        "operationId": "resend_verification_api_admin_users__user_id__resend_verification_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "No email delivery is configured"
+          }
+        }
+      }
+    },
     "/api/admin/users/{user_id}/roles": {
       "post": {
         "tags": [
@@ -6892,6 +8257,23 @@
               "minLength": 3,
               "maxLength": 500,
               "title": "Reason"
+            }
+          },
+          {
+            "name": "expected_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expected Version"
             }
           }
         ],
@@ -8562,6 +9944,72 @@
         ]
       }
     },
+    "/api/sync/state": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Versions of the data an open tab may need to refresh",
+        "operationId": "sync_state_api_sync_state_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncState"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -8732,6 +10180,17 @@
             ],
             "title": "Output"
           },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -8820,6 +10279,17 @@
               }
             ],
             "title": "Explanation"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           }
         },
         "type": "object",
@@ -9310,11 +10780,118 @@
         ],
         "title": "AdminStats"
       },
+      "AdminUserCreate": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Roles"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "title": "Status",
+            "default": "active"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ru",
+                  "kk",
+                  "en"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "send_invitation": {
+            "type": "boolean",
+            "title": "Send Invitation",
+            "default": true
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email"
+        ],
+        "title": "AdminUserCreate",
+        "description": "A new account created by staff. Staff never choose a password: the person sets one through an emailed link."
+      },
+      "AdminUserCreated": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AdminUserDetail"
+          },
+          "invitation": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "logged",
+              "unavailable",
+              "failed",
+              "not_requested"
+            ],
+            "title": "Invitation"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "invitation",
+          "message"
+        ],
+        "title": "AdminUserCreated"
+      },
       "AdminUserDetail": {
         "properties": {
           "id": {
             "type": "integer",
             "title": "Id"
+          },
+          "lock_version": {
+            "type": "integer",
+            "title": "Lock Version",
+            "description": "Send back as expected_version when editing (optimistic locking)"
           },
           "email": {
             "type": "string",
@@ -9323,6 +10900,34 @@
           "full_name": {
             "type": "string",
             "title": "Full Name"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language",
+            "description": "Saved interface language (ru | kk | en); null = never chosen"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "title": "Email Verified"
+          },
+          "auth_methods": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "email",
+                "google"
+              ]
+            },
+            "type": "array",
+            "title": "Auth Methods",
+            "description": "How the person can sign in: email = email + password set; google = Google linked. Hashes and OAuth subjects are never exposed."
           },
           "status": {
             "$ref": "#/components/schemas/AccountStatus"
@@ -9519,6 +11124,15 @@
             "type": "array",
             "title": "Sessions"
           },
+          "entitlements": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Entitlements",
+            "description": "What the current plan allows (no usage counters)"
+          },
           "audit_events": {
             "anyOf": [
               {
@@ -9533,6 +11147,36 @@
             ],
             "title": "Audit Events",
             "description": "Null when the viewer lacks audit.view"
+          },
+          "activity": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AuditLogOut"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity",
+            "description": "Actions by the user themselves (audit.view only)"
+          },
+          "change_history": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AuditLogOut"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change History",
+            "description": "Changes made to this account and its subscriptions, with field diffs (audit.view only)"
           },
           "can_manage": {
             "type": "boolean",
@@ -9550,8 +11194,12 @@
         "type": "object",
         "required": [
           "id",
+          "lock_version",
           "email",
           "full_name",
+          "language",
+          "email_verified",
+          "auth_methods",
           "status",
           "status_reason",
           "status_changed_at",
@@ -9576,7 +11224,10 @@
           "subscription",
           "subscription_history",
           "sessions",
+          "entitlements",
           "audit_events",
+          "activity",
+          "change_history",
           "can_manage",
           "can_assign_roles",
           "can_delete"
@@ -9632,6 +11283,17 @@
           "onboarding_completed": {
             "type": "boolean",
             "title": "Onboarding Completed"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           },
           "created_at": {
             "type": "string",
@@ -9690,6 +11352,7 @@
           "subscription_status",
           "email_verified",
           "onboarding_completed",
+          "language",
           "created_at",
           "last_login_at",
           "last_seen_at",
@@ -9726,11 +11389,40 @@
             ],
             "title": "Email"
           },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ru",
+                  "kk",
+                  "en"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "reason": {
             "type": "string",
             "maxLength": 500,
             "minLength": 3,
             "title": "Reason"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version",
+            "description": "lock_version the editor last saw; a newer stored version \u2192 409"
           }
         },
         "type": "object",
@@ -9825,6 +11517,10 @@
       },
       "AreaOut": {
         "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
           "code": {
             "type": "string",
             "title": "Code"
@@ -9840,6 +11536,7 @@
         },
         "type": "object",
         "required": [
+          "id",
           "code",
           "name",
           "color_token"
@@ -9911,6 +11608,34 @@
             "type": "boolean",
             "title": "Is Active"
           },
+          "lock_version": {
+            "type": "integer",
+            "title": "Lock Version"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
+          "translation_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation Status"
+          },
           "question_count": {
             "type": "integer",
             "title": "Question Count",
@@ -9930,7 +11655,9 @@
           "description",
           "estimated_minutes",
           "version",
-          "is_active"
+          "is_active",
+          "lock_version",
+          "translations"
         ],
         "title": "AssessmentAdminOut"
       },
@@ -10049,6 +11776,33 @@
       },
       "AssessmentUpdate": {
         "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
           "title": {
             "anyOf": [
               {
@@ -10445,7 +12199,8 @@
           },
           "access_token": {
             "type": "string",
-            "title": "Access Token"
+            "title": "Access Token",
+            "description": "Session token for API clients (Bearer). Browsers use the httpOnly cookie."
           },
           "token_type": {
             "type": "string",
@@ -10521,6 +12276,126 @@
           "new_password"
         ],
         "title": "ChangePasswordIn"
+      },
+      "CompetencyAdminOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "area_id": {
+            "type": "integer",
+            "title": "Area Id"
+          },
+          "area": {
+            "$ref": "#/components/schemas/AreaOut"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "short_name": {
+            "type": "string",
+            "title": "Short Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "reflection_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflection Prompt"
+          },
+          "importance": {
+            "type": "number",
+            "title": "Importance"
+          },
+          "learning_priority": {
+            "type": "number",
+            "title": "Learning Priority"
+          },
+          "default_target": {
+            "type": "integer",
+            "title": "Default Target"
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          },
+          "lock_version": {
+            "type": "integer",
+            "title": "Lock Version"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
+          "translation_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "area_id",
+          "area",
+          "name",
+          "short_name",
+          "description",
+          "hint",
+          "reflection_prompt",
+          "importance",
+          "learning_priority",
+          "default_target",
+          "sort_order",
+          "status",
+          "lock_version",
+          "translations"
+        ],
+        "title": "CompetencyAdminOut"
       },
       "CompetencyCatalog": {
         "properties": {
@@ -10661,6 +12536,122 @@
           "reassess_question_count"
         ],
         "title": "CompetencyDetail"
+      },
+      "CompetencyIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 48,
+            "minLength": 2,
+            "pattern": "^[a-z0-9_-]+$",
+            "title": "Code"
+          },
+          "area_id": {
+            "type": "integer",
+            "title": "Area Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "short_name": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 2,
+            "title": "Short Name"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Description"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "reflection_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflection Prompt"
+          },
+          "importance": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Importance",
+            "default": 0.5
+          },
+          "learning_priority": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Learning Priority",
+            "default": 0.5
+          },
+          "default_target": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 40.0,
+            "title": "Default Target",
+            "default": 70
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus",
+            "default": "draft"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "area_id",
+          "name",
+          "short_name",
+          "description"
+        ],
+        "title": "CompetencyIn"
       },
       "CompetencyLinkIn": {
         "properties": {
@@ -11003,6 +12994,67 @@
       },
       "CompetencyUpdate": {
         "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "area_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Id"
+          },
+          "sort_order": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort Order"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
           "name": {
             "anyOf": [
               {
@@ -11105,6 +13157,16 @@
         },
         "type": "object",
         "title": "CompetencyUpdate"
+      },
+      "ContentStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "published",
+          "archived"
+        ],
+        "title": "ContentStatus",
+        "description": "Lifecycle of editable content. Only `published` content is visible on the learner platform."
       },
       "CriterionOut": {
         "properties": {
@@ -11535,6 +13597,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           }
         },
         "type": "object",
@@ -11734,6 +13807,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Generated At"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           }
         },
         "type": "object",
@@ -11747,6 +13831,24 @@
           "generated_at"
         ],
         "title": "InsightOut"
+      },
+      "LanguageIn": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "ru",
+              "kk",
+              "en"
+            ],
+            "title": "Language"
+          }
+        },
+        "type": "object",
+        "required": [
+          "language"
+        ],
+        "title": "LanguageIn"
       },
       "LearningFormat": {
         "type": "string",
@@ -11805,6 +13907,11 @@
             "maxLength": 128,
             "minLength": 1,
             "title": "Password"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "title": "Remember Me",
+            "default": false
           }
         },
         "type": "object",
@@ -11819,6 +13926,28 @@
           "message": {
             "type": "string",
             "title": "Message"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
           }
         },
         "type": "object",
@@ -12025,6 +14154,21 @@
               }
             ],
             "title": "Value"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
           }
         },
         "type": "object",
@@ -12243,14 +14387,11 @@
           "password": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 1,
-            "title": "Password"
+            "title": "Password",
+            "default": ""
           }
         },
         "type": "object",
-        "required": [
-          "password"
-        ],
         "title": "PasswordConfirmIn"
       },
       "PermissionOut": {
@@ -12334,6 +14475,34 @@
             "type": "integer",
             "title": "Subscriber Count",
             "default": 0
+          },
+          "lock_version": {
+            "type": "integer",
+            "title": "Lock Version"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
+          "translation_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation Status"
           }
         },
         "type": "object",
@@ -12349,7 +14518,8 @@
           "is_active",
           "is_default",
           "sort_order",
-          "entitlements"
+          "entitlements",
+          "lock_version"
         ],
         "title": "PlanAdminOut"
       },
@@ -12405,13 +14575,27 @@
               }
             ],
             "title": "Limit Value"
+          },
+          "window_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Days",
+            "description": "Rolling window of a limit (e.g. 30 days), so plan pages don't have to assume it.",
+            "readOnly": true
           }
         },
         "type": "object",
         "required": [
           "feature_key",
           "enabled",
-          "limit_value"
+          "limit_value",
+          "window_days"
         ],
         "title": "PlanEntitlementOut"
       },
@@ -12483,6 +14667,21 @@
             },
             "type": "array",
             "title": "Entitlements"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
           }
         },
         "type": "object",
@@ -12606,6 +14805,33 @@
             ],
             "title": "Entitlements"
           },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
           "reason": {
             "type": "string",
             "maxLength": 500,
@@ -12696,7 +14922,14 @@
             "title": "Weekly Learning Minutes"
           },
           "language": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Language"
           },
           "notify_reassessment": {
@@ -13269,6 +15502,52 @@
             "type": "boolean",
             "title": "Is Active"
           },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          },
+          "lock_version": {
+            "type": "integer",
+            "title": "Lock Version"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "previous_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Id"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
+          "translation_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation Status"
+          },
           "options": {
             "items": {
               "additionalProperties": true,
@@ -13296,6 +15575,17 @@
           "answer_count": {
             "type": "integer",
             "title": "Answer Count"
+          },
+          "replaced_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replaced Id"
           }
         },
         "type": "object",
@@ -13310,6 +15600,11 @@
           "reverse_scored",
           "min_length",
           "is_active",
+          "status",
+          "lock_version",
+          "version",
+          "previous_id",
+          "translations",
           "options",
           "competencies",
           "rubric",
@@ -13319,6 +15614,18 @@
       },
       "QuestionIn": {
         "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
           "assessment_id": {
             "type": "integer",
             "title": "Assessment Id"
@@ -13374,9 +15681,40 @@
             "default": 0
           },
           "is_active": {
-            "type": "boolean",
-            "title": "Is Active",
-            "default": true
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
           },
           "options": {
             "items": {
@@ -13713,6 +16051,23 @@
             "type": "boolean",
             "title": "Accept Terms",
             "description": "Must be true: the user accepts the terms and the privacy notice"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ru",
+                  "kk",
+                  "en"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language",
+            "description": "Interface language to save"
           }
         },
         "type": "object",
@@ -13796,6 +16151,37 @@
           "is_published": {
             "type": "boolean",
             "title": "Is Published"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          },
+          "lock_version": {
+            "type": "integer",
+            "title": "Lock Version"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
+          "translation_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation Status"
           }
         },
         "type": "object",
@@ -13810,7 +16196,10 @@
           "duration_minutes",
           "content",
           "url",
-          "is_published"
+          "is_published",
+          "status",
+          "lock_version",
+          "translations"
         ],
         "title": "ResourceAdminOut"
       },
@@ -13946,6 +16335,18 @@
       },
       "ResourceIn": {
         "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
           "slug": {
             "type": "string",
             "maxLength": 120,
@@ -13999,9 +16400,40 @@
             "title": "Url"
           },
           "is_published": {
-            "type": "boolean",
-            "title": "Is Published",
-            "default": true
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Published"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
           }
         },
         "type": "object",
@@ -14137,6 +16569,19 @@
             "maxLength": 500,
             "minLength": 3,
             "title": "Reason"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version",
+            "description": "lock_version the editor last saw; a newer stored version \u2192 409"
           },
           "role_key": {
             "type": "string",
@@ -14397,6 +16842,16 @@
           "current": {
             "type": "boolean",
             "title": "Current"
+          },
+          "remember": {
+            "type": "boolean",
+            "title": "Remember",
+            "default": false
+          },
+          "auth_method": {
+            "type": "string",
+            "title": "Auth Method",
+            "default": "password"
           }
         },
         "type": "object",
@@ -14410,6 +16865,21 @@
           "current"
         ],
         "title": "SessionOut"
+      },
+      "SetPasswordIn": {
+        "properties": {
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_password"
+        ],
+        "title": "SetPasswordIn"
       },
       "SnapshotOut": {
         "properties": {
@@ -14524,6 +16994,30 @@
           "resumed"
         ],
         "title": "StartAttemptOut"
+      },
+      "StatusIn": {
+        "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "StatusIn"
       },
       "SubmitIn": {
         "properties": {
@@ -14947,6 +17441,51 @@
         ],
         "title": "SubscriptionStatusIn"
       },
+      "SyncState": {
+        "properties": {
+          "user_version": {
+            "type": "integer",
+            "title": "User Version",
+            "description": "The account's lock_version: changes when profile, status or roles change"
+          },
+          "access_version": {
+            "type": "string",
+            "title": "Access Version",
+            "description": "Changes when the account's roles or effective permissions change"
+          },
+          "entitlements_version": {
+            "type": "string",
+            "title": "Entitlements Version",
+            "description": "Changes when the plan, subscription or plan limits change"
+          },
+          "content_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Version",
+            "description": "Latest change to published learning/assessment content"
+          },
+          "server_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Server Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_version",
+          "access_version",
+          "entitlements_version",
+          "content_version",
+          "server_time"
+        ],
+        "title": "SyncState"
+      },
       "TaskAdminOut": {
         "properties": {
           "id": {
@@ -14995,6 +17534,37 @@
           "is_published": {
             "type": "boolean",
             "title": "Is Published"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ContentStatus"
+          },
+          "lock_version": {
+            "type": "integer",
+            "title": "Lock Version"
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
+          },
+          "translation_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation Status"
           }
         },
         "type": "object",
@@ -15009,7 +17579,10 @@
           "duration_minutes",
           "rubric",
           "min_length",
-          "is_published"
+          "is_published",
+          "status",
+          "lock_version",
+          "translations"
         ],
         "title": "TaskAdminOut"
       },
@@ -15188,6 +17761,18 @@
       },
       "TaskIn": {
         "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
           "slug": {
             "type": "string",
             "maxLength": 120,
@@ -15240,9 +17825,40 @@
             "default": 80
           },
           "is_published": {
-            "type": "boolean",
-            "title": "Is Published",
-            "default": true
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Published"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "translations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translations"
           }
         },
         "type": "object",
@@ -15396,6 +18012,27 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "has_password": {
+            "type": "boolean",
+            "title": "Has Password",
+            "default": true
+          },
+          "google_linked": {
+            "type": "boolean",
+            "title": "Google Linked",
+            "default": false
           }
         },
         "type": "object",
@@ -15411,6 +18048,34 @@
           "created_at"
         ],
         "title": "UserOut"
+      },
+      "VersionedReasonIn": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version",
+            "description": "lock_version the editor last saw; a newer stored version \u2192 409"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "VersionedReasonIn"
       },
       "app__schemas__billing__PlanOut": {
         "properties": {

@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.content_i18n import base_text
 from app.core.database import as_utc, utcnow
 from app.core.errors import ConflictError, NotFoundError, ValidationError
 from app.models import PlanEntitlement, SubscriptionEvent, SubscriptionPlan, UserSubscription
@@ -96,6 +97,13 @@ DEFAULT_PLANS: list[tuple[str, str, str, int, BillingInterval, bool, dict[str, t
 ]
 
 
+def _plan_translations(key: str) -> dict | None:
+    from app.seed.translations import PLANS
+
+    entry = PLANS.get(key)
+    return {lang: dict(values) for lang, values in entry.items() if values} if entry else None
+
+
 def ensure_default_plans(db: Session) -> None:
     if db.scalar(select(SubscriptionPlan.id).limit(1)) is not None:
         return  # catalogue is managed by admins after the first seed
@@ -110,6 +118,8 @@ def ensure_default_plans(db: Session) -> None:
             is_default=default,
             sort_order=i,
             is_active=True,
+            # Russian and Kazakh names/descriptions, so plans created without the seed are translated too.
+            translations=_plan_translations(key),
         )
         for fkey, (enabled, limit) in ents.items():
             plan.entitlements.append(PlanEntitlement(feature_key=fkey, enabled=enabled, limit_value=limit))
@@ -198,6 +208,41 @@ def apply_expiry(db: Session, sub: UserSubscription) -> None:
         )
 
 
+def reactivate_by_payment(db: Session, sub: UserSubscription, *, reason: str) -> bool:
+    """A paid renewal for a subscription that lazy expiry already ended (the renewal webhook arrived after
+    `expires_at`). Only `expired` subscriptions that ended by reaching their period end are reopened, and only
+    when the user has no other current subscription (a newer one is never displaced). Returns True if reopened.
+    This is the only path out of a terminal status; it is recorded as a `reactivated` event."""
+    if sub.status != S.EXPIRED:
+        return False
+    lock_user_subscriptions(db, sub.user_id)
+    other = db.scalar(
+        select(UserSubscription.id).where(
+            UserSubscription.user_id == sub.user_id,
+            UserSubscription.status.in_(CURRENT),
+            UserSubscription.id != sub.id,
+        )
+    )
+    if other is not None:
+        return False
+    prev = sub.status.value
+    sub.status = S.ACTIVE
+    sub.ended_at = None
+    db.flush()
+    record(
+        db, sub, "reactivated", actor_id=None, source=SubscriptionSource.PAYMENT.value, from_status=prev, reason=reason
+    )
+    return True
+
+
+def lock_user_subscriptions(db: Session, user_id: int) -> None:
+    """Serialize subscription changes for one user (PostgreSQL row locks; SQLite serializes writers anyway)."""
+    if db.get_bind().dialect.name == "postgresql":
+        from app.models import User
+
+        db.execute(select(User.id).where(User.id == user_id).with_for_update())
+
+
 def current_subscription(db: Session, user_id: int) -> UserSubscription | None:
     subs = list(
         db.scalars(
@@ -244,6 +289,9 @@ def assign(
         raise ValidationError("The end date must be in the future.", "INVALID_EXPIRY")
     if status not in (S.ACTIVE, S.TRIALING, S.INCOMPLETE):
         raise ValidationError("New subscriptions start as active, trialing or incomplete.", "INVALID_STATUS")
+    # One current subscription per user (also enforced by a partial unique index): lock the user so concurrent
+    # assignments queue up instead of both canceling the old row and inserting two new ones.
+    lock_user_subscriptions(db, user_id)
     for old in db.scalars(
         select(UserSubscription).where(UserSubscription.user_id == user_id, UserSubscription.status.in_(CURRENT))
     ):
@@ -253,9 +301,11 @@ def assign(
             S.CANCELED,
             actor_id=actor_id,
             source=source.value,
-            reason=f"Replaced by {plan.name}: {reason}",
+            # Stored history text: the English base name, whatever language the request that assigned it used.
+            reason=f"Replaced by {base_text(plan, 'name')}: {reason}",
             event_type="replaced",
         )
+    db.flush()  # the replaced rows leave the "current" index before the new row enters it
     sub = UserSubscription(
         user_id=user_id,
         plan_id=plan.id,

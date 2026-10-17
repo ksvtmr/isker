@@ -44,6 +44,7 @@
 .ik-assess__body{max-width:720px;margin:0 auto;padding:40px 24px 120px}
 .ik-assess__nav{margin-top:24px;display:flex;justify-content:space-between;gap:12px}
 .ik-toast{position:fixed;right:24px;bottom:24px;z-index:60;animation:isk-rise .2s ease;width:min(380px,calc(100vw - 32px))}
+.ik-toast[data-empty]{pointer-events:none;animation:none}
 .ik-avatar{width:32px;height:32px;border-radius:999px;border:0;background:var(--color-brand-100);color:var(--color-brand-700);font-size:12px;font-weight:600}
 @media (max-width:1100px){.ik-grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.ik-grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.ik-grid3>.ik-span2{grid-column:1/-1}.ik-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.ik-filters>:first-child{grid-column:1/-1}.ik-plan{grid-template-columns:1fr}}
 @media (max-width:767px){
@@ -72,7 +73,7 @@
 .ik-loop{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .ik-loop__step{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:9999px;background:#fff;border:1px solid var(--color-neutral-200);font-size:13px;font-weight:500;color:var(--color-neutral-700)}
 .ik-admin-nav{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:24px}
-.ik-kv{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:8px 16px;font-size:14px}
+.ik-kv{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:8px 16px;font-size:14px}
 .ik-kv dt{color:var(--color-neutral-500)}
 .ik-pre{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;background:var(--color-neutral-50);border:1px solid var(--color-neutral-100);border-radius:var(--radius-md);padding:12px;max-height:320px;overflow:auto}
 .ik-steps{display:flex;gap:6px}
@@ -83,3 +84,7 @@
   .ik-kv{grid-template-columns:1fr}
 }
 .ik-table-wrap{position:relative}
+.ik-auth__top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.ik-google-btn{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:10px;text-decoration:none}
+.ik-google-btn:disabled{opacity:.6;cursor:not-allowed}
+.ik-auth__row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}

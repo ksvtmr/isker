@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.content_i18n import base_language, base_text
+from app.core.i18n import tr
 from app.models import (
     AssessmentAttempt,
     Competency,
@@ -32,6 +34,7 @@ from app.models import (
 from app.models.enums import (
     ActivityKind,
     ActivityStatus,
+    ContentStatus,
     Difficulty,
     LearningFormat,
     PracticeStatus,
@@ -96,19 +99,40 @@ def rank_tasks(tasks: list[PracticalTask], score: int, ctx: LearnerContext) -> l
     )
 
 
-def build_reason(gap: CompetencyGap, comp: Competency, rel: Relevance, stretch: bool = False) -> str:
+def _reason(current: int, target: int, gap: int, stretch: bool, goal: str | None, comp: Competency, name: str) -> str:
     if stretch:
-        text = (
-            f"Score {gap.current_score} meets your target of {gap.target_score}; "
-            "this is your lowest area, so it is a stretch goal"
-        )
+        text = tr("reason.stretch", score=current, target=target)
     else:
-        text = f"Score {gap.current_score} is {gap.gap} points below your target of {gap.target_score}"
-    if rel.goal is not None and rel.value >= GOAL_MENTION_THRESHOLD:
-        text += f", and it matters for your goal “{rel.goal.title}”"
+        text = tr("reason.gap", score=current, gap=gap, target=target)
+    if goal is not None:
+        text += tr("reason.goal", goal=goal)
     elif comp.importance >= 0.8:
-        text += f", and {comp.name} has a large effect on early-stage ventures"
+        text += tr("reason.importance", name=name)
     return text + "."
+
+
+def _goal_for(rel: Relevance):
+    return rel.goal if rel.goal is not None and rel.value >= GOAL_MENTION_THRESHOLD else None
+
+
+def build_reason(gap: CompetencyGap, comp: Competency, rel: Relevance, stretch: bool = False) -> str:
+    """The stored reason, in the base language (English). Screens show `localized_reason` instead."""
+    goal = _goal_for(rel)
+    with base_language():
+        return _reason(
+            gap.current_score, gap.target_score, gap.gap, stretch,
+            base_text(goal, "title") if goal is not None else None, comp, base_text(comp, "name"),
+        )
+
+
+def localized_reason(rec: Recommendation) -> str:
+    """The stored reason is the English base text; rebuild it in the language of this request."""
+    g, comp = rec.gap, rec.competency
+    if g is None or comp is None:
+        return rec.reason
+    return _reason(
+        g.current_score, g.target_score, g.gap, g.gap <= 0, rec.goal.title if rec.goal else None, comp, comp.name
+    )
 
 
 def learner_context(db: Session, user_id: int) -> LearnerContext:
@@ -157,13 +181,15 @@ def _create(
     resources = list(
         db.scalars(
             select(LearningResource).where(
-                LearningResource.competency_id == comp.id, LearningResource.is_published.is_(True)
+                LearningResource.competency_id == comp.id, LearningResource.status == ContentStatus.PUBLISHED
             )
         )
     )
     tasks = list(
         db.scalars(
-            select(PracticalTask).where(PracticalTask.competency_id == comp.id, PracticalTask.is_published.is_(True))
+            select(PracticalTask).where(
+                PracticalTask.competency_id == comp.id, PracticalTask.status == ContentStatus.PUBLISHED
+            )
         )
     )
     ranked_res = rank_resources(resources, gap.current_score, ctx)
@@ -175,7 +201,7 @@ def _create(
         attempt_id=attempt.id,
         gap_id=gap.id,
         competency_id=comp.id,
-        goal_id=rel.goal.id if rel.goal is not None and rel.value >= GOAL_MENTION_THRESHOLD else None,
+        goal_id=_goal_for(rel).id if _goal_for(rel) is not None else None,
         resource_id=res.id if res else None,
         task_id=task.id if task else None,
         priority=priority,
@@ -184,13 +210,15 @@ def _create(
     )
     db.add(rec)
     db.flush()
+    # Stored step texts are the English base text (screens render them again in the request language, see
+    # services/views.py), so they never depend on the language of the request that created the plan.
     steps = []
     if res is not None:
         done = res.id in ctx.completed_resources
         steps.append(
             LearningActivity(
                 kind=ActivityKind.LEARN,
-                title=res.title,
+                title=base_text(res, "title"),
                 resource_id=res.id,
                 status=ActivityStatus.DONE if done else ActivityStatus.TODO,
             )
@@ -200,19 +228,21 @@ def _create(
         steps.append(
             LearningActivity(
                 kind=ActivityKind.PRACTICE,
-                title=task.title,
+                title=base_text(task, "title"),
                 task_id=task.id,
                 status=ActivityStatus.DONE if done else ActivityStatus.TODO,
             )
         )
-    steps.append(
-        LearningActivity(
-            kind=ActivityKind.REFLECT,
-            title="Reflect on what you learned",
-            prompt=comp.reflection_prompt or f"What did you learn about {comp.name}?",
+    name = base_text(comp, "name")
+    with base_language():
+        steps.append(
+            LearningActivity(
+                kind=ActivityKind.REFLECT,
+                title=tr("step.reflect"),
+                prompt=base_text(comp, "reflection_prompt") or tr("step.reflect_prompt", name=name),
+            )
         )
-    )
-    steps.append(LearningActivity(kind=ActivityKind.REASSESS, title=f"Reassess {comp.name}"))
+        steps.append(LearningActivity(kind=ActivityKind.REASSESS, title=tr("step.reassess", name=name)))
     for i, a in enumerate(steps):
         a.sort_order = i
         a.user_id = user_id
@@ -231,6 +261,8 @@ def refresh(db: Session, attempt: AssessmentAttempt, gaps: list[CompetencyGap]) 
     has_goals = db.scalar(select(UserGoal.id).where(UserGoal.user_id == user_id).limit(1)) is not None
     ctx = learner_context(db, user_id)
 
+    # Archived or draft competencies keep their scores and gaps (history) but get no new plan steps.
+    gaps = [g for g in gaps if comps[g.competency_id].status == ContentStatus.PUBLISHED]
     ordered = sorted(gaps, key=lambda g: g.priority_rank)
     desired = [g for g in ordered if g.gap > 0][:TOP_N]
     stretch = False
@@ -246,10 +278,12 @@ def refresh(db: Session, attempt: AssessmentAttempt, gaps: list[CompetencyGap]) 
             rec.completed_at = attempt.completed_at
         elif rec.competency_id in desired_by_comp and rec.competency_id not in kept:
             g = desired_by_comp[rec.competency_id]
+            r = relevance_for(rel, g.competency_id, has_goals)
             rec.gap_id, rec.priority_score = g.id, g.priority_score
-            rec.reason = build_reason(
-                g, comps[g.competency_id], relevance_for(rel, g.competency_id, has_goals), stretch
-            )
+            # The goal the reason mentions and the stored goal_id must stay the same goal.
+            goal = _goal_for(r)
+            rec.goal = goal
+            rec.reason = build_reason(g, comps[g.competency_id], r, stretch)
             kept[rec.competency_id] = rec
         else:
             rec.status = RecommendationStatus.SUPERSEDED

@@ -2,14 +2,19 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
-from app.ai.service import evaluate_text
+from app.ai.providers import heuristic_evaluation
+from app.ai.service import RULE_BASED, evaluate_text
 from app.api.deps import DB, CurrentUser
+from app.core.content_i18n import base_text, match_ratings, rubric_aliases
+from app.core.context import language_var
 from app.core.database import utcnow
 from app.core.errors import ConflictError, NotFoundError, ValidationError
+from app.core.ratelimit import enforce
 from app.models import AIEvaluation, Competency, PracticalTask, PracticeSubmission, Recommendation
-from app.models.enums import AIInputType, PracticeStatus, RecommendationStatus
+from app.models.enums import AIInputType, ContentStatus, PracticeStatus, RecommendationStatus
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.learning import FeedbackOut, SubmitIn, TaskDetail, TaskOut
 from app.services import entitlements
@@ -54,7 +59,7 @@ def list_tasks(user: CurrentUser, db: DB, competency: str | None = None) -> list
     stmt = (
         select(PracticalTask)
         .join(Competency)
-        .where(PracticalTask.is_published.is_(True))
+        .where(PracticalTask.status == ContentStatus.PUBLISHED, Competency.status == ContentStatus.PUBLISHED)
         .options(joinedload(PracticalTask.competency))
         .order_by(Competency.sort_order, PracticalTask.id)
     )
@@ -66,13 +71,28 @@ def list_tasks(user: CurrentUser, db: DB, competency: str | None = None) -> list
     return [TaskOut(**_base(t, subs.get(t.id), t.id in recs)) for t in rows]
 
 
-def _get(db, task_id: int) -> PracticalTask:
+def _in_active_plan(db, user_id: int, task_id: int) -> bool:
+    return db.scalar(
+        select(Recommendation.id).where(
+            Recommendation.user_id == user_id,
+            Recommendation.status == RecommendationStatus.ACTIVE,
+            Recommendation.task_id == task_id,
+        ).limit(1)
+    ) is not None
+
+
+def _get(db, task_id: int, history_user_id: int | None = None, plan_user_id: int | None = None) -> PracticalTask:
+    """A published task. With `history_user_id`, an unpublished task the user already submitted to stays readable
+    (their submission and feedback history), but nothing new can be started on it. With `plan_user_id`, an archived
+    task that is still a step of that user's active plan stays fully usable so the plan can be completed."""
     t = db.scalar(
-        select(PracticalTask)
-        .where(PracticalTask.id == task_id, PracticalTask.is_published.is_(True))
-        .options(joinedload(PracticalTask.competency))
+        select(PracticalTask).where(PracticalTask.id == task_id).options(joinedload(PracticalTask.competency))
     )
-    if t is None:
+    in_plan = (t is not None and plan_user_id is not None and t.status == ContentStatus.ARCHIVED
+               and _in_active_plan(db, plan_user_id, t.id))
+    if t is None or (t.status != ContentStatus.PUBLISHED and not in_plan and (
+        history_user_id is None or _sub(db, history_user_id, t.id) is None
+    )):
         raise NotFoundError("Practical task not found", "TASK_NOT_FOUND")
     return t
 
@@ -83,20 +103,56 @@ def _sub(db, user_id: int, task_id: int) -> PracticeSubmission | None:
     )
 
 
-def _feedback(ev: AIEvaluation | None) -> FeedbackOut | None:
+def _ensure_sub(db, user_id: int, task_id: int) -> tuple[PracticeSubmission, bool]:
+    """The user's submission row, created (status started) when missing. A concurrent first request that inserts it
+    too hits the (user_id, task_id) unique constraint inside a savepoint and re-reads the winner's row instead of
+    failing with a 500. Returns (row, created)."""
+    s = _sub(db, user_id, task_id)
+    if s is not None:
+        return s, False
+    try:
+        with db.begin_nested():
+            s = PracticeSubmission(user_id=user_id, task_id=task_id, status=PracticeStatus.STARTED)
+            db.add(s)
+            db.flush()
+        return s, True
+    except IntegrityError:
+        s = _sub(db, user_id, task_id)
+        if s is None:  # pragma: no cover - the conflicting row vanished again
+            raise
+        return s, False
+
+
+def _feedback(ev: AIEvaluation | None, t: PracticalTask, response: str | None) -> FeedbackOut | None:
     if ev is None:
         return None
+    out = ev.output or {}
+    language = ev.language
+    if ev.provider in RULE_BASED and t.rubric:
+        # Deterministic feedback is composed again with the task rubric in the request language (keeping the stored
+        # ratings), so its texts never mix the language it was first generated in with the current one.
+        ratings = match_ratings(out.get("criteria") or [], rubric_aliases(base_text(t, "rubric"), t.translations))
+        out = heuristic_evaluation(t.competency.name, response or ev.input_excerpt or "", t.rubric, ratings)
+        language = language_var.get()
+        evidence, strengths, dev, explanation = (
+            out["evidence"], out["strengths"], out["development_areas"], out["explanation"]
+        )
+    else:
+        evidence, strengths, dev, explanation = (
+            ev.evidence or [], ev.strengths or [], ev.development_areas or [], ev.explanation
+        )
     return FeedbackOut(
         evaluation_id=ev.id,
         score=ev.score or 0,
         level=ev.level or "",
         confidence=ev.confidence,
-        criteria=(ev.output or {}).get("criteria", []),
-        evidence=ev.evidence or [],
-        strengths=ev.strengths or [],
-        development_areas=ev.development_areas or [],
-        explanation=ev.explanation,
+        criteria=out.get("criteria", []),
+        evidence=evidence,
+        strengths=strengths,
+        development_areas=dev,
+        explanation=explanation,
         provider=ev.provider,
+        language=language,
         created_at=ev.created_at,
     )
 
@@ -120,23 +176,24 @@ def _detail(db, user_id: int, t: PracticalTask) -> TaskDetail:
         started_at=s.started_at if s else None,
         submitted_at=s.submitted_at if s else None,
         completed_at=s.completed_at if s else None,
-        feedback=_feedback(ev),
-        reason=rec.reason if rec else None,
+        feedback=_feedback(ev, t, s.response_text if s else None),
+        reason=rec_service.localized_reason(rec) if rec else None,
     )
 
 
 @router.get("/tasks/{task_id}", response_model=TaskDetail, summary="Task, your response and AI feedback")
 def get_task(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
-    return _detail(db, user.id, _get(db, task_id))
+    return _detail(db, user.id, _get(db, task_id, user.id, plan_user_id=user.id))
 
 
 @router.post("/tasks/{task_id}/start", response_model=TaskDetail, summary="Start a task")
 def start(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
-    t = _get(db, task_id)
+    t = _get(db, task_id, plan_user_id=user.id)
     if _sub(db, user.id, t.id) is None:
         entitlements.require(db, user, "practice.tasks")
-        db.add(PracticeSubmission(user_id=user.id, task_id=t.id, status=PracticeStatus.STARTED))
-        audit(db, user.id, "practice.started", "practical_task", t.id)
+        _, created = _ensure_sub(db, user.id, t.id)
+        if created:
+            audit(db, user.id, "practice.started", "practical_task", t.id)
     rec_service.on_task_started(db, user.id, t.id)
     db.commit()
     return _detail(db, user.id, t)
@@ -148,18 +205,18 @@ def start(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
     summary="Submit a response and receive rubric-based AI feedback",
 )
 def submit(task_id: int, body: SubmitIn, user: CurrentUser, db: DB) -> TaskDetail:
-    t = _get(db, task_id)
+    t = _get(db, task_id, plan_user_id=user.id)
     text = body.response_text.strip()
     if len(text) < t.min_length:
         raise ValidationError(
             f"Write at least {t.min_length} characters so the feedback can be specific.", "RESPONSE_TOO_SHORT"
         )
     entitlements.require(db, user, "practice.ai_feedback", consume=0)
+    enforce("ai_user", str(user.id))  # each submission is an AI evaluation (cost control)
     s = _sub(db, user.id, t.id)
     if s is None:
         entitlements.require(db, user, "practice.tasks")
-        s = PracticeSubmission(user_id=user.id, task_id=t.id, status=PracticeStatus.STARTED)
-        db.add(s)
+        s, _ = _ensure_sub(db, user.id, t.id)
     if s.status == PracticeStatus.COMPLETED:
         raise ConflictError("This task is already completed.", "TASK_COMPLETED")
     s.response_text, s.status, s.submitted_at = text, PracticeStatus.SUBMITTED, utcnow()
@@ -184,7 +241,7 @@ def submit(task_id: int, body: SubmitIn, user: CurrentUser, db: DB) -> TaskDetai
 
 @router.post("/tasks/{task_id}/complete", response_model=TaskDetail, summary="Mark a submitted task complete")
 def complete(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
-    t = _get(db, task_id)
+    t = _get(db, task_id, plan_user_id=user.id)
     s = _sub(db, user.id, t.id)
     if s is None or s.status == PracticeStatus.STARTED:
         raise ConflictError("Submit your response before completing the task.", "TASK_NOT_SUBMITTED")

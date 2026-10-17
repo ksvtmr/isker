@@ -17,7 +17,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div aria-live="polite" className="ik-toast" style={toast ? undefined : { display: "none" }}>
+      {/* The live region stays in the accessibility tree at all times (never display:none), so screen readers
+          reliably announce a toast inserted into it; it is empty and takes no space while nothing is shown. */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="ik-toast" data-empty={toast ? undefined : "true"}>
         {toast && <Toast key={toast.id} variant={toast.variant} title={toast.title} description={toast.description} onClose={() => setToast(null)} />}
       </div>
     </ToastCtx.Provider>

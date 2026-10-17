@@ -4,18 +4,18 @@
  * but are bundled locally instead of fetched from a CDN at runtime.
  */
 import {
-  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, Ban, ChartColumn, CreditCard, Download, KeyRound, Layers, Mail,
+  ArrowDown, EyeOff, Globe, Languages, ArrowLeft, ArrowRight, ArrowUp, ArrowUpDown, Ban, ChartColumn, CreditCard, Download, KeyRound, Layers, Mail,
   MonitorSmartphone, ScrollText, ShieldCheck, Undo2, UserCog, UserX, Award, Bell, BookOpen, Bot, Briefcase, CalendarClock, Check, ChevronDown, ChevronLeft,
   ChevronRight, ChevronUp, CircleAlert, CircleCheck, CircleDot, CirclePlay, ClipboardCheck, ClipboardList, Clock,
   CloudOff, Database, Dumbbell, ExternalLink, Eye, FileStack, FileText, Flag, GraduationCap, Info, LayoutDashboard,
   LayoutTemplate, Library, Lightbulb, ListChecks, Lock, LogOut, Menu, MessageSquareText, PencilRuler, Pencil, Play,
   Plus, Radar, RefreshCw, RotateCw, Route, Search, SearchX, Settings, Shield, Sparkles, Target, Trash2,
-  TrendingUp, TriangleAlert, User, Users, X,
+  TrendingDown, TrendingUp, TriangleAlert, User, Users, X,
   type LucideIcon,
 } from "lucide-react";
 
 export const ICONS: Record<string, LucideIcon> = {
-  "arrow-down": ArrowDown, "arrow-up": ArrowUp, "arrow-up-down": ArrowUpDown, ban: Ban, "chart-column": ChartColumn,
+  "arrow-down": ArrowDown, "eye-off": EyeOff, globe: Globe, languages: Languages, "arrow-up": ArrowUp, "arrow-up-down": ArrowUpDown, ban: Ban, "chart-column": ChartColumn,
   "credit-card": CreditCard, download: Download, "key-round": KeyRound, layers: Layers, mail: Mail,
   "monitor-smartphone": MonitorSmartphone, "scroll-text": ScrollText, "shield-check": ShieldCheck, "undo-2": Undo2,
   "user-cog": UserCog, "user-x": UserX,
@@ -30,7 +30,7 @@ export const ICONS: Record<string, LucideIcon> = {
   "log-out": LogOut, menu: Menu, "message-square-text": MessageSquareText, "pencil-ruler": PencilRuler,
   pencil: Pencil, play: Play, plus: Plus, radar: Radar, "refresh-cw": RefreshCw, "rotate-cw": RotateCw, route: Route,
   search: Search, "search-x": SearchX, settings: Settings, shield: Shield, sparkles: Sparkles, target: Target,
-  "trash-2": Trash2, "trending-up": TrendingUp, "triangle-alert": TriangleAlert, user: User, users: Users, x: X,
+  "trash-2": Trash2, "trending-down": TrendingDown, "trending-up": TrendingUp, "triangle-alert": TriangleAlert, user: User, users: Users, x: X,
 };
 
 export type IconName = keyof typeof ICONS | (string & {});

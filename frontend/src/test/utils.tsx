@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { vi } from "vitest";
 import { ToastProvider } from "../components/Toaster";
+import { I18nDSProvider } from "../i18n/DSBridge";
 
 export function LocationProbe() {
   const loc = useLocation();
@@ -15,6 +16,7 @@ export function renderWithProviders(ui: ReactElement, { route = "/", path = "*" 
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[route]}>
+        <I18nDSProvider>
         <ToastProvider>
           <Routes>
             <Route path={path} element={ui} />
@@ -22,6 +24,7 @@ export function renderWithProviders(ui: ReactElement, { route = "/", path = "*" 
           </Routes>
           <LocationProbe />
         </ToastProvider>
+        </I18nDSProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );

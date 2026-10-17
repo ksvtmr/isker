@@ -1,0 +1,560 @@
+{
+  "content": {
+    "status": "Status",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "published": "Published",
+    "unpublished": "Unpublished",
+    "unpublish": "Unpublish",
+    "unpublishTitle": "Unpublish “{{title}}”?",
+    "rubricInvalid": "Rubric must be valid JSON.",
+    "form": {
+      "title": "Title",
+      "description": "Description",
+      "competency": "Competency",
+      "difficulty": "Difficulty",
+      "duration": "Duration (minutes)",
+      "slug": "Slug",
+      "slugHint": "lowercase-with-dashes",
+      "rubric": "Rubric (JSON)",
+      "rubricHint": "A JSON list of criteria: criterion, description, competency code and keywords. Example:"
+    },
+    "assessmentsPage": {
+      "title": "Assessments",
+      "subtitle": "Assessment versions and the question bank. Editing an answered question saves a new version, so completed results never change.",
+      "tabsLabel": "Assessment content",
+      "tabAssessments": "Assessments",
+      "tabQuestions": "Question bank"
+    },
+    "competenciesPage": {
+      "title": "Competencies",
+      "subtitle": "EntreComp competencies, their descriptions, priorities, default targets and translations. Only published competencies are offered to learners."
+    },
+    "learningPage": {
+      "title": "Learning content",
+      "subtitle": "Learning resources and practical tasks. Drafts and archived items are hidden from learners; their history is kept."
+    },
+    "aiPage": {
+      "title": "AI governance",
+      "subtitle": "Every AI evaluation is logged with its provider, prompt version, latency and fallback status."
+    },
+    "noMatchesTitle": "Nothing found",
+    "noMatchesText": "No records match the selected filters.",
+    "errors": {
+      "competency": "Choose a competency",
+      "duration": "Duration must be a whole number of minutes above zero",
+      "slug": "Slug: at least 2 characters, lowercase Latin letters, digits and “-” only",
+      "title": "Title: at least 3 characters",
+      "minLength": "Minimum answer length must be a whole number from 0"
+    }
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "subtitle": "All subscriptions, current and past. Open a user to grant, extend or cancel.",
+    "filtersLabel": "Filter subscriptions",
+    "searchLabel": "Search user",
+    "searchPlaceholder": "Name or email",
+    "allStatuses": "All statuses",
+    "allPlans": "All plans",
+    "allSources": "All sources",
+    "expiringLabel": "Expiring",
+    "expiringAny": "Any time",
+    "expiringWithin_one": "Within {{count}} day",
+    "expiringWithin_few": "Within {{count}} days",
+    "expiringWithin_many": "Within {{count}} days",
+    "expiringWithin_other": "Within {{count}} days",
+    "columns": {
+      "user": "User",
+      "plan": "Plan",
+      "status": "Status",
+      "source": "Source",
+      "started": "Started",
+      "ends": "Ends"
+    },
+    "userFallback": "User #{{id}}",
+    "endsAtPeriodEnd": "ends at period end",
+    "endedOn": "Ended {{date}}",
+    "noEndDate": "No end date",
+    "emptyTitle": "No subscriptions",
+    "emptyText": "Everyone matching these filters is on the free plan.",
+    "pagesLabel": "Subscription pages"
+  },
+  "plans": {
+    "title": "Plans",
+    "subtitle": "Prices and limits are enforced by the server for every request. Changing a plan affects all its subscribers immediately.",
+    "newPlan": "New plan",
+    "editPlan": "Edit plan",
+    "editTitle": "Edit {{name}}",
+    "createPlan": "Create plan",
+    "savePlan": "Save plan",
+    "created": "Plan created",
+    "saved": "Plan saved",
+    "badgeDefault": "Default",
+    "badgeInactive": "Inactive",
+    "free": "Free",
+    "pricePer": "{{amount}} / {{interval}}",
+    "perMonth": "month",
+    "perYear": "year",
+    "subscribers_one": "{{n}} user",
+    "subscribers_few": "{{n}} users",
+    "subscribers_many": "{{n}} users",
+    "subscribers_other": "{{n}} users",
+    "keyLabel": "key “{{key}}”",
+    "features": {
+      "assessment_full": "Full assessments",
+      "assessment_reassessment": "Competency reassessment",
+      "plan_personalized": "Personalised development plan",
+      "learning_advanced_resources": "Advanced learning resources",
+      "practice_tasks": "Practical tasks",
+      "practice_ai_feedback": "AI feedback on practice",
+      "progress_history": "Full progress history",
+      "export_data": "Data export"
+    },
+    "form": {
+      "key": "Key",
+      "keyHint": "Lowercase letters, numbers, - and _. Can't be changed later.",
+      "name": "Name",
+      "description": "Description",
+      "price": "Price",
+      "priceInvalid": "Use a number like 9.00",
+      "priceDefaultHint": "The default plan stays free.",
+      "billing": "Billing",
+      "billingNone": "One-off / none",
+      "billingMonth": "Monthly",
+      "billingYear": "Yearly",
+      "available": "Available",
+      "availableHint": "Inactive plans can't be assigned.",
+      "availableDefaultHint": "The default plan can't be deactivated.",
+      "features": "Features",
+      "limitAria": "{{feature}}: limit per {{period}} (empty = unlimited)",
+      "unlimited": "Unlimited",
+      "currency": "Currency",
+      "trialDays": "Trial period, days",
+      "trialDaysInvalid": "A whole number from 0 to 365",
+      "sortOrder": "Display order",
+      "sortOrderHint": "Plans with a lower number are shown first.",
+      "sortOrderInvalid": "A whole number from 0 to 1,000"
+    },
+    "limitPerPeriod": "{{limit}} per {{period}}"
+  },
+  "auditLogs": {
+    "title": "Audit log",
+    "subtitle": "Append-only record of security-relevant and administrative actions. Passwords, tokens and secrets are never logged.",
+    "filtersLabel": "Filter audit log",
+    "groups": {
+      "all": "All actions",
+      "auth": "Sign-in & account",
+      "admin": "Admin actions",
+      "accessDenied": "Access denied",
+      "loginFailed": "Failed sign-ins",
+      "subscription": "Payments",
+      "learning": "Learning",
+      "practice": "Practice",
+      "profile": "Profile"
+    },
+    "columns": {
+      "when": "When",
+      "action": "Action",
+      "actor": "Actor",
+      "target": "Target",
+      "outcome": "Outcome"
+    },
+    "userFallback": "User #{{id}}",
+    "systemActor": "System / anonymous",
+    "anyOutcome": "Any outcome",
+    "actorId": "Actor id",
+    "targetUserId": "Target user id",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "securityOnly": "Security events only",
+    "caption": "Audit log entries, newest first",
+    "emptyTitle": "No matching events",
+    "emptyText": "Try a wider date range or remove a filter.",
+    "eventTitle": "Event #{{id}}",
+    "reason": "Reason",
+    "requestId": "Request id",
+    "ipAddress": "IP address",
+    "noDetails": "No additional details.",
+    "pagesLabel": "Audit log pages"
+  },
+  "settings": {
+    "crumb": "Settings",
+    "title": "Platform settings",
+    "subtitle": "Read-only status. Settings are changed through environment variables and a restart; secrets are never shown.",
+    "environment": "Environment: {{env}}",
+    "notProduction": "This instance is not running in production mode.",
+    "on": "On",
+    "off": "Off",
+    "security": {
+      "title": "Security",
+      "secureCookies": "Secure cookies (HTTPS only)",
+      "csrf": "CSRF protection",
+      "rateLimiting": "Rate limiting",
+      "sessionLifetime": "Session lifetime",
+      "hours_one": "{{n}} hour",
+      "hours_few": "{{n}} hours",
+      "hours_many": "{{n}} hours",
+      "hours_other": "{{n}} hours",
+      "maxRequestSize": "Max request size",
+      "kb": "{{n}} KB",
+      "cors": "Allowed origins (CORS)",
+      "sameOrigin": "Same origin only"
+    },
+    "email": {
+      "title": "Email",
+      "delivery": "Delivery",
+      "console": "Development log (not delivered)",
+      "disabled": "Disabled",
+      "verificationRequired": "Verification required to sign in",
+      "appUrl": "Public app URL (used in links)",
+      "notDelivered": "Password reset and confirmation emails are not delivered. Configure SMTP_* variables and EMAIL_BACKEND=smtp."
+    },
+    "ai": {
+      "title": "AI",
+      "provider": "Provider",
+      "builtIn": "Built-in rule-based evaluator",
+      "model": "Model"
+    },
+    "payments": {
+      "title": "Payments",
+      "provider": "Provider",
+      "none": "None",
+      "webhooks": "Webhooks configured",
+      "checkout": "Online checkout",
+      "available": "Available",
+      "notAvailable": "Not available",
+      "termsVersion": "Terms version",
+      "noteNotConfigured": "No payment provider is connected: online payment is unavailable and paid plans are granted by administrators.",
+      "noteConfigured": "Payment-provider webhooks are configured, but checkout on the site is not available yet. Paid plans can be granted manually.",
+      "noteCheckout": "Online payment is connected: learners can buy a paid plan themselves."
+    }
+  },
+  "assessments": {
+    "new": "New assessment",
+    "columns": {
+      "assessment": "Assessment",
+      "questions": "Questions",
+      "attempts": "Attempts",
+      "version": "Version"
+    },
+    "deactivateTitle": "Deactivate “{{title}}”?",
+    "deactivateText": "New attempts can't start with it. Completed attempts and scores are kept.",
+    "deactivated": "Assessment deactivated",
+    "activated": "Assessment activated",
+    "created": "Assessment created",
+    "hint": "Learners take the first active assessment. Manage its questions in the Question bank tab.",
+    "form": {
+      "code": "Code",
+      "codeHint": "Lowercase letters, numbers and dashes",
+      "minutes": "Estimated minutes"
+    },
+    "edit": "Edit assessment",
+    "saved": "Assessment saved",
+    "errors": {
+      "code": "Code: 2–48 characters, lowercase Latin letters, digits, “-” and “_” only",
+      "title": "Title: 3 to 160 characters",
+      "description": "Description: at least 10 characters",
+      "minutes": "A whole number of minutes from 1 to 240"
+    },
+    "emptyTitle": "No assessments yet",
+    "emptyText": "Create an assessment, then add questions to it."
+  },
+  "questions": {
+    "new": "New question",
+    "edit": "Edit question",
+    "saved": "Question saved",
+    "filterByType": "Filter by type",
+    "allTypes": "All types",
+    "types": {
+      "likert": "Likert scale",
+      "situational": "Situational",
+      "open": "Open answer",
+      "practical": "Practical"
+    },
+    "columns": {
+      "question": "Question",
+      "type": "Type",
+      "competencies": "Competencies",
+      "answers": "Answers"
+    },
+    "deactivateTitle": "Deactivate this question?",
+    "deactivateText": "It disappears from new attempts. Existing answers and scores are kept.",
+    "deactivated": "Question deactivated",
+    "errors": {
+      "optionLine": "Option line {{line}} must look like \"Label | 75\".",
+      "unknownCompetency": "Unknown competency code \"{{code}}\".",
+      "weight": "Line {{line}}: the weight must be a number above 0 and at most 1",
+      "noCompetency": "Link the question to at least one competency",
+      "minLength": "Minimum answer length must be a whole number from 0 to 2,000",
+      "textShort": "The question text must be at least 10 characters"
+    },
+    "form": {
+      "section": "Section",
+      "text": "Question text",
+      "helpText": "Help text",
+      "options": "Options",
+      "optionsHint": "One per line: \"Label | score 0–100\"",
+      "minLength": "Minimum answer length",
+      "competencies": "Measured competencies",
+      "competenciesHint": "One per line: \"competency-code | weight (0–1)\"",
+      "reverseScored": "Reverse scored"
+    },
+    "noAssessmentsTitle": "Create an assessment first",
+    "noAssessmentsText": "Every question belongs to an assessment. Create one on the Assessments tab, then add questions.",
+    "assessment": "Assessment",
+    "emptyTitle": "This assessment has no questions yet",
+    "emptyText": "Add the first question with “New question”.",
+    "sections": {
+      "self": "Self-assessment",
+      "situational": "Situational judgement",
+      "open": "Open answers",
+      "practical": "Practical task"
+    }
+  },
+  "resources": {
+    "tabsLabel": "Content type",
+    "tabResources": "Learning resources ({{n}})",
+    "tabTasks": "Practical tasks ({{n}})",
+    "new": "New resource",
+    "edit": "Edit resource",
+    "saved": "Resource saved",
+    "unpublishText": "Learners won't see it in the catalogue any more. Their progress is kept and you can publish it again.",
+    "unpublished": "Resource unpublished",
+    "columns": {
+      "type": "Type",
+      "minutes": "Minutes"
+    },
+    "form": {
+      "content": "Content (Markdown: ## headings, lists, **bold**)",
+      "url": "External URL (optional)"
+    },
+    "emptyTitle": "No learning resources yet",
+    "emptyText": "Add the first learning resource."
+  },
+  "tasks": {
+    "new": "New task",
+    "edit": "Edit task",
+    "saved": "Task saved",
+    "unpublishText": "Learners won't be offered this task any more. Their submissions are kept.",
+    "unpublished": "Task unpublished",
+    "criteria_one": "{{count}} criterion",
+    "criteria_few": "{{count}} criteria",
+    "criteria_many": "{{count}} criteria",
+    "criteria_other": "{{count}} criteria",
+    "columns": {
+      "rubric": "Rubric"
+    },
+    "form": {
+      "instructions": "Instructions",
+      "minLength": "Minimum response length"
+    },
+    "emptyTitle": "No practical tasks yet",
+    "emptyText": "Add the first practical task."
+  },
+  "competencies": {
+    "updated": "Competency updated",
+    "editTitle": "Edit {{name}}",
+    "columns": {
+      "competency": "Competency",
+      "area": "Area",
+      "importance": "Importance",
+      "defaultTarget": "Default target"
+    },
+    "form": {
+      "name": "Name",
+      "shortName": "Short name",
+      "importance": "Importance (0–1)",
+      "code": "Code",
+      "codeHint": "Lowercase letters, numbers, dashes and underscores; can't be changed later",
+      "hint": "Hint for learners",
+      "reflectionPrompt": "Reflection prompt",
+      "learningPriority": "Learning priority (0–1)"
+    },
+    "new": "New competency",
+    "created": "Competency created",
+    "errors": {
+      "area": "Choose a competency area",
+      "code": "Code: at least 2 characters, lowercase Latin letters, digits, “-” and “_” only",
+      "numbers": "Importance and learning priority must be between 0 and 1, the default target between 40 and 100"
+    },
+    "emptyTitle": "No competencies yet",
+    "emptyText": "Create the first competency in one of the areas.",
+    "noAreas": "The server didn't provide competency area ids, so a new competency can't be created yet. Update the server or contact the developers.",
+    "noAreasShort": "No areas available"
+  },
+  "ai": {
+    "tabEvaluations": "Evaluation log",
+    "tabPrompts": "Prompt versions",
+    "filterByStatus": "Filter by status",
+    "allStatuses": "All statuses",
+    "statuses": {
+      "success": "Success",
+      "retried": "Retried",
+      "fallback": "Fallback"
+    },
+    "inputTypes": {
+      "open_answer": "Open answer",
+      "practical_answer": "Practical answer",
+      "practice_submission": "Practice submission",
+      "profile_insight": "Profile insight"
+    },
+    "columns": {
+      "input": "Input",
+      "provider": "Provider · model",
+      "score": "Score",
+      "confidence": "Confidence",
+      "latency": "Latency",
+      "date": "Date"
+    },
+    "latencyMs": "{{n}} ms",
+    "inspect": "Inspect",
+    "evaluationsCount_one": "{{n}} evaluation",
+    "evaluationsCount_few": "{{n}} evaluations",
+    "evaluationsCount_many": "{{n}} evaluations",
+    "evaluationsCount_other": "{{n}} evaluations",
+    "previous": "Previous",
+    "evaluationTitle": "Evaluation #{{id}}",
+    "promptVersionId": "Prompt version id",
+    "builtIn": "built-in",
+    "attempts": "Attempts",
+    "level": "Level",
+    "errors": "Errors",
+    "inputExcerpt": "Input excerpt",
+    "validatedOutput": "Validated output",
+    "promptActivated": "Prompt version {{version}} activated",
+    "newVersionFrom": "New version from this",
+    "showTemplate": "Show template",
+    "newVersionTitle": "New {{key}} version",
+    "versionCreated": "Prompt version created",
+    "form": {
+      "systemPrompt": "System prompt",
+      "userTemplate": "User template",
+      "placeholders": "Placeholders: {{list}}",
+      "placeholder": "Placeholder: {{list}}",
+      "notes": "Notes",
+      "activateNow": "Activate immediately"
+    },
+    "inputTypeUnknown": "Other type ({{code}})",
+    "emptyEvaluationsTitle": "No AI evaluations yet",
+    "emptyEvaluationsText": "They appear when learners answer open questions or submit practical tasks.",
+    "emptyEvaluationsFiltered": "No evaluations with this status.",
+    "readOnly": "You have view-only access. Creating and activating prompt versions requires the “Manage AI” permission.",
+    "emptyPromptsTitle": "No prompt versions yet",
+    "emptyPromptsText": "The built-in prompt is used for now.",
+    "versionLabel": "version {{n}}",
+    "activateTitle": "Activate “{{key}}” version {{version}}?",
+    "activateText": "All new AI evaluations will use this version. The currently active version is switched off; past results are unchanged."
+  },
+  "sync": {
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "actions": {
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "archive": "Archive"
+    },
+    "confirm": {
+      "publishTitle": "Publish “{{title}}”?",
+      "publishText": "Learners will see it on the platform right away.",
+      "unpublishTitle": "Move “{{title}}” back to drafts?",
+      "unpublishText": "Learners stop seeing it. Their history is kept and you can publish it again later.",
+      "archiveTitle": "Archive “{{title}}”?",
+      "archiveText": "It is no longer offered in new assessments, catalogues or plans. Learners' history and past results are kept."
+    },
+    "done": {
+      "publish": "Published",
+      "unpublish": "Moved to drafts",
+      "archive": "Archived"
+    },
+    "conflict": {
+      "title": "Someone else changed this record",
+      "text": "Your changes were not saved, so nothing was overwritten. Load the latest version and apply your changes again.",
+      "reload": "Load latest version",
+      "reloaded": "Latest version loaded"
+    },
+    "saving": "Saving…",
+    "unsaved": "Unsaved changes",
+    "reset": "Reset changes",
+    "filterStatus": "Filter by status",
+    "allStatuses": "All statuses",
+    "draftHint": "New content is saved as a draft. Publish it when it is ready for learners.",
+    "version": "Version {{n}}",
+    "newVersion": "Saved as version {{n}}. Completed attempts keep the previous version.",
+    "versionHint_one": "This question already has {{count}} answer. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "versionHint_few": "This question already has {{count}} answers. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "versionHint_many": "This question already has {{count}} answers. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "versionHint_other": "This question already has {{count}} answers. Changing its wording or scoring saves a new version for new attempts; past results stay unchanged.",
+    "translations": {
+      "title": "Translations ({{filled}} of {{total}} filled)",
+      "hint": "English is the base text above. Empty Kazakh texts fall back to Russian, empty Russian texts to English.",
+      "ru": "Russian",
+      "kk": "Kazakh",
+      "fieldLabel": "{{field}} · {{lang}}",
+      "invalidJson": "{{field}} ({{lang}}) must be valid JSON.",
+      "rubric": "Rubric (JSON)",
+      "rubricHint": "Same order as the base rubric: [{\"criterion\": \"…\", \"description\": \"…\", \"keywords\": [\"…\"]}]",
+      "options": "Option labels · {{lang}}",
+      "optionsHint": "One per line, in the same order as the options above."
+    },
+    "discard": {
+      "title": "Discard unsaved changes?",
+      "text": "The changes in this form have not been saved and will be lost.",
+      "confirm": "Discard changes"
+    }
+  },
+  "translations": {
+    "title": "Translations",
+    "subtitle": "How complete the Russian and Kazakh translations of the content are. English is the base text.",
+    "unavailableTitle": "The translation report is not available yet",
+    "unavailableText": "The server doesn't support this report yet. Each record's translation status appears in the content editors when the server provides it.",
+    "summaryTitle": "Summary by content type",
+    "summaryEmpty": "No summary data.",
+    "countState": "{{state}}: {{n}}",
+    "filtersLabel": "Translation filters",
+    "filters": {
+      "entity": "Content type",
+      "allEntities": "All types",
+      "language": "Language",
+      "allLanguages": "Russian and Kazakh",
+      "status": "Translation status"
+    },
+    "columns": {
+      "item": "Record"
+    },
+    "caption": "Records and their translation status",
+    "openEditor": "Open editor",
+    "noEditor": "No editor yet",
+    "emptyTitle": "Nothing to translate",
+    "emptyText": "No records with the selected statuses.",
+    "pagesLabel": "Translation list pages",
+    "states": {
+      "complete": "Complete",
+      "partial": "Partial",
+      "missing": "Missing",
+      "stale": "Outdated"
+    },
+    "badge": {
+      "complete": "Translated",
+      "lang": "{{lang}}: {{state}}",
+      "fields": "Fields: {{list}}"
+    },
+    "entities": {
+      "competency": "Competencies",
+      "question": "Questions",
+      "assessment": "Assessments",
+      "resource": "Learning resources",
+      "task": "Practical tasks",
+      "plan": "Plans",
+      "area": "Competency areas",
+      "goal": "Goals",
+      "level": "Levels",
+      "option": "Answer options"
+    }
+  }
+}

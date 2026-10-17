@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -26,6 +26,7 @@ from app.models import (
 from app.models.enums import (
     AttemptScope,
     AttemptStatus,
+    ContentStatus,
     PracticeStatus,
     ProgressStatus,
     QuestionType,
@@ -59,13 +60,37 @@ def get_attempt(db: Session, user: User, attempt_id: int) -> AssessmentAttempt:
     return att
 
 
-def questions_for(db: Session, attempt: AssessmentAttempt) -> list[Question]:
-    q = (
-        select(Question)
-        .where(Question.assessment_id == attempt.assessment_id, Question.is_active.is_(True))
-        .options(selectinload(Question.options), selectinload(Question.competency_links))
-        .order_by(Question.sort_order, Question.id)
+def _published_competencies():
+    return select(Competency.id).where(Competency.status == ContentStatus.PUBLISHED)
+
+
+def live_question_filter(assessment_id: int) -> tuple:
+    """Questions offered in new attempts: published, and measuring at least one published competency."""
+    return (
+        Question.assessment_id == assessment_id,
+        Question.status == ContentStatus.PUBLISHED,
+        Question.id.in_(
+            select(QuestionCompetency.question_id).where(
+                QuestionCompetency.competency_id.in_(_published_competencies())
+            )
+        ),
     )
+
+
+def questions_for(db: Session, attempt: AssessmentAttempt) -> list[Question]:
+    """The questions of an attempt.
+
+    A completed attempt is defined by the questions it answered (their versions are frozen, see admin question
+    versioning), so its results stay reproducible after the bank changes. An open attempt uses the published
+    questions that measure at least one published competency; where it already answered an older version of a
+    question that has since been replaced, it keeps that version so the answer is not lost.
+    """
+    opts = (selectinload(Question.options), selectinload(Question.competency_links))
+    order = (Question.sort_order, Question.id)
+    answered = select(Answer.question_id).where(Answer.attempt_id == attempt.id)
+    if attempt.status == AttemptStatus.COMPLETED:
+        return list(db.scalars(select(Question).where(Question.id.in_(answered)).options(*opts).order_by(*order)))
+    q = select(Question).where(*live_question_filter(attempt.assessment_id)).options(*opts).order_by(*order)
     if attempt.scope == AttemptScope.COMPETENCY and attempt.scope_competency_id:
         q = q.where(
             Question.id.in_(
@@ -74,14 +99,48 @@ def questions_for(db: Session, attempt: AssessmentAttempt) -> list[Question]:
                 )
             )
         )
-    return list(db.scalars(q))
+    live = list(db.scalars(q))
+    if attempt.id is None:
+        return live
+    live_ids = {x.id for x in live}
+    stale = set(db.scalars(answered)) - live_ids
+    if not stale:
+        return live
+    # Map each replaced version to its successor, then swap the newest live version for the answered one.
+    successor = {
+        prev: qid
+        for qid, prev in db.execute(
+            select(Question.id, Question.previous_id).where(
+                Question.assessment_id == attempt.assessment_id, Question.previous_id.is_not(None)
+            )
+        )
+    }
+    swap: dict[int, int] = {}
+    for old in stale:
+        cur, seen = old, set()
+        while cur in successor and cur not in seen:
+            seen.add(cur)
+            cur = successor[cur]
+            if cur in live_ids:
+                swap[cur] = old
+                break
+    if not swap:
+        return live
+    olds = {x.id: x for x in db.scalars(select(Question).where(Question.id.in_(swap.values())).options(*opts))}
+    return [olds[swap[x.id]] if x.id in swap else x for x in live]
 
 
 def scope_competency_ids(db: Session, attempt: AssessmentAttempt, questions: list[Question]) -> list[int]:
     if attempt.scope == AttemptScope.COMPETENCY and attempt.scope_competency_id:
         return [attempt.scope_competency_id]
     ids = {link.competency_id for q in questions for link in q.competency_links}
-    return [c.id for c in db.scalars(select(Competency).order_by(Competency.sort_order)) if c.id in ids]
+    return [
+        c.id
+        for c in db.scalars(
+            select(Competency).where(Competency.status == ContentStatus.PUBLISHED).order_by(Competency.sort_order)
+        )
+        if c.id in ids
+    ]
 
 
 def in_progress_attempt(db: Session, user_id: int) -> AssessmentAttempt | None:
@@ -97,7 +156,8 @@ def start_attempt(
 ) -> tuple[AssessmentAttempt, bool]:
     """Start a new attempt or resume the matching in-progress one. Returns (attempt, resumed)."""
     if scope == AttemptScope.COMPETENCY:
-        if competency_id is None or db.get(Competency, competency_id) is None:
+        comp = db.get(Competency, competency_id) if competency_id is not None else None
+        if comp is None or comp.status != ContentStatus.PUBLISHED:
             raise ValidationError(
                 "A valid competency is required for a competency reassessment.", "COMPETENCY_REQUIRED"
             )
@@ -109,12 +169,22 @@ def start_attempt(
             return current, True
         # Only one attempt can be open at a time; the older one is abandoned (its answers are kept).
         current.status = AttemptStatus.ABANDONED
+        db.flush()  # leave the "one open attempt per user" index before the new attempt enters it
     assessment = active_assessment(db)
     att = AssessmentAttempt(
         user_id=user.id, assessment_id=assessment.id, scope=scope, scope_competency_id=competency_id
     )
-    db.add(att)
-    db.flush()
+    # Two concurrent starts: the partial unique index (one in_progress attempt per user) lets only one insert win;
+    # the other resumes the attempt that won instead of failing.
+    try:
+        with db.begin_nested():
+            db.add(att)
+            db.flush()
+    except IntegrityError:
+        winner = in_progress_attempt(db, user.id)
+        if winner is None:  # pragma: no cover - defensive
+            raise
+        return winner, True
     previous = db.scalar(
         select(AssessmentAttempt.id)
         .where(AssessmentAttempt.user_id == user.id, AssessmentAttempt.status == AttemptStatus.COMPLETED)
@@ -187,6 +257,21 @@ def is_answered(q: Question, a: Answer | None) -> bool:
     return len((a.text_response or "").strip()) >= max(1, q.min_length)
 
 
+def claim_for_submit(db: Session, attempt: AssessmentAttempt, now) -> None:
+    """Atomically move the attempt out of `in_progress` (conditional UPDATE). Of two concurrent submits only one
+    matches the row: on PostgreSQL the second waits for the first to commit and then finds nothing to update. The
+    loser gets 409 ATTEMPT_NOT_IN_PROGRESS instead of a unique-constraint error on competency_scores. If the
+    winner's transaction fails, its claim is rolled back with it and the attempt stays open."""
+    result = db.execute(
+        update(AssessmentAttempt)
+        .where(AssessmentAttempt.id == attempt.id, AssessmentAttempt.status == AttemptStatus.IN_PROGRESS)
+        .values(status=AttemptStatus.COMPLETED, completed_at=now)
+        .execution_options(synchronize_session=False)
+    )
+    if result.rowcount != 1:
+        raise ConflictError("This assessment is already finished.", "ATTEMPT_NOT_IN_PROGRESS")
+
+
 def submit(db: Session, user: User, attempt: AssessmentAttempt) -> AssessmentAttempt:
     if attempt.status != AttemptStatus.IN_PROGRESS:
         raise ConflictError("This assessment is already finished.", "ATTEMPT_NOT_IN_PROGRESS")
@@ -198,10 +283,12 @@ def submit(db: Session, user: User, attempt: AssessmentAttempt) -> AssessmentAtt
             "Answer every question before finishing.", "ASSESSMENT_INCOMPLETE", {"unanswered": missing}
         )
 
+    now = utcnow()
+    claim_for_submit(db, attempt, now)
+
     comp_ids = scope_competency_ids(db, attempt, questions)
     score_attempt(db, attempt, questions, comp_ids)
 
-    now = utcnow()
     attempt.status = AttemptStatus.COMPLETED
     attempt.completed_at = now
     attempt.sequence = 1 + (
@@ -301,4 +388,12 @@ def insight_for_attempt(db: Session, user_id: int, attempt: AssessmentAttempt, p
         ),
         "top_resource": top_res,
     }
-    generate_insight(db, user_id=user_id, facts=facts, attempt_id=attempt.id)
+    refs = {
+        "strongest": best.competency_id,
+        "strongest_score": best.score,
+        "top_gap": top_gap.competency_id if top_gap else None,
+        "gap_score": top_gap.current_score if top_gap else None,
+        "gap_target": top_gap.target_score if top_gap else None,
+        "top_resource": recs[0].resource_id if recs and recs[0].resource_id else None,
+    }
+    generate_insight(db, user_id=user_id, facts=facts, attempt_id=attempt.id, refs=refs)

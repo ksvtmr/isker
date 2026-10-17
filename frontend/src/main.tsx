@@ -5,6 +5,8 @@ import { BrowserRouter } from "react-router-dom";
 import { ApiError } from "./api/client";
 import { App } from "./App";
 import { ToastProvider } from "./components/Toaster";
+import "./i18n";
+import { I18nDSProvider } from "./i18n/DSBridge";
 import "./styles/app.css";
 
 const queryClient = new QueryClient({
@@ -22,9 +24,11 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <I18nDSProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </I18nDSProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

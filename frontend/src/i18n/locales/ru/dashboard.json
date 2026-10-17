@@ -1,0 +1,148 @@
+{
+  "dashboard": {
+    "greeting": "{{greeting}}, {{name}}",
+    "subtitle": "Продолжайте развивать свои предпринимательские компетенции.",
+    "continueDevelopment": "Продолжить развитие",
+    "loadError": "Не удалось загрузить панель",
+    "empty": {
+      "startTitle": "Пройдите первую оценку",
+      "finishTitle": "Завершите первую оценку",
+      "description": "После прохождения оценки здесь появятся ваш профиль компетенций, разрывы и план развития.",
+      "startButton": "Начать оценку",
+      "continueButton": "Продолжить оценку"
+    },
+    "score": {
+      "title": "Предпринимательский балл",
+      "label": "Предпринимательский балл",
+      "change": "Изменение с последней оценки: {{change}}",
+      "chartAria": "История общего балла"
+    },
+    "openPlan": "Открыть план развития",
+    "nextStep": "Рекомендуемый следующий шаг:",
+    "insightEmpty": "AI-вывод появится после вашей следующей оценки.",
+    "stats": {
+      "strengths": "Сильные стороны",
+      "strengthsDescription_one": "компетенция на уровне цели или выше",
+      "strengthsDescription_few": "компетенции на уровне цели или выше",
+      "strengthsDescription_many": "компетенций на уровне цели или выше",
+      "strengthsDescription_other": "компетенции на уровне цели или выше",
+      "strongest": "самая сильная: {{name}}",
+      "priorityGaps": "Приоритетный разрыв",
+      "priorityGapsDescription_one": "компетенция на 10+ баллов ниже цели",
+      "priorityGapsDescription_few": "компетенции на 10+ баллов ниже цели",
+      "priorityGapsDescription_many": "компетенций на 10+ баллов ниже цели",
+      "priorityGapsDescription_other": "компетенции на 10+ баллов ниже цели",
+      "top": "главный: {{name}}",
+      "progress": "Прогресс развития",
+      "progressDescription_one": "выполнено {{done}} из {{count}} задания плана",
+      "progressDescription_few": "выполнено {{done}} из {{count}} заданий плана",
+      "progressDescription_many": "выполнено {{done}} из {{count}} заданий плана",
+      "progressDescription_other": "выполнено {{done}} из {{count}} задания плана",
+      "nextAssessment": "Следующая оценка",
+      "reassessCompetency": "Повторная оценка: {{name}}",
+      "fullReassessment": "Полная повторная оценка"
+    },
+    "profile": {
+      "title": "Ваш профиль компетенций",
+      "description": "15 компетенций EntreComp, сгруппированных по областям. Отметка показывает вашу цель.",
+      "viewAll": "Весь профиль"
+    },
+    "areaScoreAria": "Балл области: {{score}}",
+    "competencyBarAria": "{{name}}: {{score}} из 100, цель {{target}}",
+    "gaps": {
+      "title": "Приоритетные разрывы",
+      "description": "Начните с разрыва, который важнее всего для ваших целей.",
+      "analysis": "Анализ разрывов",
+      "continuePlan": "Продолжить план",
+      "startDevelopment": "Начать развитие",
+      "alsoBelow": "Также ниже цели",
+      "noOther": "Других компетенций на 10+ баллов ниже цели нет.",
+      "emptyTitle": "Нет открытых приоритетных разрывов",
+      "emptyDescription": "Все компетенции соответствуют вашим целям. Пройдите повторную оценку, чтобы отслеживать своё развитие.",
+      "reassess": "Пройти повторную оценку"
+    },
+    "strongest": "Самые сильные компетенции"
+  },
+  "journey": {
+    "label": "Ваш путь развития",
+    "assess": "Оценка",
+    "assessDone": "Профиль измерен",
+    "assessInProgress": "В процессе",
+    "assessDuration": "Около 25 минут",
+    "review": "Изучите профиль",
+    "reviewDescription": "Сильные стороны и разрывы",
+    "learn": "Обучение и практика",
+    "activities_one": "{{done}} из {{count}} задания",
+    "activities_few": "{{done}} из {{count}} заданий",
+    "activities_many": "{{done}} из {{count}} заданий",
+    "activities_other": "{{done}} из {{count}} задания",
+    "personalPlan": "Персональный план",
+    "reassess": "Повторная оценка",
+    "availableNow": "Доступна сейчас",
+    "afterPlan": "После выполнения плана"
+  },
+  "progress": {
+    "title": "Ваш прогресс",
+    "subtitle_one": "Как менялись ваши компетенции за {{count}} измерение.",
+    "subtitle_few": "Как менялись ваши компетенции за {{count}} измерения.",
+    "subtitle_many": "Как менялись ваши компетенции за {{count}} измерений.",
+    "subtitle_other": "Как менялись ваши компетенции за {{count}} измерения.",
+    "empty": {
+      "title": "Данных о прогрессе пока нет",
+      "description": "Пройдите первую оценку, чтобы начать отслеживать своё развитие.",
+      "button": "Начать оценку"
+    },
+    "locked": {
+      "title": "Показаны два последних измерения",
+      "text": "Ваш тариф включает текущее и предыдущее измерение.",
+      "link": "Тарифы с полной историей"
+    },
+    "filterAria": "Фильтр по области",
+    "allCompetencies": "Все компетенции",
+    "areas": {
+      "ideas": "Идеи и возможности",
+      "resources": "Ресурсы",
+      "action": "Действие"
+    },
+    "currentScore": "Текущий балл",
+    "previous": "Предыдущий",
+    "change": "Изменение",
+    "sinceFirst": "С первого измерения",
+    "history": {
+      "title": "История баллов",
+      "overall": "Общий",
+      "summary": "Балл изменился с {{first}} до {{last}} ({{change}}).",
+      "single": "Пройдите повторную оценку, чтобы увидеть, как меняются ваши баллы.",
+      "chartAria": "История баллов по областям"
+    },
+    "stats": {
+      "learning": "Пройдено материалов",
+      "learningDescription": "Статьи, видео, курсы",
+      "practice": "Выполнено практик",
+      "practiceDescription": "Практические задания с обратной связью",
+      "reflections": "Рефлексии",
+      "reflectionsDescription": "Шаги рефлексии в плане",
+      "reassessments": "Повторные оценки",
+      "reassessmentsDescription_one": "Всего {{count}} измерение",
+      "reassessmentsDescription_few": "Всего {{count}} измерения",
+      "reassessmentsDescription_many": "Всего {{count}} измерений",
+      "reassessmentsDescription_other": "Всего {{count}} измерения"
+    },
+    "growth": {
+      "title": "Рост компетенций",
+      "description": "Первое измерение → последнее, сначала наибольшие изменения",
+      "summary": "Наибольшее изменение: {{name}} ({{change}}).",
+      "empty": "Рост появится после второго измерения.",
+      "first": "Первое",
+      "latest": "Последнее",
+      "none": "Ни одна компетенция ещё не измерялась дважды."
+    },
+    "recent": {
+      "title": "Последние действия",
+      "empty": "Выполняйте учебные и практические задания — они появятся здесь."
+    },
+    "pointAssessment": "Оценка {{n}}",
+    "pointReassessment": "Повторная оценка: {{name}}",
+    "pointLabel": "{{kind}} · {{date}}"
+  }
+}

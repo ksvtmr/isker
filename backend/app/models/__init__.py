@@ -10,7 +10,7 @@ from app.models.assessment import (
     QuestionOption,
     Reassessment,
 )
-from app.models.auth import EmailVerificationToken, PasswordResetToken, UserSession
+from app.models.auth import EmailVerificationToken, OAuthIdentity, OAuthState, PasswordResetToken, UserSession
 from app.models.billing import (
     PaymentWebhookEvent,
     PlanEntitlement,
@@ -44,6 +44,8 @@ __all__ = [
     "SubscriptionPlan",
     "UserRole",
     "UserSession",
+    "OAuthIdentity",
+    "OAuthState",
     "UserSubscription",
     "AIEvaluation",
     "AIPromptVersion",

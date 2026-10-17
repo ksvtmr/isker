@@ -1,14 +1,16 @@
 import { InlineAlert, SkeletonCard } from "@isker/design-system";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
-import { authApi, useMe } from "../api/auth";
+import { authApi, messageText, useMe } from "../api/auth";
 import { errorMessage } from "../api/client";
 import { keys } from "../api/keys";
 import { AuthFrame } from "../components/AuthFrame";
 import { LinkButton } from "../components/RouterLink";
 
 export function VerifyEmailPage() {
+  const { t } = useTranslation("auth");
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
   const qc = useQueryClient();
@@ -22,18 +24,18 @@ export function VerifyEmailPage() {
     }
   }, [token, verify]);
 
-  const next = me ? <LinkButton to="/dashboard">Go to your dashboard</LinkButton> : <LinkButton to="/login">Sign in</LinkButton>;
+  const next = me ? <LinkButton to="/dashboard">{t("verify.toDashboard")}</LinkButton> : <LinkButton to="/login">{t("login.submit")}</LinkButton>;
   return (
-    <AuthFrame title="Confirm your email">
+    <AuthFrame title={t("verify.title")}>
       {!token ? (
-        <InlineAlert>This page needs the link from your confirmation email.</InlineAlert>
+        <InlineAlert>{t("verify.missing")}</InlineAlert>
       ) : verify.isPending || verify.isIdle ? (
-        <div aria-busy="true"><span className="isk-sr-only">Confirming…</span><SkeletonCard lines={2} /></div>
+        <div aria-busy="true"><span className="isk-sr-only">{t("verify.confirming")}</span><SkeletonCard lines={2} /></div>
       ) : verify.isSuccess ? (
-        <InlineAlert tone="success" title="Email confirmed">{verify.data.message}</InlineAlert>
+        <InlineAlert tone="success" title={t("verify.done")}>{messageText(verify.data)}</InlineAlert>
       ) : (
-        <InlineAlert title="We couldn't confirm your email">
-          {errorMessage(verify.error)} {me ? "You can request a new link from your settings." : "Sign in to request a new link."}
+        <InlineAlert title={t("verify.failed")}>
+          {errorMessage(verify.error)} {me ? t("verify.fromSettings") : t("verify.signInToRequest")}
         </InlineAlert>
       )}
       {(verify.isSuccess || verify.isError || !token) && <div style={{ marginTop: 16 }}>{next}</div>}

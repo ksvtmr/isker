@@ -20,6 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.service import evaluate_text, rubric_score
+from app.core.i18n import tr
 from app.models import (
     AIEvaluation,
     Answer,
@@ -39,7 +40,6 @@ METHOD_OF = {
     QuestionType.PRACTICAL: "open",
 }
 METHOD_WEIGHTS = {"self": 0.2, "situational": 0.4, "open": 0.4}
-METHOD_LABEL = {"self": "self-assessment", "situational": "situational judgement", "open": "open answers"}
 CHOICE_CONFIDENCE = 0.9
 
 
@@ -89,18 +89,29 @@ def combine(items: list[Item]) -> CompetencyResult | None:
 def explain(result: CompetencyResult) -> str:
     present = [m for m in ("self", "situational", "open") if m in result.method_scores]
     total = sum(METHOD_WEIGHTS[m] for m in present)
-    mix = ", ".join(f"{METHOD_LABEL[m]} ({round(METHOD_WEIGHTS[m] / total * 100)}%)" for m in present)
-    parts = " · ".join(f"{METHOD_LABEL[m].capitalize()} {round(result.method_scores[m])}" for m in present)
-    text = f"Combines {mix}. {parts}."
+    mix = ", ".join(f"{tr(f'method.{m}')} ({round(METHOD_WEIGHTS[m] / total * 100)}%)" for m in present)
+    parts = " · ".join(f"{tr(f'method.{m}').capitalize()} {round(result.method_scores[m])}" for m in present)
+    text = tr("explain.combines", mix=mix, parts=parts)
     self_s = result.method_scores.get("self")
     shown = [result.method_scores[m] for m in ("situational", "open") if m in result.method_scores]
     if self_s is not None and shown:
         demo = sum(shown) / len(shown)
         if self_s - demo >= 20:
-            text += " Your self-rating is higher than what your situational and open answers demonstrate."
+            text += tr("explain.self_higher")
         elif demo - self_s >= 20:
-            text += " Your answers demonstrate more than your self-rating suggests."
+            text += tr("explain.demo_higher")
     return text
+
+
+def explain_stored(score: object) -> str:
+    """Rebuild the explanation of a stored competency score in the request language."""
+    methods = {m: getattr(score, f"{m}_score", None) for m in ("self", "situational", "open")}
+    result = CompetencyResult(
+        score=0, raw_score=0, max_raw_score=0, method_scores={m: v for m, v in methods.items() if v is not None}
+    )
+    if not result.method_scores:
+        return getattr(score, "explanation", None) or ""
+    return explain(result)
 
 
 def item_score_for_choice(answer: Answer, question: Question) -> float:

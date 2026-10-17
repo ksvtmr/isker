@@ -4,8 +4,22 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.models.enums import AIEvalStatus, AIInputType, Difficulty, QuestionType, ResourceType
+from app.models.enums import AIEvalStatus, AIInputType, ContentStatus, Difficulty, QuestionType, ResourceType
 from app.schemas.common import ORM
+from app.schemas.competency import AreaOut
+
+# {"ru": {"field": "text"}, "kk": {...}}; validated against the model's translatable fields by the route.
+Translations = dict[str, dict] | None
+
+
+class Versioned(BaseModel):
+    """`expected_version`: the `lock_version` the editor loaded. A stale value is refused with 409 VERSION_CONFLICT."""
+
+    expected_version: int | None = Field(default=None, ge=1)
+
+
+class StatusIn(Versioned):
+    status: ContentStatus
 
 
 class AdminStats(BaseModel):
@@ -21,7 +35,48 @@ class AdminStats(BaseModel):
     competency_averages: list[dict]
 
 
-class CompetencyUpdate(BaseModel):
+class CompetencyIn(BaseModel):
+    code: str = Field(min_length=2, max_length=48, pattern=r"^[a-z0-9_-]+$")
+    area_id: int
+    name: str = Field(min_length=2, max_length=120)
+    short_name: str = Field(min_length=2, max_length=40)
+    description: str = Field(min_length=10)
+    hint: str | None = None
+    reflection_prompt: str | None = None
+    importance: float = Field(default=0.5, ge=0, le=1)
+    learning_priority: float = Field(default=0.5, ge=0, le=1)
+    default_target: int = Field(default=70, ge=40, le=100)
+    sort_order: int | None = Field(default=None, ge=0, le=10_000)
+    status: ContentStatus = ContentStatus.DRAFT
+    translations: Translations = None
+
+
+class CompetencyAdminOut(ORM):
+    id: int
+    code: str
+    area_id: int
+    area: AreaOut
+    name: str
+    short_name: str
+    description: str
+    hint: str | None
+    reflection_prompt: str | None
+    importance: float
+    learning_priority: float
+    default_target: int
+    sort_order: int
+    status: ContentStatus
+    lock_version: int
+    translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
+
+
+class CompetencyUpdate(Versioned):
+    area_id: int | None = None
+    sort_order: int | None = Field(default=None, ge=0, le=10_000)
+    status: ContentStatus | None = None
+    translations: Translations = None
     name: str | None = Field(default=None, min_length=2, max_length=120)
     short_name: str | None = Field(default=None, min_length=2, max_length=40)
     description: str | None = Field(default=None, min_length=10)
@@ -36,6 +91,8 @@ class OptionIn(BaseModel):
     label: str = Field(min_length=1, max_length=500)
     score: int = Field(ge=0, le=100)
     value: int | None = None
+    # {"ru": {"label": "…"}, "kk": {…}}; omitted → kept from the option at the same position if its label is unchanged.
+    translations: Translations = None
 
 
 class CompetencyLinkIn(BaseModel):
@@ -50,7 +107,7 @@ class RubricIn(BaseModel):
     keywords: list[str] = Field(default_factory=list)
 
 
-class QuestionIn(BaseModel):
+class QuestionIn(Versioned):
     assessment_id: int
     type: QuestionType
     section: str = Field(min_length=2, max_length=64)
@@ -59,7 +116,10 @@ class QuestionIn(BaseModel):
     sort_order: int | None = None
     reverse_scored: bool = False
     min_length: int = Field(default=0, ge=0, le=2000)
-    is_active: bool = True
+    # Older clients send only is_active; `status` wins when both are present.
+    is_active: bool | None = None
+    status: ContentStatus | None = None
+    translations: Translations = None
     options: list[OptionIn] = Field(default_factory=list)
     competencies: list[CompetencyLinkIn] = Field(min_length=1)
     rubric: list[RubricIn] = Field(default_factory=list)
@@ -84,10 +144,18 @@ class QuestionAdminOut(BaseModel):
     reverse_scored: bool
     min_length: int
     is_active: bool
+    status: ContentStatus
+    lock_version: int
+    version: int
+    previous_id: int | None
+    translations: dict | None
+    translation_status: dict | None = None
     options: list[dict]
     competencies: list[dict]
     rubric: list[dict]
     answer_count: int
+    # Set when this save created a new version: the id of the version it replaced (now archived).
+    replaced_id: int | None = None
 
 
 class AssessmentIn(BaseModel):
@@ -98,7 +166,8 @@ class AssessmentIn(BaseModel):
     is_active: bool = True
 
 
-class AssessmentUpdate(BaseModel):
+class AssessmentUpdate(Versioned):
+    translations: Translations = None
     title: str | None = Field(default=None, min_length=3, max_length=160)
     description: str | None = Field(default=None, min_length=10)
     estimated_minutes: int | None = Field(default=None, ge=1, le=240)
@@ -113,11 +182,15 @@ class AssessmentAdminOut(ORM):
     estimated_minutes: int
     version: int
     is_active: bool
+    lock_version: int
+    translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
     question_count: int = 0
     attempt_count: int = 0
 
 
-class ResourceIn(BaseModel):
+class ResourceIn(Versioned):
     slug: str = Field(min_length=2, max_length=120, pattern=r"^[a-z0-9-]+$")
     competency_id: int
     title: str = Field(min_length=3, max_length=200)
@@ -127,7 +200,10 @@ class ResourceIn(BaseModel):
     duration_minutes: int = Field(ge=1, le=600)
     content: str = Field(min_length=20)
     url: str | None = Field(default=None, max_length=500, pattern=r"^https?://")
-    is_published: bool = True
+    # Older clients send only is_published; `status` wins when both are present.
+    is_published: bool | None = None
+    status: ContentStatus | None = None
+    translations: Translations = None
 
 
 class ResourceAdminOut(ORM):
@@ -142,9 +218,14 @@ class ResourceAdminOut(ORM):
     content: str
     url: str | None
     is_published: bool
+    status: ContentStatus
+    lock_version: int
+    translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
 
 
-class TaskIn(BaseModel):
+class TaskIn(Versioned):
     slug: str = Field(min_length=2, max_length=120, pattern=r"^[a-z0-9-]+$")
     competency_id: int
     title: str = Field(min_length=3, max_length=200)
@@ -154,7 +235,9 @@ class TaskIn(BaseModel):
     duration_minutes: int = Field(ge=1, le=600)
     rubric: list[RubricIn] = Field(min_length=1)
     min_length: int = Field(default=80, ge=0, le=2000)
-    is_published: bool = True
+    is_published: bool | None = None
+    status: ContentStatus | None = None
+    translations: Translations = None
 
 
 class TaskAdminOut(ORM):
@@ -169,6 +252,11 @@ class TaskAdminOut(ORM):
     rubric: list[dict]
     min_length: int
     is_published: bool
+    status: ContentStatus
+    lock_version: int
+    translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
 
 
 class AIEvaluationAdminOut(ORM):
@@ -188,6 +276,7 @@ class AIEvaluationAdminOut(ORM):
     error: str | None
     input_excerpt: str | None
     output: dict | None
+    language: str | None = None
     created_at: datetime
 
 

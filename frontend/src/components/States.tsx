@@ -1,12 +1,14 @@
 import { Button, EmptyState, InlineAlert, SkeletonCard } from "@isker/design-system";
+import { useTranslation } from "react-i18next";
 import { errorMessage, isUpgradeRequired } from "../api/client";
 import { LinkButton } from "./RouterLink";
 
 /** Page-level loading skeleton (shimmer, never a blank screen). */
 export function PageSkeleton({ cards = 3, chart = true }: { cards?: number; chart?: boolean }) {
+  const { t } = useTranslation();
   return (
     <div aria-busy="true" aria-live="polite">
-      <span className="isk-sr-only">Loading…</span>
+      <span className="isk-sr-only">{t("state.loading")}</span>
       <div style={{ height: 28, width: 260, marginBottom: 28 }} className="isk-skel" />
       <div className="ik-grid3" style={{ marginBottom: 24 }}>
         <div className="ik-span2"><SkeletonCard chart={chart} /></div>
@@ -18,29 +20,31 @@ export function PageSkeleton({ cards = 3, chart = true }: { cards?: number; char
 }
 
 /** Friendly error with retry. Plan limits (UPGRADE_REQUIRED) get a link to the plans page instead of a retry. */
-export function ErrorState({ error, onRetry, title = "Something went wrong" }: { error: unknown; onRetry?: () => void; title?: string }) {
+export function ErrorState({ error, onRetry, title }: { error: unknown; onRetry?: () => void; title?: string }) {
+  const { t } = useTranslation();
   if (isUpgradeRequired(error)) {
-    return <EmptyState icon="lock" title="Not included in your plan" description={errorMessage(error)} action={<LinkButton to="/plans">See plans</LinkButton>} />;
+    return <EmptyState icon="lock" title={t("state.notIncluded")} description={errorMessage(error)} action={<LinkButton to="/plans">{t("actions.seePlans")}</LinkButton>} />;
   }
   return (
     <EmptyState
       tone="error"
       icon="cloud-off"
-      title={title}
-      description={errorMessage(error, "We couldn't load this page. Please try again.")}
-      action={onRetry && <Button variant="secondary" iconLeft="rotate-cw" onClick={onRetry}>Try again</Button>}
+      title={title ?? t("state.errorTitle")}
+      description={errorMessage(error, t("state.errorLoad"))}
+      action={onRetry && <Button variant="secondary" iconLeft="rotate-cw" onClick={onRetry}>{t("actions.tryAgain")}</Button>}
     />
   );
 }
 
 /** Inline error for a failed action. Plan limits show a "See plans" link. */
 export function ApiErrorAlert({ error }: { error: unknown }) {
+  const { t } = useTranslation();
   if (!error) return null;
   if (isUpgradeRequired(error)) {
     return (
-      <InlineAlert tone="warning" title="Not included in your plan">
+      <InlineAlert tone="warning" title={t("state.notIncluded")}>
         {errorMessage(error)}
-        <span style={{ display: "block", marginTop: 8 }}><LinkButton to="/plans" size="sm" variant="secondary">See plans</LinkButton></span>
+        <span style={{ display: "block", marginTop: 8 }}><LinkButton to="/plans" size="sm" variant="secondary">{t("actions.seePlans")}</LinkButton></span>
       </InlineAlert>
     );
   }

@@ -4,7 +4,9 @@
  * class names (isk-*) are unchanged. Additions are marked "Addition" and follow DESIGN_SYSTEM.md.
  */
 import {
+  createContext,
   forwardRef,
+  useContext,
   useEffect,
   useId,
   useRef,
@@ -15,6 +17,7 @@ import {
   type ElementType,
   type HTMLAttributes,
   type InputHTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
   type ReactNode,
   type SelectHTMLAttributes,
@@ -32,6 +35,126 @@ export type Gap = "High" | "Medium" | "Low";
 export const LEVELS: Level[] = ["Foundation", "Developing", "Intermediate", "Advanced", "Proficient"];
 
 /** Foundation 0–39 · Developing 40–59 · Intermediate 60–79 · Advanced 80–89 · Proficient 90–100 */
+/* ============================================================================================
+ * Strings (Addition): every user-facing text in the design system comes from here. The app passes translated
+ * strings through <DSLocaleProvider>; the English defaults keep the components usable on their own.
+ * ========================================================================================== */
+
+export interface DSStrings {
+  levels: Record<string, string>;
+  gaps: Record<string, string>;
+  gapSuffix: string;
+  prioritySuffix: string;
+  close: string;
+  dismiss: string;
+  loading: string;
+  notAssessed: string;
+  notMeasured: string;
+  target: (n: number) => string;
+  scoreAria: (name: string) => string;
+  outOf: (label: string, value: number | string, max: number) => string;
+  questionOf: (current: number, total: number) => string;
+  aiInsight: string;
+  confidence: (value: string) => string;
+  planSteps: Record<string, string>;
+  stepStatus: { done: string; current: string; todo: string; locked: string };
+  recommendedFor: (competency: string) => string;
+  targetSuffix: string;
+  practice: string;
+  learn: string;
+  startActivity: string;
+  nav: Record<string, string>;
+  bottomNav: Record<string, string>;
+  mainNavigation: string;
+  primaryNavigation: string;
+  breadcrumb: string;
+  pagination: string;
+  noResults: string;
+  previous: string;
+  next: string;
+  pageOf: (page: number, pages: number) => string;
+  range: (from: number, to: number, total: number) => string;
+  sortedBy: (column: string, ascending: boolean) => string;
+  cancel: string;
+  reasonLabel: string;
+  reasonHint: string;
+  reasonTooShort: string;
+  typeToConfirm: (text: string) => string;
+  progress: string;
+  skipToContent: string;
+  admin: string;
+  adminNavigation: string;
+  administration: string;
+  before: string;
+  after: string;
+  scoreHistoryChart: string;
+  radarChart: string;
+  charCount: (count: number, max: number) => string;
+  formatNumber: (n: number) => string;
+}
+
+export const DS_STRINGS_EN: DSStrings = {
+  levels: { Foundation: "Foundation", Developing: "Developing", Intermediate: "Intermediate", Advanced: "Advanced", Proficient: "Proficient" },
+  gaps: { High: "High", Medium: "Medium", Low: "Low" },
+  gapSuffix: "gap",
+  prioritySuffix: "priority",
+  close: "Close",
+  dismiss: "Dismiss",
+  loading: "Loading",
+  notAssessed: "Not assessed",
+  notMeasured: "not measured",
+  target: (n) => `Target ${n}`,
+  scoreAria: (name) => `${name} score`,
+  outOf: (label, value, max) => `${label}: ${value} out of ${max}`,
+  questionOf: (c, t) => `Question ${c} of ${t}`,
+  aiInsight: "AI insight",
+  confidence: (v) => `Confidence: ${v}`,
+  planSteps: { gap: "Your gap", learn: "Learn", practice: "Practice", reflect: "Reflect", reassess: "Reassess" },
+  stepStatus: { done: "Completed", current: "Current step", todo: "Not started", locked: "Locked" },
+  recommendedFor: (c) => `Recommended for ${c}`,
+  targetSuffix: "target",
+  practice: "Practice",
+  learn: "Learn",
+  startActivity: "Start activity",
+  nav: { dashboard: "Dashboard", assessment: "Assessment", competencies: "Competencies", "development-plan": "Development Plan", learning: "Learning", practice: "Practice", progress: "Progress", profile: "Profile", settings: "Settings" },
+  bottomNav: { dashboard: "Home", assessment: "Assess", competencies: "Profile", "development-plan": "Develop", progress: "Progress" },
+  mainNavigation: "Main navigation",
+  primaryNavigation: "Primary",
+  breadcrumb: "Breadcrumb",
+  pagination: "Pagination",
+  noResults: "No results.",
+  previous: "Previous",
+  next: "Next",
+  pageOf: (p, n) => `Page ${p} of ${n}`,
+  range: (f, t, total) => `${f}–${t} of ${total}`,
+  sortedBy: (c, asc) => `, sorted by ${c} ${asc ? "ascending" : "descending"}`,
+  cancel: "Cancel",
+  reasonLabel: "Reason (saved in the audit log)",
+  reasonHint: "At least 3 characters.",
+  reasonTooShort: "Please give a short reason.",
+  typeToConfirm: (t) => `Type ${t} to confirm`,
+  progress: "Progress",
+  skipToContent: "Skip to content",
+  admin: "Admin",
+  adminNavigation: "Administration navigation",
+  administration: "Administration",
+  before: "Before",
+  after: "After",
+  scoreHistoryChart: "Score history chart",
+  radarChart: "Competency radar chart",
+  charCount: (c, m) => `${c} / ${m}`,
+  formatNumber: (n) => String(n),
+};
+
+const DSStringsContext = createContext<DSStrings>(DS_STRINGS_EN);
+
+/** Addition: provides translated design-system strings (see DS_STRINGS_EN for the keys). */
+export function DSLocaleProvider({ strings, children }: { strings: DSStrings; children: ReactNode }) {
+  return <DSStringsContext.Provider value={strings}>{children}</DSStringsContext.Provider>;
+}
+
+export const useDSStrings = () => useContext(DSStringsContext);
+
 export function levelFromScore(score: number): Level {
   return score >= 90 ? "Proficient" : score >= 80 ? "Advanced" : score >= 60 ? "Intermediate" : score >= 40 ? "Developing" : "Foundation";
 }
@@ -218,7 +341,10 @@ export function ChartCard({ title, description, action, summary, children, legen
 
 export interface CompareItem { label: string; before: number; after: number }
 
-export function CompareBars({ items, max = 100, beforeLabel = "Before", afterLabel = "After" }: { items: CompareItem[]; max?: number; beforeLabel?: string; afterLabel?: string }) {
+export function CompareBars({ items, max = 100, beforeLabel, afterLabel }: { items: CompareItem[]; max?: number; beforeLabel?: string; afterLabel?: string }) {
+  const S = useDSStrings();
+  beforeLabel = beforeLabel ?? S.before;
+  afterLabel = afterLabel ?? S.after;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {items.map((it) => {
@@ -245,8 +371,10 @@ export function CompareBars({ items, max = 100, beforeLabel = "Before", afterLab
   );
 }
 
-export function GapBadge({ gap, score, target = 70, suffix = "gap" }: { gap?: Gap; score?: number; target?: number; suffix?: string }) {
+export function GapBadge({ gap, score, target = 70, suffix }: { gap?: Gap; score?: number; target?: number; suffix?: string }) {
+  const S = useDSStrings();
   const g = gap || gapFromScore(score ?? 0, target);
+  if (suffix === undefined) suffix = S.gapSuffix;
   const k = g.toLowerCase();
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 9999, padding: "4px 10px", fontSize: "var(--text-xs)", fontWeight: 500, lineHeight: "16px", background: `var(--gap-${k}-bg)`, color: `var(--gap-${k}-fg)`, whiteSpace: "nowrap" }}>
@@ -255,19 +383,20 @@ export function GapBadge({ gap, score, target = 70, suffix = "gap" }: { gap?: Ga
           <span key={i} style={{ width: 3, height: 8, borderRadius: 1, background: "currentColor", opacity: i < (k === "high" ? 3 : k === "medium" ? 2 : 1) ? 1 : 0.25 }} />
         ))}
       </span>
-      {g}
+      {S.gaps[g] ?? g}
       {suffix ? " " + suffix : ""}
     </span>
   );
 }
 
 export function LevelBadge({ level, score, showDot = false }: { level?: Level | string; score?: number; showDot?: boolean }) {
+  const S = useDSStrings();
   const lv = level || levelFromScore(score ?? 0);
   const k = lv.toLowerCase();
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 9999, padding: "4px 10px", fontSize: "var(--text-xs)", fontWeight: 500, lineHeight: "16px", background: `var(--level-${k}-bg)`, color: `var(--level-${k}-fg)`, whiteSpace: "nowrap" }}>
       {showDot && <span style={{ width: 6, height: 6, borderRadius: 9999, background: `var(--color-level-${k})` }} />}
-      {lv}
+      {S.levels[lv] ?? lv}
     </span>
   );
 }
@@ -285,7 +414,9 @@ export interface LineChartProps {
   ariaLabel?: string;
 }
 
-export function LineChart({ labels, series, height = 220, min = 0, max = 100, ticks = [0, 25, 50, 75, 100], showValues = true, ariaLabel = "Score history chart" }: LineChartProps) {
+export function LineChart({ labels, series, height = 220, min = 0, max = 100, ticks = [0, 25, 50, 75, 100], showValues = true, ariaLabel }: LineChartProps) {
+  const S = useDSStrings();
+  ariaLabel = ariaLabel ?? S.scoreHistoryChart;
   const W = 600, H = height, pl = 32, pr = 16, pt = 16, pb = 28;
   const x = (i: number) => pl + (labels.length === 1 ? (W - pl - pr) / 2 : (i * (W - pl - pr)) / (labels.length - 1));
   const y = (v: number) => pt + (1 - (v - min) / (max - min)) * (H - pt - pb);
@@ -330,6 +461,7 @@ export interface ProgressBarProps {
 }
 
 export function ProgressBar({ value, max = 100, label, showValue = true, color = "var(--color-brand-600)", height = 8, target, ariaLabel }: ProgressBarProps) {
+  const S = useDSStrings();
   const pct = Math.min(Math.max((value / max) * 100, 0), 100);
   const tpct = target !== undefined ? Math.min(Math.max((target / max) * 100, 0), 100) : null;
   return (
@@ -350,7 +482,7 @@ export function ProgressBar({ value, max = 100, label, showValue = true, color =
       >
         <div style={{ height: "100%", width: pct + "%", borderRadius: 9999, background: color, transition: "width 500ms ease" }} />
         {tpct !== null && (
-          <span title={"Target " + target} style={{ position: "absolute", top: -3, bottom: -3, left: `calc(${tpct}% - 1px)`, width: 2, borderRadius: 2, background: "var(--color-neutral-700)" }} />
+          <span title={S.target(target ?? 0)} style={{ position: "absolute", top: -3, bottom: -3, left: `calc(${tpct}% - 1px)`, width: 2, borderRadius: 2, background: "var(--color-neutral-700)" }} />
         )}
       </div>
     </div>
@@ -372,6 +504,7 @@ export interface CompetencyCardProps {
 }
 
 export function CompetencyCard({ name, area, score, max = 100, level, gap, target = 70, description, onClick, href, notAssessed = false }: CompetencyCardProps) {
+  const S = useDSStrings();
   const lv = level || levelFromScore((score / max) * 100);
   const gp = gap || gapFromScore((score / max) * 100, target);
   const fmt = max === 100 ? Math.round(score) : score.toFixed(1);
@@ -383,7 +516,7 @@ export function CompetencyCard({ name, area, score, max = 100, level, gap, targe
           <h3 style={{ marginTop: area ? 4 : 0, fontSize: "var(--text-md)", fontWeight: 600, color: "var(--color-neutral-900)", lineHeight: 1.35, textWrap: "pretty" }}>{name}</h3>
         </div>
         {notAssessed ? (
-          <span style={{ fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", whiteSpace: "nowrap" }}>Not assessed</span>
+          <span style={{ fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", whiteSpace: "nowrap" }}>{S.notAssessed}</span>
         ) : (
           <span style={{ whiteSpace: "nowrap" }}>
             <span style={{ fontSize: "var(--text-2xl)", fontWeight: 600, letterSpacing: "-0.02em", color: "var(--color-neutral-900)" }}>{fmt}</span>
@@ -392,7 +525,7 @@ export function CompetencyCard({ name, area, score, max = 100, level, gap, targe
         )}
       </div>
       <div style={{ marginTop: 16 }}>
-        <ProgressBar value={notAssessed ? 0 : score} max={max} showValue={false} target={notAssessed ? undefined : target} ariaLabel={`${name} score`} />
+        <ProgressBar value={notAssessed ? 0 : score} max={max} showValue={false} target={notAssessed ? undefined : target} ariaLabel={S.scoreAria(name)} />
       </div>
       {!notAssessed && (
         <div style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
@@ -421,7 +554,9 @@ export function CompetencyCard({ name, area, score, max = 100, level, gap, targe
 export interface RadarAxis { label: string; short?: string; color?: string }
 export interface RadarSeries { values: number[]; color: string; dashed?: boolean; fill?: string; fillOpacity?: number }
 
-export function RadarChart({ axes, series, size = 360, max = 100, rings = 4, labelMode = "short", ariaLabel = "Competency radar chart" }: { axes: RadarAxis[]; series: RadarSeries[]; size?: number; max?: number; rings?: number; labelMode?: "short" | "full"; ariaLabel?: string }) {
+export function RadarChart({ axes, series, size = 360, max = 100, rings = 4, labelMode = "short", ariaLabel }: { axes: RadarAxis[]; series: RadarSeries[]; size?: number; max?: number; rings?: number; labelMode?: "short" | "full"; ariaLabel?: string }) {
+  const S = useDSStrings();
+  ariaLabel = ariaLabel ?? S.radarChart;
   const n = axes.length, c = size / 2, r = size / 2 - 64;
   const pt = (i: number, v: number): [number, number] => {
     const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -510,16 +645,18 @@ export function StatCard({ label, value, change, description, icon, tone = "bran
  * Feedback
  * ========================================================================================== */
 
-export function AIInsight({ title = "AI insight", context, children, action, confidence }: { title?: ReactNode; context?: ReactNode; children: ReactNode; action?: ReactNode; confidence?: ReactNode }) {
+export function AIInsight({ title, context, children, action, confidence }: { title?: ReactNode; context?: ReactNode; children: ReactNode; action?: ReactNode; confidence?: ReactNode }) {
+  const S = useDSStrings();
+  title = title ?? S.aiInsight;
   return (
-    <section aria-label={typeof title === "string" ? title : "AI insight"} style={{ borderRadius: "var(--radius-lg)", border: "1px solid var(--color-brand-100)", background: "var(--color-brand-50)", padding: 20 }}>
+    <section aria-label={typeof title === "string" ? title : S.aiInsight} style={{ borderRadius: "var(--radius-lg)", border: "1px solid var(--color-brand-100)", background: "var(--color-brand-50)", padding: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <span style={{ display: "flex", width: 28, height: 28, alignItems: "center", justifyContent: "center", borderRadius: 9999, background: "var(--color-brand-600)", color: "#fff" }}>
           <Icon name="sparkles" size={14} />
         </span>
         <span style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--color-brand-800)" }}>{title}</span>
         {context && <span style={{ fontSize: "var(--text-xs)", color: "var(--color-brand-700)", background: "#fff", border: "1px solid var(--color-brand-100)", borderRadius: 9999, padding: "2px 8px" }}>{context}</span>}
-        {confidence && <span style={{ marginLeft: "auto", fontSize: "var(--text-xs)", color: "var(--color-neutral-600)" }}>Confidence: {confidence}</span>}
+        {confidence && <span style={{ marginLeft: "auto", fontSize: "var(--text-xs)", color: "var(--color-neutral-600)" }}>{typeof confidence === "string" ? S.confidence(confidence) : confidence}</span>}
       </div>
       <div style={{ marginTop: 12, fontSize: "var(--text-sm)", lineHeight: "24px", color: "var(--color-neutral-700)", textWrap: "pretty" }}>{children}</div>
       {action && <div style={{ marginTop: 14 }}>{action}</div>}
@@ -552,16 +689,21 @@ export interface ModalProps {
 }
 
 export function Modal({ open = true, onClose, title, description, children, footer, inline = false }: ModalProps) {
+  const S = useDSStrings();
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // Callers usually pass an inline onClose; keep it in a ref so a re-render (e.g. typing in a field) doesn't re-run
+  // the effect below, which would move focus back to the first field.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!open || inline) return;
     const prev = document.activeElement as HTMLElement | null;
     const box = ref.current;
     const focusables = () => Array.from(box?.querySelectorAll<HTMLElement>("button, [href], input, textarea, select, [tabindex]:not([tabindex='-1'])") ?? []).filter((el) => !el.hasAttribute("disabled"));
-    (focusables().find((el) => el.tagName !== "BUTTON" || el.getAttribute("aria-label") !== "Close") ?? box)?.focus();
+    (focusables().find((el) => el.tagName !== "BUTTON" || el.getAttribute("aria-label") !== S.close) ?? box)?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose?.();
+      if (e.key === "Escape") onCloseRef.current?.();
       if (e.key === "Tab") {
         const f = focusables();
         if (!f.length) return;
@@ -572,7 +714,7 @@ export function Modal({ open = true, onClose, title, description, children, foot
     };
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("keydown", onKey); prev?.focus?.(); };
-  }, [open, inline, onClose]);
+  }, [open, inline, S.close]);
   if (!open) return null;
   const box = (
     <div ref={ref} tabIndex={-1} className="isk-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(e) => e.stopPropagation()}>
@@ -582,7 +724,7 @@ export function Modal({ open = true, onClose, title, description, children, foot
           {description && <p style={{ marginTop: 6, fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", lineHeight: 1.5 }}>{description}</p>}
         </div>
         {onClose && (
-          <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-500)", padding: 4, display: "flex", borderRadius: 6 }}>
+          <button type="button" aria-label={S.close} onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-500)", padding: 4, display: "flex", borderRadius: 6 }}>
             <Icon name="x" size={18} />
           </button>
         )}
@@ -600,8 +742,9 @@ export function Skeleton({ width = "100%", height = 12, radius, circle = false, 
 }
 
 export function SkeletonCard({ lines = 3, chart = false }: { lines?: number; chart?: boolean }) {
+  const S = useDSStrings();
   return (
-    <div className="isk-card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }} aria-busy="true" aria-label="Loading">
+    <div className="isk-card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }} aria-busy="true" aria-label={S.loading}>
       <Skeleton width="40%" height={10} />
       <Skeleton width="60%" height={16} />
       {chart ? <Skeleton height={140} radius={10} /> : <Skeleton height={8} radius={9999} />}
@@ -619,6 +762,7 @@ const TOAST: Record<ToastVariant, [IconName, string]> = {
 };
 
 export function Toast({ variant = "success", title, description, onClose, action }: { variant?: ToastVariant; title: ReactNode; description?: ReactNode; onClose?: () => void; action?: ReactNode }) {
+  const S = useDSStrings();
   const [ic, col] = TOAST[variant];
   return (
     <div role={variant === "error" ? "alert" : "status"} style={{ display: "flex", gap: 12, alignItems: "flex-start", width: "100%", maxWidth: 380, background: "#fff", border: "1px solid var(--color-neutral-200)", borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)", padding: "14px 16px" }}>
@@ -629,7 +773,7 @@ export function Toast({ variant = "success", title, description, onClose, action
         {action && <div style={{ marginTop: 8 }}>{action}</div>}
       </div>
       {onClose && (
-        <button type="button" aria-label="Dismiss" onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-500)", padding: 2, display: "flex" }}>
+        <button type="button" aria-label={S.dismiss} onClick={onClose} style={{ border: 0, background: "transparent", color: "var(--color-neutral-500)", padding: 2, display: "flex" }}>
           <Icon name="x" size={16} />
         </button>
       )}
@@ -775,6 +919,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement>, FieldProps {}
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea({ label, hint, error, id, rows = 4, maxLength, value, className = "", ...props }, ref) {
+  const S = useDSStrings();
   const auto = useId();
   const fid = fieldId("t", label, id, auto);
   const hintId = `${fid}-hint`;
@@ -785,7 +930,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
       <textarea ref={ref} id={fid} rows={rows} maxLength={maxLength} value={value} className={cx("isk-input", error && "isk-input--error", className)} aria-invalid={!!error || undefined} aria-describedby={hintId} {...props} />
       <span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
         <span id={hintId} className={cx("isk-hint", error && "isk-hint--error")}>{error || hint}</span>
-        {maxLength && count !== null && <span className="isk-hint" aria-live="polite">{count} / {maxLength}</span>}
+        {maxLength && count !== null && <span className="isk-hint" aria-live="polite">{S.charCount(count, maxLength)}</span>}
       </span>
     </div>
   );
@@ -796,17 +941,18 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
  * ========================================================================================== */
 
 export function AssessmentProgress({ current, total, section }: { current: number; total: number; section?: string }) {
+  const S = useDSStrings();
   const pct = (current / total) * 100;
   return (
     <div style={{ width: "100%" }}>
       <div style={{ marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <span style={{ fontSize: "var(--text-sm)", fontWeight: 500, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          Question {current} of {total}
+          {S.questionOf(current, total)}
           {section && <span style={{ color: "var(--color-neutral-500)", fontWeight: 400 }}> · {section}</span>}
         </span>
         <span style={{ fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", fontVariantNumeric: "tabular-nums" }}>{Math.round(pct)}%</span>
       </div>
-      <ProgressBar value={current} max={total} showValue={false} ariaLabel={`Question ${current} of ${total}`} />
+      <ProgressBar value={current} max={total} showValue={false} ariaLabel={S.questionOf(current, total)} />
     </div>
   );
 }
@@ -822,9 +968,11 @@ const STEP: Record<PlanStepKind, [IconName, string]> = {
 };
 
 export function PlanStep({ step, title, meta, action, status = "todo", last = false, children }: { step: PlanStepKind; title?: ReactNode; meta?: ReactNode; action?: ReactNode; status?: PlanStepStatus; last?: boolean; children?: ReactNode }) {
-  const [ic, lab] = STEP[step];
+  const S = useDSStrings();
+  const ic = STEP[step][0];
+  const lab = S.planSteps[step] ?? STEP[step][1];
   const done = status === "done", locked = status === "locked";
-  const statusText = done ? "Completed" : locked ? "Locked" : status === "current" ? "Current step" : "Not started";
+  const statusText = done ? S.stepStatus.done : locked ? S.stepStatus.locked : status === "current" ? S.stepStatus.current : S.stepStatus.todo;
   return (
     <div style={{ display: "grid", gridTemplateColumns: "36px minmax(0,1fr)", gap: 16 }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -863,18 +1011,21 @@ export interface RecommendationCardProps {
   reason?: ReactNode;
 }
 
-export function RecommendationCard({ competency, title, description, duration, difficulty, type = "Learn", current, target, gap, practice, onStart, cta = "Start activity", reason }: RecommendationCardProps) {
+export function RecommendationCard({ competency, title, description, duration, difficulty, type, current, target, gap, practice, onStart, cta, reason }: RecommendationCardProps) {
+  const S = useDSStrings();
+  type = type ?? S.learn;
+  cta = cta ?? S.startActivity;
   const meta = [type, duration, difficulty].filter(Boolean);
   return (
     <Card style={{ overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ padding: 24, display: "flex", flexDirection: "column", flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <span style={{ fontSize: "var(--text-xs)", fontWeight: 500, color: "var(--color-brand-600)" }}>Recommended for {competency}</span>
-          {gap ? <GapBadge gap={gap} suffix="priority" /> : <span style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-500)" }}>{duration}</span>}
+          <span style={{ fontSize: "var(--text-xs)", fontWeight: 500, color: "var(--color-brand-600)" }}>{S.recommendedFor(competency)}</span>
+          {gap ? <GapBadge gap={gap} suffix={S.prioritySuffix} /> : <span style={{ fontSize: "var(--text-xs)", color: "var(--color-neutral-500)" }}>{duration}</span>}
         </div>
         {current !== undefined && (
           <p style={{ marginTop: 12, fontSize: "var(--text-sm)", color: "var(--color-neutral-500)", fontVariantNumeric: "tabular-nums" }}>
-            <b style={{ color: "var(--color-neutral-900)", fontWeight: 600 }}>{current}</b> → {target} target
+            <b style={{ color: "var(--color-neutral-900)", fontWeight: 600 }}>{current}</b> → {target} {S.targetSuffix}
           </p>
         )}
         <h3 style={{ marginTop: 10, fontSize: "var(--text-lg)", fontWeight: 600, lineHeight: 1.35, textWrap: "pretty" }}>{title}</h3>
@@ -887,7 +1038,7 @@ export function RecommendationCard({ competency, title, description, duration, d
         )}
         {practice && (
           <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: "var(--radius-md)", background: "var(--color-neutral-50)", border: "1px solid var(--color-neutral-100)" }}>
-            <p style={{ fontSize: "var(--text-xs)", fontWeight: 500, color: "var(--color-neutral-500)" }}>Practice</p>
+            <p style={{ fontSize: "var(--text-xs)", fontWeight: 500, color: "var(--color-neutral-500)" }}>{S.practice}</p>
             <p style={{ marginTop: 2, fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--color-neutral-800)" }}>
               {practice.title} <span style={{ color: "var(--color-neutral-500)", fontWeight: 400 }}>· {practice.duration}</span>
             </p>
@@ -989,20 +1140,21 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ items = ISKER_NAV, footerItems = ISKER_NAV_FOOTER, active, onNavigate, hrefFor, footer, user }: SidebarProps) {
+  const S = useDSStrings();
   return (
-    <aside className="isk-sidebar" aria-label="Main navigation">
+    <aside className="isk-sidebar" aria-label={S.mainNavigation}>
       <div className="isk-sidebar__brand" style={{ padding: "4px 12px 20px" }}>
         <Wordmark />
       </div>
-      <nav aria-label="Primary" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <nav aria-label={S.primaryNavigation} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {items.map((it) => (
-          <NavItem key={it.id} icon={it.icon} label={it.label} active={active === it.id} href={hrefFor?.(it.id) ?? it.href} onClick={() => onNavigate?.(it.id)} />
+          <NavItem key={it.id} icon={it.icon} label={S.nav[it.id] ?? it.label} active={active === it.id} href={hrefFor?.(it.id) ?? it.href} onClick={() => onNavigate?.(it.id)} />
         ))}
       </nav>
       <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
         {footer}
         {footerItems.map((it) => (
-          <NavItem key={it.id} icon={it.icon} label={it.label} active={active === it.id} href={hrefFor?.(it.id) ?? it.href} onClick={() => onNavigate?.(it.id)} />
+          <NavItem key={it.id} icon={it.icon} label={S.nav[it.id] ?? it.label} active={active === it.id} href={hrefFor?.(it.id) ?? it.href} onClick={() => onNavigate?.(it.id)} />
         ))}
         {user && (
           <a href={hrefFor?.("profile")} className="isk-sidebar__user" onClick={(e) => { e.preventDefault(); onNavigate?.("profile"); }} title={user.name}>
@@ -1019,8 +1171,9 @@ export function Sidebar({ items = ISKER_NAV, footerItems = ISKER_NAV_FOOTER, act
 }
 
 export function BottomNav({ items = ISKER_BOTTOM_NAV, active, onNavigate, hrefFor, fixed = true }: { items?: NavEntry[]; active?: string; onNavigate?: (id: string) => void; hrefFor?: (id: string) => string; fixed?: boolean }) {
+  const S = useDSStrings();
   return (
-    <nav className="isk-bottom-nav" aria-label="Main navigation" style={fixed ? undefined : { position: "relative" }}>
+    <nav className="isk-bottom-nav" aria-label={S.mainNavigation} style={fixed ? undefined : { position: "relative" }}>
       {items.map((it) => (
         <a
           key={it.id}
@@ -1031,7 +1184,7 @@ export function BottomNav({ items = ISKER_BOTTOM_NAV, active, onNavigate, hrefFo
           onClick={(e) => { e.preventDefault(); onNavigate?.(it.id); }}
         >
           <Icon name={it.icon} size={20} />
-          {it.label}
+          {S.bottomNav[it.id] ?? it.label}
         </a>
       ))}
     </nav>
@@ -1040,14 +1193,46 @@ export function BottomNav({ items = ISKER_BOTTOM_NAV, active, onNavigate, hrefFo
 
 export interface TabDef { value: string; label: string }
 
-export function Tabs({ tabs, value, onChange, variant = "pill", ariaLabel }: { tabs: Array<string | TabDef>; value: string; onChange?: (v: string) => void; variant?: "pill" | "line"; ariaLabel?: string }) {
+/** Element ids shared by a Tabs list and its panels: `${base}-tab-${value}` and `${base}-panel-${value}`. */
+export const tabIds = (base: string, value: string) => ({ tab: `${base}-tab-${value}`, panel: `${base}-panel-${value}` });
+
+/** Props for the panel shown under a Tabs list with the same `id` (role, id and aria-labelledby). */
+export function tabPanelProps(base: string, value: string) {
+  const ids = tabIds(base, value);
+  return { role: "tabpanel" as const, id: ids.panel, "aria-labelledby": ids.tab, tabIndex: 0 };
+}
+
+/**
+ * WAI-ARIA tabs: roving tabindex (only the selected tab is in the Tab order), Left/Right/Home/End move between tabs
+ * and select them. Pass `id` and render the panel with `tabPanelProps(id, value)` so tab and panel reference each
+ * other (aria-controls / aria-labelledby).
+ */
+export function Tabs({ tabs, value, onChange, variant = "pill", ariaLabel, id }: { tabs: Array<string | TabDef>; value: string; onChange?: (v: string) => void; variant?: "pill" | "line"; ariaLabel?: string; id?: string }) {
+  const auto = useId();
+  const base = id ?? `tabs${auto.replace(/:/g, "")}`;
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const values = tabs.map((t) => (typeof t === "string" ? t : t.value));
+  const onKey = (i: number) => (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    let n = -1;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") n = (i + 1) % values.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") n = (i - 1 + values.length) % values.length;
+    else if (e.key === "Home") n = 0;
+    else if (e.key === "End") n = values.length - 1;
+    if (n < 0) return;
+    e.preventDefault();
+    refs.current[n]?.focus();
+    onChange?.(values[n]);
+  };
+  const selectedIndex = Math.max(0, values.indexOf(value));
   return (
     <div role="tablist" aria-label={ariaLabel} className={cx("isk-tabs", variant === "line" && "isk-tabs--line")}>
-      {tabs.map((t) => {
-        const id = typeof t === "string" ? t : t.value;
+      {tabs.map((t, i) => {
+        const v = values[i];
         const lab = typeof t === "string" ? t : t.label;
+        const ids = tabIds(base, v);
         return (
-          <button key={id} role="tab" type="button" aria-selected={value === id} className="isk-tab" onClick={() => onChange?.(id)}>
+          <button key={v} ref={(el) => { refs.current[i] = el; }} id={ids.tab} role="tab" type="button" aria-selected={value === v} aria-controls={ids.panel}
+            tabIndex={i === selectedIndex ? 0 : -1} className="isk-tab" onClick={() => onChange?.(v)} onKeyDown={onKey(i)}>
             {lab}
           </button>
         );
@@ -1139,8 +1324,9 @@ export function Prose({ source }: { source: string }) {
 
 /** Addition: the score hero ("72 / 100"). Scores are the visual hero: 36–48/600 with a quiet "/ 100". */
 export function ScoreValue({ value, max = 100, size = 48, label }: { value: number | null | undefined; max?: number; size?: number; label?: string }) {
+  const S = useDSStrings();
   return (
-    <div className="ik-score" aria-label={label ? `${label}: ${value ?? "not measured"} out of ${max}` : undefined}>
+    <div className="ik-score" aria-label={label ? S.outOf(label, value ?? S.notMeasured, max) : undefined}>
       <span className="ik-score__value" style={{ fontSize: size }}>{value ?? "—"}</span>
       <span className="ik-score__max" style={{ fontSize: size >= 40 ? 16 : 13 }}>/ {max}</span>
     </div>
@@ -1166,7 +1352,9 @@ export function Badge({ tone = "neutral", icon, children, title }: { tone?: Badg
 export interface Crumb { label: ReactNode; href?: string; onClick?: () => void }
 
 /** Addition: breadcrumb trail. The last item is the current page (aria-current). */
-export function Breadcrumbs({ items, label = "Breadcrumb" }: { items: Crumb[]; label?: string }) {
+export function Breadcrumbs({ items, label }: { items: Crumb[]; label?: string }) {
+  const S = useDSStrings();
+  label = label ?? S.breadcrumb;
   return (
     <nav aria-label={label} className="isk-crumbs">
       <ol>
@@ -1220,11 +1408,12 @@ export interface DataTableProps<T> {
  * screen readers; rows open through a real link in the first cell (keyboard friendly, no clickable <tr>).
  */
 export function DataTable<T>({ columns, rows, rowKey, caption, sort, onSortChange, empty, loading = false, onRowOpen, rowHref }: DataTableProps<T>) {
+  const S = useDSStrings();
   const ariaSort = (c: DataColumn<T>) => (!c.sortable ? undefined : sort?.key === c.key ? (sort.order === "asc" ? "ascending" : "descending") : "none");
   return (
     <div className="isk-table-wrap" aria-busy={loading || undefined}>
       <table className="isk-table">
-        <caption className="isk-sr-only">{caption}{sort ? `, sorted by ${sort.key.replace(/_/g, " ")} ${sort.order === "asc" ? "ascending" : "descending"}` : ""}</caption>
+        <caption className="isk-sr-only">{caption}{sort ? S.sortedBy(String(columns.find((c) => c.key === sort.key)?.header ?? sort.key.replace(/_/g, " ")), sort.order === "asc") : ""}</caption>
         <thead>
           <tr>
             {columns.map((c) => (
@@ -1245,7 +1434,7 @@ export function DataTable<T>({ columns, rows, rowKey, caption, sort, onSortChang
               <tr key={`sk${i}`}>{columns.map((c) => <td key={c.key} className={c.hideOnMobile ? "isk-hide-sm" : undefined}><Skeleton height={10} width="70%" /></td>)}</tr>
             ))
           ) : rows.length === 0 ? (
-            <tr><td colSpan={columns.length}>{empty ?? <p style={{ padding: 16, color: "var(--color-neutral-500)", fontSize: 14 }}>No results.</p>}</td></tr>
+            <tr><td colSpan={columns.length}>{empty ?? <p style={{ padding: 16, color: "var(--color-neutral-500)", fontSize: 14 }}>{S.noResults}</p>}</td></tr>
           ) : (
             rows.map((r) => (
               <tr key={rowKey(r)}>
@@ -1270,17 +1459,19 @@ export function DataTable<T>({ columns, rows, rowKey, caption, sort, onSortChang
 }
 
 /** Addition: pagination with a live range summary ("21–40 of 132"). */
-export function Pagination({ page, pageSize, total, onChange, label = "Pagination" }: { page: number; pageSize: number; total: number; onChange: (page: number) => void; label?: string }) {
+export function Pagination({ page, pageSize, total, onChange, label }: { page: number; pageSize: number; total: number; onChange: (page: number) => void; label?: string }) {
+  const S = useDSStrings();
+  label = label ?? S.pagination;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
   return (
     <nav className="isk-pagination" aria-label={label}>
-      <p aria-live="polite">{total === 0 ? "No results" : `${from}–${to} of ${total}`}</p>
+      <p aria-live="polite">{total === 0 ? S.noResults : S.range(from, to, total)}</p>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <Button size="sm" variant="secondary" iconLeft="chevron-left" disabled={page <= 1} onClick={() => onChange(page - 1)}>Previous</Button>
-        <span style={{ fontSize: 13, color: "var(--color-neutral-600)" }}>Page {page} of {pages}</span>
-        <Button size="sm" variant="secondary" iconRight="chevron-right" disabled={page >= pages} onClick={() => onChange(page + 1)}>Next</Button>
+        <Button size="sm" variant="secondary" iconLeft="chevron-left" disabled={page <= 1} onClick={() => onChange(page - 1)}>{S.previous}</Button>
+        <span style={{ fontSize: 13, color: "var(--color-neutral-600)" }}>{S.pageOf(page, pages)}</span>
+        <Button size="sm" variant="secondary" iconRight="chevron-right" disabled={page >= pages} onClick={() => onChange(page + 1)}>{S.next}</Button>
       </div>
     </nav>
   );
@@ -1310,7 +1501,9 @@ export interface ConfirmActionDialogProps {
  * Addition: confirmation for sensitive actions. The confirm button stays disabled until the reason and/or the
  * typed confirmation are valid; it never reports success itself — the caller closes it after the server confirms.
  */
-export function ConfirmActionDialog({ open, title, description, confirmLabel, tone = "danger", requireReason = false, reasonLabel = "Reason (saved in the audit log)", confirmText, busy = false, confirmDisabled = false, error, children, onConfirm, onCancel }: ConfirmActionDialogProps) {
+export function ConfirmActionDialog({ open, title, description, confirmLabel, tone = "danger", requireReason = false, reasonLabel, confirmText, busy = false, confirmDisabled = false, error, children, onConfirm, onCancel }: ConfirmActionDialogProps) {
+  const S = useDSStrings();
+  reasonLabel = reasonLabel ?? S.reasonLabel;
   const [reason, setReason] = useState("");
   const [typed, setTyped] = useState("");
   useEffect(() => { if (open) { setReason(""); setTyped(""); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1319,7 +1512,7 @@ export function ConfirmActionDialog({ open, title, description, confirmLabel, to
   return (
     <Modal open={open} onClose={busy ? undefined : onCancel} title={title} description={description}
       footer={<>
-        <Button variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
+        <Button variant="secondary" onClick={onCancel} disabled={busy}>{S.cancel}</Button>
         <Button variant={tone === "danger" ? "danger" : "primary"} loading={busy} disabled={!reasonOk || !typedOk || confirmDisabled} onClick={() => onConfirm(reason.trim())}>{confirmLabel}</Button>
       </>}>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1327,11 +1520,11 @@ export function ConfirmActionDialog({ open, title, description, confirmLabel, to
         {children}
         {requireReason && (
           <Textarea label={reasonLabel} rows={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)}
-            hint={reason.trim().length > 0 && reason.trim().length < 3 ? undefined : "At least 3 characters."}
-            error={reason.trim().length > 0 && reason.trim().length < 3 ? "Please give a short reason." : undefined} />
+            hint={reason.trim().length > 0 && reason.trim().length < 3 ? undefined : S.reasonHint}
+            error={reason.trim().length > 0 && reason.trim().length < 3 ? S.reasonTooShort : undefined} />
         )}
         {confirmText && (
-          <Input label={`Type ${confirmText} to confirm`} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} />
+          <Input label={S.typeToConfirm(confirmText)} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} />
         )}
       </div>
     </Modal>
@@ -1349,11 +1542,13 @@ export function PermissionGuard({ granted, require, any = false, fallback = null
 export interface StepperStep { label: ReactNode; description?: ReactNode; status: "done" | "current" | "todo"; href?: string; onClick?: () => void }
 
 /** Addition: horizontal journey stepper (wraps on small screens). Status is given in text, not only colour. */
-export function Stepper({ steps, label = "Progress" }: { steps: StepperStep[]; label?: string }) {
+export function Stepper({ steps, label }: { steps: StepperStep[]; label?: string }) {
+  const S = useDSStrings();
+  label = label ?? S.progress;
   return (
     <ol className="isk-stepper" aria-label={label}>
       {steps.map((s, i) => {
-        const statusText = s.status === "done" ? "Completed" : s.status === "current" ? "Current step" : "Not started";
+        const statusText = S.stepStatus[s.status];
         const inner = (
           <>
             <span className={cx("isk-stepper__dot", `isk-stepper__dot--${s.status}`)} aria-hidden="true">
@@ -1393,16 +1588,17 @@ export interface AdminLayoutProps {
 
 /** Addition: administration shell — dedicated sidebar (sections filtered by the caller), skip link and main region. */
 export function AdminLayout({ nav, active, hrefFor, onNavigate, footer, user, mobileBar, children }: AdminLayoutProps) {
+  const S = useDSStrings();
   return (
     <div className="isk-admin">
-      <a href="#admin-main" className="isk-skip-link">Skip to content</a>
+      <a href="#admin-main" className="isk-skip-link">{S.skipToContent}</a>
       <div className="isk-admin__side">
-        <aside className="isk-sidebar" aria-label="Administration navigation">
+        <aside className="isk-sidebar" aria-label={S.adminNavigation}>
           <div className="isk-sidebar__brand" style={{ padding: "4px 12px 6px", display: "flex", alignItems: "center", gap: 8 }}>
             <Wordmark />
-            <Badge tone="brand">Admin</Badge>
+            <Badge tone="brand">{S.admin}</Badge>
           </div>
-          <nav aria-label="Administration" style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 14 }}>
+          <nav aria-label={S.administration} style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 14 }}>
             {nav.map((it) => (
               <NavItem key={it.id} icon={it.icon} label={it.label} active={active === it.id} href={hrefFor(it.id)} onClick={() => onNavigate(it.id)} />
             ))}
@@ -1462,5 +1658,68 @@ export function BarChart({ data, ariaLabel, height = 160, color = "var(--color-b
         <tbody>{data.map((d) => <tr key={d.label}><th scope="row">{d.label}</th><td>{d.value}{valueSuffix}</td></tr>)}</tbody>
       </table>
     </figure>
+  );
+}
+
+/* ============================================================================================
+ * Localization & authentication controls (Additions)
+ * ========================================================================================== */
+
+/**
+ * Addition: language selector. Language names are shown in their own language (never flags only).
+ * A native <select>, so it works with keyboards, screen readers and mobile pickers.
+ */
+export function LanguageSelect({ value, options, onChange, label, compact = false, id }: { value: string; options: Array<{ value: string; label: string }>; onChange: (v: string) => void; label: string; compact?: boolean; id?: string }) {
+  const auto = useId();
+  const fid = id ?? `lang-${auto}`;
+  return (
+    <div className={cx("isk-lang", compact && "isk-lang--compact")}>
+      <label htmlFor={fid} className={compact ? "isk-sr-only" : "isk-label"}>{label}</label>
+      <span className="isk-lang__control">
+        <Icon name="languages" size={16} />
+        <select id={fid} className="isk-lang__select" value={value} onChange={(e) => onChange(e.target.value)}>
+          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </span>
+    </div>
+  );
+}
+
+export interface PasswordInputProps extends Omit<InputProps, "type"> {
+  showLabel: string;
+  hideLabel: string;
+}
+
+/**
+ * Addition: password field with a show/hide toggle. The toggle is a real <button type="button"> (never submits the
+ * form), exposes aria-pressed and a localized label, and only switches the input type — the value is untouched.
+ */
+export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(function PasswordInput({ label, hint, error, id, className = "", showLabel, hideLabel, ...props }, ref) {
+  const [visible, setVisible] = useState(false);
+  const auto = useId();
+  const fid = fieldId("p", label, id, auto);
+  const hintId = `${fid}-hint`;
+  return (
+    <div className="isk-field">
+      {label && <label className="isk-label" htmlFor={fid}>{label}</label>}
+      <span className="isk-password">
+        <input ref={ref} id={fid} type={visible ? "text" : "password"} className={cx("isk-input", error && "isk-input--error", className)}
+          aria-invalid={!!error || undefined} aria-describedby={error || hint ? hintId : undefined} autoCapitalize="none" spellCheck={false} {...props} />
+        <button type="button" className="isk-password__toggle" aria-label={visible ? hideLabel : showLabel} aria-pressed={visible} aria-controls={fid}
+          title={visible ? hideLabel : showLabel} onClick={() => setVisible((v) => !v)}>
+          <Icon name={visible ? "eye-off" : "eye"} size={18} />
+        </button>
+      </span>
+      {(error || hint) && <span id={hintId} className={cx("isk-hint", error && "isk-hint--error")}>{error || hint}</span>}
+    </div>
+  );
+});
+
+/** Addition: a horizontal "or continue with" separator. */
+export function Divider({ label }: { label?: string }) {
+  return (
+    <div className="isk-divider" role={label ? undefined : "separator"}>
+      {label && <span>{label}</span>}
+    </div>
   );
 }

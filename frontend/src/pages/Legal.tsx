@@ -1,64 +1,81 @@
-import { Card, PageHeader } from "@isker/design-system";
+import { Card } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import type { ReactNode } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { supportEmail } from "../config";
+import { formatDate } from "../utils/format";
 
-const UPDATED = "October 2026";
+/** Date of the current version of both documents. */
+const UPDATED = new Date(2026, 9, 1);
 
 function LegalFrame({ title, children }: { title: string; children: ReactNode }) {
+  const { t } = useTranslation("public");
+  const email = supportEmail();
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "40px 16px 80px" }}>
-      <p style={{ marginBottom: 16 }}><Link to="/">← Isker</Link></p>
-      <PageHeader title={title} subtitle={`Last updated: ${UPDATED}`} />
-      <Card padding={28}><div className="isk-prose">{children}</div></Card>
+      <p style={{ marginBottom: 16 }}><Link to="/"><span aria-hidden="true">← </span>{t("legal.backHome")}</Link></p>
+      <PageHeader title={title} subtitle={t("legal.lastUpdated", { date: formatDate(UPDATED, { month: "long", year: "numeric" }) })} />
+      <Card padding={28}>
+        <div className="isk-prose">
+          {children}
+          <h2>{t("legal.contactTitle")}</h2>
+          {email
+            ? <p>{t("legal.contactText")} <a href={`mailto:${email}`}>{email}</a>.</p>
+            : <p>{t("legal.contactInApp")}</p>}
+        </div>
+      </Card>
     </main>
   );
 }
 
 export function TermsPage() {
+  const { t } = useTranslation("public");
   return (
-    <LegalFrame title="Terms of Use">
-      <h2>What Isker is</h2>
-      <p>Isker is an educational platform that helps you assess and develop entrepreneurial competencies based on the EntreComp framework. Results are developmental guidance, not a professional, psychological or hiring evaluation.</p>
-      <h2>Your account</h2>
+    <LegalFrame title={t("terms.title")}>
+      <h2>{t("terms.whatTitle")}</h2>
+      <p>{t("terms.whatText")}</p>
+      <h2>{t("terms.accountTitle")}</h2>
       <ul>
-        <li>Give accurate information and keep your password private. You are responsible for activity in your account.</li>
-        <li>You can close your account at any time in Settings. Closed accounts can be restored by support; permanent deletion is done on request.</li>
-        <li>We may suspend accounts that abuse the service, attack it, or harm other people. We record the reason.</li>
+        <li>{t("terms.accountAccurate")}</li>
+        <li>{t("terms.accountClose")}</li>
+        <li>{t("terms.accountSuspend")}</li>
       </ul>
-      <h2>Plans</h2>
-      <p>The Free plan includes the core journey: assessment, results, a development plan, learning and practice, with the limits shown on the <Link to="/plans">plans page</Link>. Paid plans can currently be granted by an administrator; online payment is not yet available.</p>
-      <h2>AI feedback</h2>
-      <p>Some feedback is generated automatically. It can be wrong. Use it as one input among others.</p>
-      <h2>Acceptable use</h2>
-      <p>Don't try to access other people's data, disrupt the service, or submit unlawful content.</p>
-      <h2>Changes</h2>
-      <p>If these terms change in a meaningful way, we will ask you to accept the new version.</p>
+      <h2>{t("terms.plansTitle")}</h2>
+      <p><Trans t={t} i18nKey="terms.plansText" components={{ plansLink: <Link to="/plans" /> }} /></p>
+      <h2>{t("terms.aiTitle")}</h2>
+      <p>{t("terms.aiText")}</p>
+      <h2>{t("terms.useTitle")}</h2>
+      <p>{t("terms.useText")}</p>
+      <h2>{t("terms.changesTitle")}</h2>
+      <p>{t("terms.changesText")}</p>
     </LegalFrame>
   );
 }
 
 export function PrivacyPage() {
+  const { t } = useTranslation("public");
   return (
-    <LegalFrame title="Privacy Policy">
-      <h2>What we store</h2>
+    <LegalFrame title={t("privacy.title")}>
+      <h2>{t("privacy.storeTitle")}</h2>
       <ul>
-        <li>Account data: name, email, a salted password hash (never the password itself), roles and account status.</li>
-        <li>Learning data: profile answers, goals, assessment answers and scores, plan, learning and practice progress.</li>
-        <li>Security data: sign-in sessions (device description and IP address) and an audit log of security-relevant actions.</li>
+        <li>{t("privacy.storeAccount")}</li>
+        <li>{t("privacy.storeLearning")}</li>
+        <li>{t("privacy.storeSecurity")}</li>
       </ul>
-      <h2>Why</h2>
-      <p>To run your assessment and development plan, keep your account secure, and understand how the platform is used in aggregate.</p>
-      <h2>Who can see it</h2>
-      <p>Only you and authorised staff with a specific role (for example support or administrators). Staff access is permission-based and logged. Staff can never see your password.</p>
-      <h2>AI processing</h2>
-      <p>When an AI provider is configured, the text of open answers and practice submissions is sent to it to generate feedback. When none is configured, feedback is produced by a built-in rule-based evaluator.</p>
-      <h2>Your choices</h2>
+      <h2>{t("privacy.whyTitle")}</h2>
+      <p>{t("privacy.whyText")}</p>
+      <h2>{t("privacy.whoTitle")}</h2>
+      <p>{t("privacy.whoText")}</p>
+      <h2>{t("privacy.aiTitle")}</h2>
+      <p>{t("privacy.aiText")}</p>
+      <h2>{t("privacy.choicesTitle")}</h2>
       <ul>
-        <li>Download your data from Settings (data export).</li>
-        <li>Close your account from Settings, or ask support to delete it permanently.</li>
+        <li>{t("privacy.choicesExport")}</li>
+        <li>{t("privacy.choicesClose")}</li>
       </ul>
-      <h2>Cookies</h2>
-      <p>Isker uses two strictly necessary cookies: a sign-in session cookie and a security token that protects forms against cross-site requests. There are no advertising or tracking cookies.</p>
+      <h2>{t("privacy.cookiesTitle")}</h2>
+      <p>{t("privacy.cookiesText")}</p>
     </LegalFrame>
   );
 }

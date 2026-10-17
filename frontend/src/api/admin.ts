@@ -1,8 +1,52 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Competency, Difficulty, QuestionType, ResourceType } from "../types/api";
 import type { Page } from "../types/api";
-import { api, qs } from "./client";
-import { keys } from "./keys";
+import type { PlanAdmin, PlanEntitlementInput } from "./adminManage";
+import { ApiError, api, qs } from "./client";
+import { derivedKeys, keys } from "./keys";
+
+/** Draft → Published → Archived. Only published content is visible to learners; archived keeps history. */
+export type ContentStatus = "draft" | "published" | "archived";
+export const CONTENT_STATUSES: ContentStatus[] = ["draft", "published", "archived"];
+/** Translated texts of the ru/kk interface; English is the base text in the normal fields. */
+export type TranslationLang = "ru" | "kk";
+export type Translations = Partial<Record<TranslationLang, Record<string, unknown>>>;
+
+/** How complete a record's ru/kk translation is: complete, partial, missing, or stale (base text changed since). */
+export type TranslationState = "complete" | "partial" | "missing" | "stale";
+export interface TranslationLangStatus { status: TranslationState; missing: string[]; stale: string[] }
+export type TranslationStatus = Partial<Record<TranslationLang, TranslationLangStatus>>;
+
+/** Optimistic locking: every editable record carries `lock_version`; edits send it back as `expected_version`. */
+export interface VersionedRecord {
+  lock_version: number;
+  translations: Translations | null;
+  /** Per-language translation completeness (sent by newer API versions; absent on older ones). */
+  translation_status?: TranslationStatus | null;
+}
+
+export interface AdminCompetency extends Competency, VersionedRecord {
+  area_id: number;
+  reflection_prompt: string | null;
+  learning_priority: number;
+  sort_order: number;
+  status: ContentStatus;
+}
+
+export interface CompetencyInput {
+  code: string; area_id: number; name: string; short_name: string; description: string; hint?: string | null;
+  reflection_prompt?: string | null; importance?: number; learning_priority?: number; default_target?: number;
+  status?: ContentStatus; translations?: Translations | null;
+}
+
+export type CompetencyUpdate = Partial<Omit<CompetencyInput, "code">> & { expected_version?: number };
+
+export type PlanWithVersion = PlanAdmin & Partial<VersionedRecord>;
+
+/** True when the server refused a save because someone else changed the record first (409 VERSION_CONFLICT). */
+export function isVersionConflict(e: unknown): e is ApiError {
+  return e instanceof ApiError && e.code === "VERSION_CONFLICT";
+}
 
 export interface AdminStats {
   users: number;
@@ -30,10 +74,18 @@ export interface AdminQuestion {
   reverse_scored: boolean;
   min_length: number;
   is_active: boolean;
-  options: { id: number; label: string; score: number; value: number | null }[];
+  status: ContentStatus;
+  lock_version: number;
+  version: number;
+  previous_id: number | null;
+  translations: Translations | null;
+  options: { id: number; label: string; score: number; value: number | null; translations?: Translations | null }[];
   competencies: { competency_id: number; weight: number }[];
   rubric: RubricItem[];
   answer_count: number;
+  /** Set when the save created a new version: the id of the replaced (now archived) version. */
+  replaced_id?: number | null;
+  translation_status?: TranslationStatus | null;
 }
 
 export interface QuestionInput {
@@ -45,7 +97,10 @@ export interface QuestionInput {
   reverse_scored?: boolean;
   min_length?: number;
   is_active?: boolean;
-  options: { label: string; score: number; value?: number | null }[];
+  status?: ContentStatus;
+  translations?: Translations | null;
+  expected_version?: number;
+  options: { label: string; score: number; value?: number | null; translations?: Translations | null }[];
   competencies: { competency_id: number; weight: number }[];
   rubric: RubricItem[];
 }
@@ -58,9 +113,14 @@ export interface AdminAssessment {
   estimated_minutes: number;
   version: number;
   is_active: boolean;
+  lock_version: number;
+  translations: Translations | null;
   question_count: number;
   attempt_count: number;
+  translation_status?: TranslationStatus | null;
 }
+
+export interface AssessmentUpdate { title?: string; description?: string; estimated_minutes?: number; is_active?: boolean; translations?: Translations | null; expected_version?: number }
 
 export interface ResourceInput {
   slug: string;
@@ -72,9 +132,12 @@ export interface ResourceInput {
   duration_minutes: number;
   content: string;
   url?: string | null;
-  is_published: boolean;
+  is_published?: boolean;
+  status?: ContentStatus;
+  translations?: Translations | null;
+  expected_version?: number;
 }
-export interface AdminResource extends ResourceInput { id: number }
+export interface AdminResource extends Omit<ResourceInput, "translations" | "expected_version">, VersionedRecord { id: number; is_published: boolean; status: ContentStatus }
 
 export interface TaskInput {
   slug: string;
@@ -86,9 +149,16 @@ export interface TaskInput {
   duration_minutes: number;
   rubric: RubricItem[];
   min_length: number;
-  is_published: boolean;
+  is_published?: boolean;
+  status?: ContentStatus;
+  translations?: Translations | null;
+  expected_version?: number;
 }
-export interface AdminTask extends TaskInput { id: number }
+export interface AdminTask extends Omit<TaskInput, "translations" | "expected_version">, VersionedRecord { id: number; is_published: boolean; status: ContentStatus }
+
+/** Entities whose publication status the content editor can change. */
+export type StatusEntity = "competencies" | "questions" | "resources" | "tasks";
+export interface StatusChange { entity: StatusEntity; id: number; status: ContentStatus; expected_version?: number }
 
 export interface AIEvaluationRow {
   id: number;
@@ -123,9 +193,11 @@ export interface PromptVersion {
 
 export const adminApi = {
   stats: () => api.get<AdminStats>("/api/admin/stats"),
-  competencies: () => api.get<Competency[]>("/api/admin/competencies"),
-  updateCompetency: (id: number, body: Partial<Competency> & { reflection_prompt?: string; learning_priority?: number }) =>
-    api.put<Competency>(`/api/admin/competencies/${id}`, body),
+  competencies: () => api.get<AdminCompetency[]>("/api/admin/competencies"),
+  createCompetency: (body: CompetencyInput) => api.post<AdminCompetency>("/api/admin/competencies", body),
+  updateCompetency: (id: number, body: CompetencyUpdate) => api.put<AdminCompetency>(`/api/admin/competencies/${id}`, body),
+  setStatus: ({ entity, id, status, expected_version }: StatusChange) =>
+    api.post<{ id: number; status: ContentStatus; lock_version: number }>(`/api/admin/${entity}/${id}/status`, { status, expected_version }),
   questions: () => api.get<AdminQuestion[]>("/api/admin/questions"),
   createQuestion: (body: QuestionInput) => api.post<AdminQuestion>("/api/admin/questions", body),
   updateQuestion: (id: number, body: QuestionInput) => api.put<AdminQuestion>(`/api/admin/questions/${id}`, body),
@@ -133,7 +205,11 @@ export const adminApi = {
   assessments: () => api.get<AdminAssessment[]>("/api/admin/assessments"),
   createAssessment: (body: { code: string; title: string; description: string; estimated_minutes: number; is_active: boolean }) =>
     api.post<AdminAssessment>("/api/admin/assessments", body),
-  updateAssessment: (id: number, body: Partial<AdminAssessment>) => api.put<AdminAssessment>(`/api/admin/assessments/${id}`, body),
+  updateAssessment: (id: number, body: AssessmentUpdate) => api.put<AdminAssessment>(`/api/admin/assessments/${id}`, body),
+  /** Plan edit with optimistic locking and name/description translations. */
+  updatePlan: (id: number, body: { name?: string; description?: string | null; price_cents?: number; currency?: string; billing_interval?: string; trial_days?: number;
+    is_active?: boolean; sort_order?: number; entitlements?: PlanEntitlementInput[]; translations?: Translations | null; expected_version?: number; reason: string }) =>
+    api.patch<PlanWithVersion>(`/api/admin/plans/${id}`, body),
   resources: () => api.get<AdminResource[]>("/api/admin/resources"),
   createResource: (body: ResourceInput) => api.post<AdminResource>("/api/admin/resources", body),
   updateResource: (id: number, body: ResourceInput) => api.put<AdminResource>(`/api/admin/resources/${id}`, body),
@@ -149,6 +225,40 @@ export const adminApi = {
   activatePrompt: (id: number) => api.post<PromptVersion>(`/api/admin/ai/prompts/${id}/activate`),
 };
 
+// --- Translation completeness (GET /api/admin/translations/status, permission content.manage) -----------------
+
+export type TranslationEntity = "competency" | "question" | "assessment" | "resource" | "task" | "plan" | "area" | "goal" | "level" | "option";
+export const TRANSLATION_ENTITIES: TranslationEntity[] = ["competency", "question", "assessment", "resource", "task", "plan", "area", "goal", "level", "option"];
+export const TRANSLATION_STATES: TranslationState[] = ["complete", "partial", "missing", "stale"];
+
+export interface TranslationStatusItem {
+  entity: TranslationEntity;
+  id: number;
+  label: string;
+  status: Partial<Record<TranslationLang, TranslationState>>;
+  missing: Partial<Record<TranslationLang, string[]>>;
+  stale: Partial<Record<TranslationLang, string[]>>;
+}
+export type TranslationSummary = Partial<Record<TranslationEntity, Partial<Record<TranslationLang, Partial<Record<TranslationState, number>>>>>>;
+export interface TranslationStatusPage { summary: TranslationSummary; items: TranslationStatusItem[]; total: number; page: number; page_size: number }
+export interface TranslationStatusFilters { entity?: TranslationEntity | ""; language?: TranslationLang | ""; status?: TranslationState[]; page?: number; page_size?: number }
+
+/** `null` when the API doesn't offer the endpoint yet (404), so the page can say so instead of failing. */
+export async function fetchTranslationStatus(f: TranslationStatusFilters): Promise<TranslationStatusPage | null> {
+  try {
+    return await api.get<TranslationStatusPage>(`/api/admin/translations/status${qs({
+      entity: f.entity || undefined, language: f.language || undefined, status: f.status?.length ? f.status.join(",") : undefined,
+      page: f.page, page_size: f.page_size,
+    })}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export const useTranslationStatus = (f: TranslationStatusFilters) =>
+  useQuery({ queryKey: keys.admin("translations", f), queryFn: () => fetchTranslationStatus(f), placeholderData: (prev) => prev, refetchOnWindowFocus: true });
+
 export const useAdminStats = () => useQuery({ queryKey: keys.admin("stats"), queryFn: adminApi.stats });
 export const useAdminCompetencies = () => useQuery({ queryKey: keys.admin("competencies"), queryFn: adminApi.competencies });
 export const useAdminQuestions = () => useQuery({ queryKey: keys.admin("questions"), queryFn: adminApi.questions });
@@ -159,8 +269,21 @@ export const useAdminEvaluations = (status: string, page: number) =>
   useQuery({ queryKey: keys.admin("evaluations", status, page), queryFn: () => adminApi.evaluations(status, page) });
 export const useAdminPrompts = () => useQuery({ queryKey: keys.admin("prompts"), queryFn: adminApi.prompts });
 
-/** Generic admin mutation that refreshes all admin queries. */
+/** Learner-side queries that show admin-edited content (catalogue, learning, practice, assessments, plans). */
+export const learnerContentKeys: readonly (readonly unknown[])[] = [keys.catalog, keys.plans, ...derivedKeys];
+
+/**
+ * Admin mutation. After the API confirms, every admin query and every learner query that shows content is
+ * invalidated, so both the editor and the platform refetch the saved state (nothing is updated optimistically).
+ */
 export function useAdminMutation<V, R>(fn: (v: V) => Promise<R>) {
   const qc = useQueryClient();
-  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: ["admin"] }) });
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: async () => {
+      // `me` too: an admin may have changed their own roles, permissions, plan or language.
+      await Promise.all([qc.invalidateQueries({ queryKey: ["admin"] }), qc.invalidateQueries({ queryKey: keys.me }),
+        ...learnerContentKeys.map((queryKey) => qc.invalidateQueries({ queryKey }))]);
+    },
+  });
 }

@@ -59,10 +59,23 @@ async function axe(page, label) {
   console.log(res.length ? "AXE " : "A11Y", label, res.length ? JSON.stringify(res) : "no violations");
 }
 
+// This journey reads English labels. A signed-in account's saved language wins over the browser (by design), so
+// the seeded accounts are switched to English first.
+async function useEnglish(page, email, password) {
+  await page.goto(B + "/login");
+  await page.evaluate(async ([e, p]) => {
+    await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: e, password: p }) });
+    const csrf = document.cookie.split("; ").find((c) => c.startsWith("isker_csrf="))?.split("=")[1] ?? "";
+    await fetch("/api/auth/me/language", { method: "PUT", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf }, body: JSON.stringify({ language: "en" }) });
+    await fetch("/api/auth/logout", { method: "POST", headers: { "X-CSRF-Token": csrf } });
+  }, [email, password]);
+  await page.context().clearCookies();
+}
+
 async function login(page, email, password) {
   await page.goto(B + "/login");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
@@ -121,7 +134,7 @@ await step(learner, "dashboard shows the journey stepper", async () => {
 await step(learner, "development plan → learn → practice", async () => {
   await learner.goto(B + "/development-plan");
   await learner.getByText("Priority 1").waitFor();
-  await learner.getByRole("link", { name: /Start Learning/ }).first().click();
+  await learner.getByRole("link", { name: /Start learning/i }).first().click();
   await learner.waitForURL(/\/learning\/\d+|\/plans/);
   if (learner.url().includes("/learning/")) {
     await learner.getByRole("button", { name: /^Start/ }).click();
@@ -129,7 +142,7 @@ await step(learner, "development plan → learn → practice", async () => {
     await learner.getByText(/Completed/).first().waitFor();
   }
   await learner.goto(B + "/development-plan");
-  await learner.getByRole("link", { name: /Start Practice/ }).first().click();
+  await learner.getByRole("link", { name: /Start practice/i }).first().click();
   await learner.waitForURL(/\/practice\/\d+/);
   await learner.getByRole("button", { name: "Start task" }).click();
   await learner.getByLabel("Your response").fill(ANSWER);
@@ -147,7 +160,7 @@ for (const path of ["/competencies", "/development-plan", "/learning", "/practic
 
 await step(learner, "free plan: advanced resources are locked, plans page explains upgrades", async () => {
   await learner.goto(B + "/learning?difficulty=advanced");
-  await learner.getByRole("link", { name: /needs a plan with advanced resources/ }).first().waitFor();
+  await learner.getByRole("link", { name: /requires a plan with advanced resources/ }).first().waitFor();
   await learner.goto(B + "/plans");
   await learner.getByText("Your plan: Free").waitFor();
   await learner.getByText("Online payment isn't available yet.", { exact: false }).waitFor();
@@ -172,6 +185,7 @@ await step(learner, "learner is kept out of the admin area (UI and API)", async 
 
 // --- Admin -------------------------------------------------------------------------------------------
 const admin = await newPage();
+await useEnglish(admin, ADMIN_EMAIL, ADMIN_PASSWORD);
 let userUrl = "";
 await step(admin, "super admin signs in and lands in the admin area", async () => {
   await login(admin, ADMIN_EMAIL, ADMIN_PASSWORD);
@@ -250,7 +264,7 @@ for (const path of ["/admin/plans", "/admin/roles", "/admin/subscriptions", "/ad
 const kb = await newPage();
 await step(kb, "keyboard: sign in with Tab/Enter only", async () => {
   await kb.goto(B + "/login");
-  await kb.getByRole("heading", { name: "Sign in" }).waitFor();
+  await kb.getByRole("heading", { name: "Welcome back!" }).waitFor();
   const active = () => kb.evaluate(() => `${document.activeElement?.tagName}:${document.activeElement?.getAttribute("type") ?? ""}:${document.activeElement?.textContent?.trim().slice(0, 30) ?? ""}`);
   for (let i = 0; i < 5 && !(await active()).startsWith("INPUT:email"); i++) await kb.keyboard.press("Tab");
   if (!(await active()).startsWith("INPUT:email")) throw new Error(`email field not reachable by Tab (${await active()})`);

@@ -1,8 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { setUnauthorizedHandler } from "./api/client";
+import { useEffect, useRef } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { SIGN_OUT_CODES, setUnauthorizedHandler } from "./api/client";
 import { keys } from "./api/keys";
+import { useMe } from "./api/auth";
+import { useLanguageSync } from "./i18n/useLanguage";
 import { AppShell } from "./layouts/AppShell";
 import { FocusLayout } from "./layouts/FocusLayout";
 import { AdminShell } from "./layouts/AdminShell";
@@ -15,6 +17,7 @@ import { AdminPlans } from "./pages/admin/AdminPlans";
 import { AdminRoles } from "./pages/admin/AdminRoles";
 import { AdminSettings } from "./pages/admin/AdminSettings";
 import { AdminSubscriptions } from "./pages/admin/AdminSubscriptions";
+import { AdminTranslations } from "./pages/admin/AdminTranslations";
 import { AdminUserDetailPage } from "./pages/admin/AdminUserDetail";
 import { AdminUsersList } from "./pages/admin/AdminUsersList";
 import { AssessmentIntro } from "./pages/AssessmentIntro";
@@ -25,7 +28,7 @@ import { DashboardPage } from "./pages/Dashboard";
 import { DevelopmentPlanPage } from "./pages/DevelopmentPlan";
 import { ForgotPasswordPage } from "./pages/ForgotPassword";
 import { PrivacyPage, TermsPage } from "./pages/Legal";
-import { PlansPage } from "./pages/Plans";
+import { PlansRoute } from "./pages/Plans";
 import { ResetPasswordPage } from "./pages/ResetPassword";
 import { VerifyEmailPage } from "./pages/VerifyEmail";
 import { Landing } from "./pages/Landing";
@@ -45,11 +48,23 @@ import { SettingsPage } from "./pages/Settings";
 export function App() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
+  // The signed-in user's saved language applies everywhere (app, admin area, assessment and onboarding).
+  const { data: me } = useMe();
+  useLanguageSync(me);
+  const here = useRef(location.pathname);
+  here.current = location.pathname;
   useEffect(() => {
-    // An expired/revoked session anywhere in the app returns the user to sign-in.
-    setUnauthorizedHandler(() => {
+    // An expired, revoked or blocked session anywhere in the app returns the user to sign-in with the reason.
+    setUnauthorizedHandler((err, path) => {
+      const wasSignedIn = !!qc.getQueryData(keys.me);
+      if (path === "/api/auth/me" && !wasSignedIn) return; // anonymous visitor: nothing to end
+      // Drop every cached private response (another person may sign in next), keep the signed-out state.
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "me" });
       qc.setQueryData(keys.me, null);
-      navigate(`/login?next=${encodeURIComponent(window.location.pathname)}`, { replace: true });
+      const reason = SIGN_OUT_CODES.has(err.code) ? `&reason=${err.code}` : "";
+      const next = here.current.startsWith("/login") ? "/" : here.current;
+      navigate(`/login?next=${encodeURIComponent(next)}${reason}`, { replace: true });
     });
     return () => setUnauthorizedHandler(null);
   }, [qc, navigate]);
@@ -61,6 +76,8 @@ export function App() {
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      {/* Public: anonymous visitors see the plans with a sign-up call to action, signed-in users their current plan. */}
+      <Route path="/plans" element={<PlansRoute />} />
       <Route element={<RedirectIfAuthed />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -91,7 +108,6 @@ export function App() {
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/plans" element={<PlansPage />} />
         </Route>
       </Route>
 
@@ -117,6 +133,7 @@ export function App() {
             <Route path="/admin/assessments" element={<AdminAssessmentsPage />} />
             <Route path="/admin/competencies" element={<AdminCompetenciesPage />} />
             <Route path="/admin/learning-resources" element={<AdminLearningPage />} />
+            <Route path="/admin/translations" element={<AdminTranslations />} />
             <Route path="/admin/questions" element={<Navigate to="/admin/assessments?tab=questions" replace />} />
             <Route path="/admin/resources" element={<Navigate to="/admin/learning-resources" replace />} />
           </Route>

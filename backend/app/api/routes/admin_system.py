@@ -38,6 +38,7 @@ from app.models.enums import (
     AuditOutcome,
     PracticeStatus,
     ProgressStatus,
+    SubscriptionSource,
     SubscriptionStatus,
 )
 from app.schemas.admin_users import AuditLogOut
@@ -108,13 +109,16 @@ def overview(viewer: Analyst, db: DB, days: Annotated[int, Query(ge=7, le=365)] 
 
     sub_status = dict(db.execute(select(UserSubscription.status, func.count(UserSubscription.id))
                                  .group_by(UserSubscription.status)).all())
+    # Paying = a current subscription on a priced plan that came from a verified payment. Plans granted by staff
+    # (source admin/trial/system), even on a priced plan, are counted under granted_free_of_charge.
     paid_users = _count(db, select(func.count(func.distinct(UserSubscription.user_id)))
                         .join(SubscriptionPlan, SubscriptionPlan.id == UserSubscription.plan_id)
-                        .where(UserSubscription.status.in_(subs.ENTITLED), SubscriptionPlan.price_cents > 0))
+                        .where(UserSubscription.status.in_(subs.ENTITLED), SubscriptionPlan.price_cents > 0,
+                               UserSubscription.source == SubscriptionSource.PAYMENT))
     entitled_users = _count(db, select(func.count(func.distinct(UserSubscription.user_id)))
                             .where(UserSubscription.status.in_(subs.ENTITLED)))
-    by_plan = [{"plan": k, "name": n, "count": c} for k, n, c in db.execute(
-        select(SubscriptionPlan.key, SubscriptionPlan.name, func.count(UserSubscription.id))
+    by_plan = [{"plan": p.key, "name": p.name, "count": c} for p, c in db.execute(
+        select(SubscriptionPlan, func.count(UserSubscription.id))
         .join(UserSubscription, UserSubscription.plan_id == SubscriptionPlan.id)
         .where(UserSubscription.status.in_(subs.ENTITLED)).group_by(SubscriptionPlan.id))]
 
@@ -363,7 +367,9 @@ def settings_status(_: SettingsViewer) -> dict:
             "csrf_protection": True,
             "rate_limiting": s.rate_limit_enabled,
             "max_request_bytes": s.max_request_bytes,
-            "session_hours": round(s.jwt_expires_minutes / 60, 1),
+            "session_hours": s.session_hours,
+            "remember_me_days": s.remember_me_days,
+            "google_sign_in": s.google_enabled,
         },
         "email": {
             "backend": email_service.backend_name(),

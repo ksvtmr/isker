@@ -20,7 +20,7 @@ describe("routing and guards", () => {
     mockApi({ "GET /api/auth/me": unauth });
     renderApp("/dashboard");
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/login?next=%2Fdashboard"));
-    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Welcome back!" })).toBeInTheDocument();
   });
 
   it("sends users who haven't onboarded to onboarding", async () => {

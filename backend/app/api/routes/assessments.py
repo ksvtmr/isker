@@ -34,9 +34,7 @@ router = APIRouter(prefix="/api/assessments", tags=["assessments"], responses=ER
 def _assessment_out(db, a) -> AssessmentOut:
     qs = list(
         db.scalars(
-            select(Question)
-            .where(Question.assessment_id == a.id, Question.is_active.is_(True))
-            .order_by(Question.sort_order)
+            select(Question).where(*svc.live_question_filter(a.id)).order_by(Question.sort_order, Question.id)
         )
     )
     counts = Counter(q.section for q in qs)

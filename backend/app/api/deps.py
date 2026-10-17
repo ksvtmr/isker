@@ -10,20 +10,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.api.cookies import set_session_cookie
 from app.core.config import get_settings
 from app.core.database import get_db, utcnow
 from app.core.errors import AuthenticationError, AuthorizationError
-from app.core.security import csrf_matches, decode_token
+from app.core.security import create_access_token, csrf_matches, decode_token
 from app.models import User, UserSession
 from app.models.enums import AccountStatus
-from app.services.accounts import session_is_valid, touch_last_seen
+from app.services.accounts import check_token_version, needs_rotation, rotate, session_is_valid, touch_last_seen
 from app.services.audit import audit_now
 from app.services.permissions import has_permission
 
@@ -40,6 +42,14 @@ class AuthContext:
     via_cookie: bool
 
 
+def account_blocked_error(user: User) -> AuthenticationError:
+    """401 for a suspended or deactivated account; checked on every authenticated request (not only at sign-in)."""
+    if user.status == AccountStatus.SUSPENDED:
+        return AuthenticationError("This account is suspended. Contact support if you think this is a mistake.",
+                                   "ACCOUNT_SUSPENDED")
+    return AuthenticationError("This account has been closed. Contact support to restore it.", "ACCOUNT_DEACTIVATED")
+
+
 def token_from_request(request: Request, creds: HTTPAuthorizationCredentials | None) -> tuple[str | None, bool]:
     if creds and creds.scheme.lower() == "bearer":
         return creds.credentials, False
@@ -47,7 +57,7 @@ def token_from_request(request: Request, creds: HTTPAuthorizationCredentials | N
 
 
 def get_auth(
-    request: Request, creds: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)], db: DB
+    request: Request, response: Response, creds: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)], db: DB
 ) -> AuthContext:
     s = get_settings()
     token, via_cookie = token_from_request(request, creds)
@@ -61,8 +71,27 @@ def get_auth(
         raise AuthenticationError("Invalid session. Please sign in again.", "INVALID_TOKEN") from e
     sess = db.get(UserSession, claims["jti"])
     if not session_is_valid(sess):
+        # Blocking revokes every session: tell the person why instead of a generic "session ended".
+        owner = db.get(User, sess.user_id) if sess is not None else None
+        if owner is not None and owner.status != AccountStatus.ACTIVE:
+            raise account_blocked_error(owner)
         raise AuthenticationError("Your session has ended. Please sign in again.", "SESSION_REVOKED")
     assert sess is not None
+    try:
+        version = int(claims.get("ver", 0))
+    except (TypeError, ValueError) as e:
+        raise AuthenticationError("Invalid session.", "INVALID_TOKEN") from e
+    if version > sess.token_version:
+        raise AuthenticationError("Invalid session.", "INVALID_TOKEN")
+    # Cookie and Bearer tokens get the same reuse check: once a session's token has been rotated, the previous one
+    # works only during a short grace period, and anything older revokes the session. (Otherwise a stolen, superseded
+    # cookie token would keep working as a Bearer token for the whole session.) API clients that only use the
+    # Bearer token are never rotated (rotation happens on cookie requests), so their token stays valid.
+    if not check_token_version(db, sess, version):
+        db.commit()
+        audit_now(sess.user_id, "auth.token_reuse_detected", "user", sess.user_id, outcome="denied",
+                  via="cookie" if via_cookie else "bearer")
+        raise AuthenticationError("Your session has ended. Please sign in again.", "SESSION_REVOKED")
     try:
         user = db.get(User, int(claims["sub"]))
     except (TypeError, ValueError) as e:
@@ -70,12 +99,18 @@ def get_auth(
     if user is None or user.id != sess.user_id:
         raise AuthenticationError("Invalid session.", "INVALID_TOKEN")
     if user.status != AccountStatus.ACTIVE:
-        raise AuthenticationError("This account is not active. Contact support if you think this is a mistake.",
-                                  "ACCOUNT_INACTIVE")
+        raise account_blocked_error(user)
     if via_cookie and request.method in UNSAFE and not request.url.path.endswith("/auth/logout"):
         if not csrf_matches(request.cookies.get(s.csrf_cookie_name), request.headers.get("x-csrf-token")):
             raise AuthorizationError("Security check failed. Reload the page and try again.", "CSRF_FAILED")
-    if touch_last_seen(db, user, sess, utcnow()):
+    changed = touch_last_seen(db, user, sess, utcnow())
+    issued = datetime.fromtimestamp(int(claims.get("iat", 0)), UTC)
+    if via_cookie and version == sess.token_version and needs_rotation(sess, issued):
+        # Rotation: a fresh token (new `ver`) replaces the cookie; the old one stops working after a short grace.
+        rotate(sess)
+        set_session_cookie(response, create_access_token(user.id, sess.id, sess.expires_at, sess.token_version), sess)
+        changed = True
+    if changed:
         db.commit()
     return AuthContext(user=user, session=sess, via_cookie=via_cookie)
 

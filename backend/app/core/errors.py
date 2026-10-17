@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import StaleDataError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 log = logging.getLogger("isker.errors")
@@ -52,6 +53,15 @@ class NotFoundError(AppError):
 class ConflictError(AppError):
     status_code = 409
     code = "CONFLICT"
+
+
+VERSION_CONFLICT_MESSAGE = (
+    "Someone else changed this record while you were editing. Reload it and apply your change again."
+)
+
+
+class VersionConflict(ConflictError):
+    code = "VERSION_CONFLICT"
 
 
 class AIError(AppError):
@@ -104,6 +114,10 @@ def install_error_handlers(app: FastAPI) -> None:
     async def _http(_: Request, exc: StarletteHTTPException) -> JSONResponse:
         code = _HTTP_CODES.get(exc.status_code, "HTTP_ERROR")
         return JSONResponse(error_body(code, str(exc.detail)), status_code=exc.status_code)
+
+    @app.exception_handler(StaleDataError)
+    async def _stale(_: Request, exc: StaleDataError) -> JSONResponse:
+        return JSONResponse(error_body("VERSION_CONFLICT", VERSION_CONFLICT_MESSAGE), status_code=409)
 
     @app.exception_handler(SQLAlchemyError)
     async def _db(_: Request, exc: SQLAlchemyError) -> JSONResponse:

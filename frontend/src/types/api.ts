@@ -27,6 +27,10 @@ export interface User {
   onboarding_completed: boolean;
   email_verified: boolean;
   created_at: string;
+  /** Saved interface language; null until the user (or first sign-in) sets one. */
+  language: "ru" | "kk" | "en" | null;
+  has_password: boolean;
+  google_linked: boolean;
 }
 
 /** What the API says happened with the confirmation email. "logged" = dev mode: written to the server log, not sent. */
@@ -46,7 +50,10 @@ export interface SessionInfo {
   last_seen_at: string | null;
   expires_at: string;
   user_agent: string | null;
+  ip_address?: string | null;
   current: boolean;
+  remember?: boolean;
+  auth_method?: "password" | "google";
 }
 
 export interface Entitlement {
@@ -130,7 +137,7 @@ export interface Profile {
   business_experience: string | null;
   preferred_learning_format: LearningFormat;
   weekly_learning_minutes: number;
-  language: string;
+  language: "ru" | "kk" | "en" | null;
   notify_reassessment: boolean;
   notify_weekly_summary: boolean;
   goals: Goal[];
@@ -138,6 +145,8 @@ export interface Profile {
 }
 
 export interface Area {
+  /** Database id (needed to create competencies); sent by API versions that expose it. */
+  id?: number;
   code: string;
   name: string;
   color_token: string;
@@ -439,7 +448,8 @@ export interface Task {
 export interface Feedback {
   evaluation_id: number;
   score: number;
-  level: Level;
+  /** Empty when the evaluation produced no level (the API sends ""). */
+  level: Level | "";
   confidence: number | null;
   criteria: { criterion: string; rating: number; evidence: string }[];
   evidence: string[];

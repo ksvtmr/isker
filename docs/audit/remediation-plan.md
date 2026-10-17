@@ -1,0 +1,25 @@
+# Remediation plan (remaining work)
+
+Everything here is open after the audit of 12–17 October 2026. Items fixed during the audit are in
+[full-system-audit.md](full-system-audit.md). Priority: **P1** before production use, **P2** soon after, **P3**
+improvement.
+
+| # | Priority | Item | Impact | Required action | Dependencies | Verification |
+|---|---|---|---|---|---|---|
+| 1 | P1 | Google sign-in not verified against a real Google project | "Continue with Google" stays disabled until configured; behaviour with real Google unverified | Create an OAuth client, set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, register the exact redirect URI (see `docs/google-oauth-setup.md`) | Google Cloud project, production URL | Sign up, sign in again, link from Settings, cancel on Google's screen — on the deployed site |
+| 2 | P1 | Email delivery not configured | Verification and password-reset emails are not sent (the UI says so honestly) | Configure SMTP (`SMTP_HOST`, credentials, `SMTP_FROM`) | SMTP provider, sender domain (SPF/DKIM) | Register, reset password, admin "resend verification" on the deployed site; check all three languages |
+| 3 | P1 | Native-speaker review of Russian and Kazakh translations | Interface and educational content were translated for this release without expert review; terminology may read unnaturally | Review locale files and `backend/app/seed/translations.py` against `docs/audit/glossary.md`; correct in the files or in the admin translations editor | Native ru/kk reviewers familiar with EntreComp | Review sign-off; `i18n.test.ts` and `test_all_seeded_content_is_fully_translated` stay green |
+| 4 | P1 | Production configuration review | Defaults are safe but must be set deliberately | Set `JWT_SECRET`, `ENVIRONMENT=production`, `CORS_ORIGINS`, `TRUSTED_PROXY_HOPS` (1 behind Render/nginx), `ADMIN_PASSWORD`; decide `API_DOCS_ENABLED`; set `DEMO_READ_ONLY`/`SEED_DEMO` per environment; `VITE_SUPPORT_EMAIL` | Deployment access | App refuses to start with unsafe values; check `/api/health`, docs visibility, login from the real domain |
+| 5 | P2 | Real AI provider not exercised | With `MOCK_AI=false` the language validation and retries are tested only with simulated replies | Run a sample of open answers in ru/kk/en against the configured model; tune the language threshold if needed | API key and budget | Admin → AI shows `success` (not `fallback`) with matching `language`; feedback reads naturally |
+| 6 | P2 | Rate limiting is in-memory per process | Limits multiply with several API instances | Move limiter storage to Redis (or keep one instance) | Redis | Load test login limits across two instances |
+| 7 | P2 | Database pagination for growing lists | Admin question/resource/task lists and learning resources load all rows, some with per-row count queries | Paginate in SQL, batch counts | — | Lists with 1 000+ items load in < 500 ms; existing tests pass |
+| 8 | P2 | `expected_version` optional | Old API clients without it don't get conflict protection | Make it required after confirming no external client depends on the old shape | API consumers | `test_content_sync.py` / `test_user_sync.py` updated |
+| 9 | P2 | Online payment | Paid plans can only be granted by admins (stated in the UI) | Integrate a provider adapter that emits the signed webhook format in `app/services/payments.py` | Payment provider contract | Webhook signature and renewal tests; end-to-end purchase in a sandbox |
+| 10 | P3 | Translations page links open the editor's list, not the item | One extra click to find the item | Support `?edit=<id>` in content editors | — | Frontend test opening an editor from the translations page |
+| 11 | P3 | Plan editor and AI "new version" dialogs don't confirm discarding unsaved edits | Unsaved text can be lost on Escape | Reuse `EditorModal` | — | Frontend test as for content editors |
+| 12 | P3 | Live updates by polling (30 s) | Other admins' changes appear with a delay (access checks are always current) | SSE channel for `sync/state` if near-real-time is needed | — | Two browsers see each other's edits within 2 s |
+| 13 | P3 | Registration reveals whether an email exists (409 `EMAIL_TAKEN`) | Account enumeration (rate-limited) | Decide product trade-off; optionally generic response + email | Email delivery (#2) | Security test |
+| 14 | P3 | Hardening of the separate nginx frontend (docker-compose) | No CSP/HSTS on that path (the API-served SPA has them) | Add headers to `frontend/nginx.conf` | — | Response headers check |
+| 15 | P3 | Large frontend bundle (> 800 kB chunk) | Slower first load on mobile | Route-level code splitting | — | Build without the size warning; Lighthouse |
+| 16 | P3 | Admin action responses (`ActionResult`) have no message `code` | Toasts use a generic translated text instead of a specific one | Add codes; frontend already handles them | — | Frontend test |
+| 17 | P3 | Old migrations 0001–0004 don't pass ruff | Cosmetic (migrations are not in the lint scope) | Format or exclude explicitly | — | `ruff check alembic` |

@@ -21,7 +21,7 @@ class ProfileOut(BaseModel):
     business_experience: str | None
     preferred_learning_format: LearningFormat
     weekly_learning_minutes: int
-    language: str
+    language: str | None
     notify_reassessment: bool
     notify_weekly_summary: bool
     goals: list[GoalOut]

@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 import app.models  # noqa: E402,F401
+from app.core.context import language_var  # noqa: E402
 from app.core.database import Base, SessionLocal, engine  # noqa: E402
 from app.core.ratelimit import limiter  # noqa: E402
 from app.main import app  # noqa: E402
@@ -32,6 +33,17 @@ class BrowserClient(TestClient):
             headers.setdefault("X-CSRF-Token", token)
             kwargs["headers"] = headers
         return super().request(method, url, *args, **kwargs)
+
+
+# Most assertions read English text; localization tests ask for ru/kk explicitly.
+EN = {"Accept-Language": "en"}
+
+
+@pytest.fixture(autouse=True)
+def _english():
+    token = language_var.set("en")
+    yield
+    language_var.reset(token)
 
 
 @pytest.fixture(autouse=True)
@@ -55,13 +67,13 @@ def db() -> Session:
 
 @pytest.fixture
 def client() -> TestClient:
-    return BrowserClient(app)
+    return BrowserClient(app, headers=EN)
 
 
 @pytest.fixture
 def raw_client() -> TestClient:
     """A client that does NOT send the CSRF header (simulates a cross-site request)."""
-    return TestClient(app)
+    return TestClient(app, headers=EN)
 
 
 def register(
