@@ -116,6 +116,8 @@ cd backend && .venv/bin/pytest && .venv/bin/ruff check app tests && .venv/bin/my
 npm test && npm run typecheck && npm run lint && npm run build
 # Browser journey + axe-core accessibility run against a running instance (API + built SPA on one origin):
 cd scripts/e2e && npm install && BASE=http://localhost:8000 node journey.mjs
+# Localization check in ru/kk/en (raw keys, wrong-language text, content language, switching, phone layout):
+cd scripts/e2e && BASE=http://localhost:8000 node languages.mjs
 # Regenerate docs/api.md, docs/database.md and docs/openapi.json from the code:
 cd backend && .venv/bin/python scripts/gen_docs.py
 ```
@@ -129,6 +131,13 @@ cd backend && .venv/bin/python scripts/gen_docs.py
 - [docs/traceability.md](docs/traceability.md) — requirement → UI → API → DB → tests
 - [docs/platform-audit.md](docs/platform-audit.md) — audit of the platform before the admin/security/UX overhaul
 - [docs/admin-security-ux-report.md](docs/admin-security-ux-report.md) — what was implemented, tested, and what is left
+- [docs/audit/full-system-audit.md](docs/audit/full-system-audit.md) — full system audit (Oct 2026): defects, root causes, fixes
+- [docs/audit/localization-audit.md](docs/audit/localization-audit.md) — ru/kk/en coverage, content and AI language, fallback rules
+- [docs/audit/admin-platform-consistency.md](docs/audit/admin-platform-consistency.md) — admin ↔ platform data consistency
+- [docs/audit/test-results.md](docs/audit/test-results.md) — commands run and their actual results
+- [docs/audit/remediation-plan.md](docs/audit/remediation-plan.md) — remaining work by priority
+- [docs/audit/glossary.md](docs/audit/glossary.md) — Isker terminology in ru/kk/en
+- [docs/localization.md](docs/localization.md), [docs/authentication.md](docs/authentication.md), [docs/google-oauth-setup.md](docs/google-oauth-setup.md)
 - [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) — visual language and component catalogue
 
 ## Main routes

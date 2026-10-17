@@ -42,6 +42,8 @@ Registration, login, logout, current user
 | `POST` | `/api/auth/login` | Sign in with email and password |
 | `POST` | `/api/auth/logout` | Sign out and revoke this session |
 | `GET` | `/api/auth/me` | Current user, roles and permissions |
+| `PUT` | `/api/auth/me/language` | Save the interface language for this account |
+| `POST` | `/api/auth/set-password` | Add a password to an account created with Google (requires a sign-in in the last 10 minutes) |
 | `POST` | `/api/auth/password` | Change password (signs out other sessions) |
 | `POST` | `/api/auth/forgot-password` | Request a password reset link (same response whether or not the email exists) |
 | `POST` | `/api/auth/reset-password` | Set a new password with a reset token |
@@ -51,6 +53,12 @@ Registration, login, logout, current user
 | `DELETE` | `/api/auth/sessions/{session_id}` | Sign out one of your sessions |
 | `POST` | `/api/auth/sessions/revoke-others` | Sign out all other sessions |
 | `POST` | `/api/auth/deactivate` | Close your account (reversible by support) |
+| `GET` | `/api/auth/providers` | Which sign-in methods this server offers |
+| `GET` | `/api/auth/google/start` | Start “Continue with Google” (redirects to Google) |
+| `POST` | `/api/auth/google/link` | Start linking Google to the signed-in account (returns the Google URL) |
+| `DELETE` | `/api/auth/google` | Unlink Google (only if the account keeps a password) |
+| `GET` | `/api/auth/google/callback` | Google redirects here after consent |
+| `GET` | `/api/sync/state` | Versions of the data an open tab may need to refresh |
 
 ### profile
 
@@ -162,27 +170,33 @@ Content management and AI governance (permission-based)
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/admin/stats` | Platform and assessment statistics |
-| `GET` | `/api/admin/competencies` | Competencies |
+| `GET` | `/api/admin/competencies` | Competencies (all statuses) |
+| `POST` | `/api/admin/competencies` | Create a competency (draft unless published explicitly) |
 | `PUT` | `/api/admin/competencies/{competency_id}` | Edit a competency |
-| `GET` | `/api/admin/questions` | Question bank |
+| `POST` | `/api/admin/competencies/{competency_id}/status` | Publish, unpublish or archive |
+| `GET` | `/api/admin/questions` | Question bank (all versions) |
 | `POST` | `/api/admin/questions` | Create Question |
-| `PUT` | `/api/admin/questions/{question_id}` | Update Question |
-| `DELETE` | `/api/admin/questions/{question_id}` | Deactivate (history is preserved) |
+| `PUT` | `/api/admin/questions/{question_id}` | Edit (versioned once answered) |
+| `DELETE` | `/api/admin/questions/{question_id}` | Archive (history is preserved) |
+| `POST` | `/api/admin/questions/{question_id}/status` | Publish or archive |
 | `GET` | `/api/admin/assessments` | Assessments |
 | `POST` | `/api/admin/assessments` | Create Assessment |
 | `PUT` | `/api/admin/assessments/{assessment_id}` | Update Assessment |
 | `GET` | `/api/admin/resources` | Resources |
 | `POST` | `/api/admin/resources` | Create Resource |
 | `PUT` | `/api/admin/resources/{resource_id}` | Update Resource |
-| `DELETE` | `/api/admin/resources/{resource_id}` | Unpublish a resource |
+| `DELETE` | `/api/admin/resources/{resource_id}` | Archive a resource (history is kept) |
+| `POST` | `/api/admin/resources/{resource_id}/status` | Publish, unpublish, archive |
 | `GET` | `/api/admin/tasks` | Tasks |
 | `POST` | `/api/admin/tasks` | Create Task |
 | `PUT` | `/api/admin/tasks/{task_id}` | Update Task |
-| `DELETE` | `/api/admin/tasks/{task_id}` | Unpublish a task |
+| `DELETE` | `/api/admin/tasks/{task_id}` | Archive a task (submissions are kept) |
+| `POST` | `/api/admin/tasks/{task_id}/status` | Publish, unpublish or archive |
 | `GET` | `/api/admin/ai/evaluations` | AI evaluation log |
 | `GET` | `/api/admin/ai/prompts` | Prompt versions |
 | `POST` | `/api/admin/ai/prompts` | Create a new prompt version |
 | `POST` | `/api/admin/ai/prompts/{prompt_id}/activate` | Activate a prompt version |
+| `GET` | `/api/admin/translations/status` | Translation completeness of the content (ru, kk) |
 
 ### admin-users
 
@@ -191,14 +205,16 @@ User management, roles and account lifecycle (permission-based)
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/admin/users` | Search, filter, sort and page user accounts |
+| `POST` | `/api/admin/users` | Create an account (no password: the person sets one through an emailed link) |
 | `GET` | `/api/admin/users/{user_id}` | Full account details |
-| `PATCH` | `/api/admin/users/{user_id}` | Edit name or email (reason required) |
+| `PATCH` | `/api/admin/users/{user_id}` | Edit name, email or interface language (reason required; send expected_version) |
 | `DELETE` | `/api/admin/users/{user_id}` | Permanently delete a deactivated account (super admin; email confirmation required) |
 | `POST` | `/api/admin/users/{user_id}/suspend` | Suspend (signs the user out) |
 | `POST` | `/api/admin/users/{user_id}/deactivate` | Deactivate (data kept; permanent deletion is a separate step) |
 | `POST` | `/api/admin/users/{user_id}/reactivate` | Reactivate a suspended account |
 | `POST` | `/api/admin/users/{user_id}/revoke-sessions` | Sign the user out everywhere |
 | `POST` | `/api/admin/users/{user_id}/password-reset` | Send the user a password reset link (staff never see or set passwords) |
+| `POST` | `/api/admin/users/{user_id}/resend-verification` | Send the email confirmation link again |
 | `POST` | `/api/admin/users/{user_id}/roles` | Grant a role |
 | `DELETE` | `/api/admin/users/{user_id}/roles/{role_key}` | Revoke a role |
 
