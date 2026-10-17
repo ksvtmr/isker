@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.api.cookies import clear_auth_cookies, set_auth_cookies
 from app.api.deps import DB, Auth, CurrentUser
@@ -9,7 +10,7 @@ from app.core.config import get_settings
 from app.core.context import client_ip_var, language_var
 from app.core.database import utcnow
 from app.core.errors import AuthenticationError, ConflictError, NotFoundError
-from app.core.ratelimit import enforce
+from app.core.ratelimit import check, enforce, record_failure
 from app.core.security import create_access_token, hash_password, verify_password
 from app.core.security import decode_token as _decode
 from app.models import User, UserProfile, UserSession
@@ -29,7 +30,7 @@ from app.schemas.auth import (
     UserOut,
 )
 from app.schemas.common import ERROR_RESPONSES, Message
-from app.services import accounts
+from app.services import accounts, maintenance
 from app.services import email as email_service
 from app.services.audit import audit, audit_now
 from app.services.permissions import DEFAULT_ROLE, give_role, user_permissions
@@ -76,7 +77,12 @@ def register(body: RegisterIn, response: Response, db: DB) -> AuthOut:
                 last_login_at=now, terms_accepted_at=now, terms_version=s.terms_version)
     user.profile = UserProfile(language=body.language or language_var.get())
     db.add(user)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError as e:  # a concurrent registration with the same email won: the unique index decides
+        db.rollback()
+        raise ConflictError("An account with this email already exists. Sign in or reset your password.",
+                            "EMAIL_TAKEN") from e
     give_role(db, user, DEFAULT_ROLE)
     result = accounts.start_email_verification(db, user) if email_service.is_available() else None
     audit(db, user.id, "auth.register", "user", user.id, email_verification=_verification_state(result))
@@ -87,12 +93,19 @@ def register(body: RegisterIn, response: Response, db: DB) -> AuthOut:
 
 @router.post("/login", response_model=AuthOut, summary="Sign in with email and password")
 def login(body: LoginIn, response: Response, db: DB) -> AuthOut:
-    enforce("login_ip", client_ip_var.get())
-    enforce("login_email", body.email)
+    ip = client_ip_var.get()
+    enforce("login_ip", ip)
+    # Only failed attempts count towards the per-email limits (successful sign-ins never lock an account out).
+    email_ip = f"{body.email}|{ip}" if ip else None
+    check("login_email_ip", email_ip)
+    check("login_email", body.email)
+    maintenance.maybe_purge()
     user = db.scalar(select(User).where(User.email == body.email))
     # Always run bcrypt (dummy hash for unknown emails) so timing doesn't reveal which emails exist.
     ok = verify_password(body.password, user.password_hash if user else None)
     if user is None or not ok:
+        record_failure("login_email_ip", email_ip)
+        record_failure("login_email", body.email)
         audit_now(user.id if user else None, "auth.login_failed", "user", user.id if user else None,
                   reason="unknown email" if user is None else "wrong password")
         raise AuthenticationError("Email or password is incorrect.", "INVALID_CREDENTIALS")
@@ -162,6 +175,7 @@ def set_language(body: LanguageIn, user: CurrentUser, db: DB) -> UserOut:
 @router.post("/set-password", response_model=Message,
              summary="Add a password to an account created with Google (requires a sign-in in the last 10 minutes)")
 def set_password(body: SetPasswordIn, auth: Auth, db: DB) -> Message:
+    accounts.assert_not_demo(auth.user)
     if auth.user.password_hash:
         raise ConflictError("This account already has a password. Use change password instead.", "PASSWORD_ALREADY_SET")
     if not _recently_signed_in(auth):
@@ -175,6 +189,7 @@ def set_password(body: SetPasswordIn, auth: Auth, db: DB) -> Message:
 
 @router.post("/password", response_model=Message, summary="Change password (signs out other sessions)")
 def change_password(body: ChangePasswordIn, auth: Auth, db: DB) -> Message:
+    accounts.assert_not_demo(auth.user)
     enforce("password_change_user", str(auth.user.id))
     if not verify_password(body.current_password, auth.user.password_hash):
         audit_now(auth.user.id, "auth.password_change_failed", "user", auth.user.id)
@@ -275,6 +290,7 @@ def revoke_others(auth: Auth, db: DB) -> Message:
 def deactivate(body: PasswordConfirmIn, auth: Auth, response: Response, db: DB) -> Message:
     from app.services.permissions import assert_keeps_a_super_admin
 
+    accounts.assert_not_demo(auth.user)
     if auth.user.password_hash:
         if not verify_password(body.password, auth.user.password_hash):
             raise AuthenticationError("Password is incorrect.", "INVALID_CREDENTIALS")

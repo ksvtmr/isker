@@ -87,7 +87,10 @@ class UserOut(BaseModel):
 
 class AuthOut(BaseModel):
     user: UserOut
-    access_token: str
+    # For API clients (Authorization: Bearer). The web app does not read it: it relies on the httpOnly session
+    # cookie. The token is bound to the same server-side session, so it is revoked, rotated-out and reuse-checked
+    # exactly like the cookie (see api/deps.py). Kept for API compatibility.
+    access_token: str = Field(description="Session token for API clients (Bearer). Browsers use the httpOnly cookie.")
     token_type: str = "bearer"
     expires_at: datetime
     email_verification: str  # "verified" | "sent" | "logged" | "unavailable" | "not_required"

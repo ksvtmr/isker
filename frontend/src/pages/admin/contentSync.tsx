@@ -3,9 +3,10 @@
  * and the save/reset footer. Every save sends the `lock_version` the editor loaded as `expected_version`; a 409
  * VERSION_CONFLICT is shown with a "Reload" action and never overwrites someone else's change.
  */
-import { Badge, Button, InlineAlert, Input, Textarea, type BadgeTone } from "@isker/design-system";
+import { Badge, Button, ConfirmActionDialog, InlineAlert, Input, Modal, Textarea, type BadgeTone } from "@isker/design-system";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { adminApi, isVersionConflict, useAdminMutation, type ContentStatus, type StatusEntity, type TranslationLang, type Translations } from "../../api/admin";
+import { adminApi, isVersionConflict, useAdminMutation, type ContentStatus, type StatusEntity, type TranslationLang, type TranslationState, type TranslationStatus, type Translations } from "../../api/admin";
 import { errorMessage } from "../../api/client";
 import { useConfirmAction } from "./common";
 
@@ -16,6 +17,35 @@ const STATUS_TONE: Record<ContentStatus, BadgeTone> = { published: "success", dr
 export function ContentStatusBadge({ status }: { status: ContentStatus }) {
   const { t } = useTranslation("adminContent");
   return <Badge tone={STATUS_TONE[status]}>{t(`sync.status.${status}`)}</Badge>;
+}
+
+const TR_TONE: Record<TranslationState, BadgeTone> = { complete: "success", partial: "warning", missing: "error", stale: "info" };
+
+/**
+ * Compact ru/kk translation state for content lists: one "Translated" badge when both languages are complete,
+ * otherwise a badge per incomplete language (missing/stale fields in the tooltip). Nothing when the API doesn't
+ * report the status.
+ */
+export function TranslationStatusBadge({ status }: { status?: TranslationStatus | null }) {
+  const { t } = useTranslation("adminContent");
+  if (!status) return null;
+  const langs = LANGS.filter((l) => status[l]);
+  if (!langs.length) return null;
+  const incomplete = langs.filter((l) => status[l]!.status !== "complete");
+  if (!incomplete.length) return <Badge tone="success" icon="languages">{t("translations.badge.complete")}</Badge>;
+  return (
+    <span style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
+      {incomplete.map((l) => {
+        const st = status[l]!;
+        const fields = [...st.missing, ...st.stale];
+        return (
+          <Badge key={l} tone={TR_TONE[st.status]} title={fields.length ? t("translations.badge.fields", { list: fields.join(", ") }) : undefined}>
+            {t("translations.badge.lang", { lang: l.toUpperCase(), state: t(`translations.states.${st.status}`) })}
+          </Badge>
+        );
+      })}
+    </span>
+  );
 }
 
 export interface StatusTarget { entity: StatusEntity; id: number; status: ContentStatus; lock_version: number; title: string }
@@ -137,6 +167,28 @@ export function EditorFooter({ dirty, saving, onCancel, onReset, onSave, saveLab
       {onReset && <Button variant="ghost" disabled={!dirty || saving} onClick={onReset}>{t("sync.reset")}</Button>}
       <Button variant="secondary" onClick={onCancel}>{t("common:actions.cancel")}</Button>
       <Button loading={saving} disabled={!dirty} onClick={onSave}>{saveLabel ?? t("common:actions.save")}</Button>
+    </>
+  );
+}
+
+// --- Editor modal with a discard confirmation ------------------------------------------------------------------------
+
+/**
+ * Modal for content editors. Closing it with unsaved edits (overlay click, Escape, the close button or Cancel via
+ * `requestClose`) first asks whether to discard them; without edits it closes immediately.
+ */
+export function EditorModal({ open, dirty, onDiscard, title, footer, children }: {
+  open: boolean; dirty: boolean; onDiscard: () => void; title: string; footer?: (requestClose: () => void) => ReactNode; children?: ReactNode;
+}) {
+  const { t } = useTranslation("adminContent");
+  const [asking, setAsking] = useState(false);
+  const requestClose = () => { if (dirty) setAsking(true); else onDiscard(); };
+  return (
+    <>
+      <Modal open={open} onClose={requestClose} title={title} footer={footer?.(requestClose)}>{children}</Modal>
+      <ConfirmActionDialog open={open && asking} title={t("sync.discard.title")} description={t("sync.discard.text")}
+        confirmLabel={t("sync.discard.confirm")} onCancel={() => setAsking(false)}
+        onConfirm={() => { setAsking(false); onDiscard(); }} />
     </>
   );
 }

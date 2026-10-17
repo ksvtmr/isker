@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "Isker",
-    "home": "Isker басты беті"
+    "home": "Isker басты беті",
+    "pageTitle": "{{page}} · Isker",
+    "metaDescription": "Isker — EntreComp моделі бойынша кәсіпкерлік құзыреттерді бағалау және дамыту."
   },
   "language": {
     "label": "Тіл",
@@ -51,7 +53,8 @@
     "never": "Ешқашан",
     "none": "—",
     "yes": "Иә",
-    "no": "Жоқ"
+    "no": "Жоқ",
+    "requestFailedCode": "Сұранысты орындау мүмкін болмады (код: {{code}}). Қайталап көріңіз."
   },
   "nav": {
     "dashboard": "Басты бет",
@@ -59,7 +62,7 @@
     "competencies": "Құзыреттер",
     "development-plan": "Даму жоспары",
     "learning": "Оқу",
-    "practice": "Тәжірибе",
+    "practice": "Практика",
     "progress": "Прогресс",
     "profile": "Профиль",
     "settings": "Баптаулар",
@@ -91,7 +94,7 @@
     "prioritySuffix": "басымдық",
     "targetSuffix": "мақсат",
     "recommendedFor": "Ұсынылады: {{competency}}",
-    "practice": "Тәжірибе",
+    "practice": "Практика",
     "learn": "Оқу",
     "startActivity": "Бастау",
     "mainNavigation": "Негізгі навигация",
@@ -123,7 +126,7 @@
     "planSteps": {
       "gap": "Сіздің алшақтығыңыз",
       "learn": "Оқу",
-      "practice": "Тәжірибе",
+      "practice": "Практика",
       "reflect": "Рефлексия",
       "reassess": "Қайта бағалау"
     },
@@ -137,7 +140,7 @@
   "levels": {
     "Foundation": "Бастапқы",
     "Developing": "Дамушы",
-    "Intermediate": "Орташа",
+    "Intermediate": "Орта",
     "Advanced": "Озық",
     "Proficient": "Кәсіби"
   },
@@ -160,9 +163,9 @@
     "template": "Үлгі"
   },
   "difficulty": {
-    "beginner": "Бастапқы",
-    "intermediate": "Орташа",
-    "advanced": "Озық"
+    "beginner": "Бастаушыларға",
+    "intermediate": "Орташа күрделілік",
+    "advanced": "Жоғары күрделілік"
   },
   "roles": {
     "user": "Тыңдаушы",
@@ -224,7 +227,40 @@
     "chooseGoal": "Кемінде бір мақсат таңдаңыз",
     "chooseFormat": "Форматты таңдаңыз",
     "minMinutes": "Кемінде 15 минут",
-    "tooLong": "Мәтін тым ұзын"
+    "tooLong": "Мәтін тым ұзын",
+    "server": {
+      "required": "Бұл өрісті толтырыңыз",
+      "email": "Дұрыс электрондық пошта мекенжайын енгізіңіз",
+      "min": "Мән {{value}} кем болмауы керек",
+      "greaterThan": "Мән {{value}} артық болуы керек",
+      "max": "Мән {{value}} артық болмауы керек",
+      "lessThan": "Мән {{value}} кем болуы керек",
+      "number": "Сан енгізіңіз",
+      "pattern": "Мән пішімі дұрыс емес",
+      "choice": "Рұқсат етілген мәндердің бірін таңдаңыз",
+      "invalid": "Жарамсыз мән",
+      "minLength_one": "Кемінде {{count}} таңба",
+      "minLength_few": "Кемінде {{count}} таңба",
+      "minLength_many": "Кемінде {{count}} таңба",
+      "minLength_other": "Кемінде {{count}} таңба",
+      "maxLength_one": "Ең көбі {{count}} таңба",
+      "maxLength_few": "Ең көбі {{count}} таңба",
+      "maxLength_many": "Ең көбі {{count}} таңба",
+      "maxLength_other": "Ең көбі {{count}} таңба",
+      "minItems_one": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "minItems_few": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "minItems_many": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "minItems_other": "Кемінде {{count}} нұсқаны таңдаңыз",
+      "maxItems_one": "Ең көбі {{count}} нұсқаны таңдаңыз",
+      "maxItems_few": "Ең көбі {{count}} нұсқаны таңдаңыз",
+      "maxItems_many": "Ең көбі {{count}} нұсқаны таңдаңыз",
+      "maxItems_other": "Ең көбі {{count}} нұсқаны таңдаңыз"
+    },
+    "backgroundMax": "Ең көбі 1000 таңба",
+    "businessExperienceMax": "Ең көбі 1000 таңба",
+    "goalsMax": "Ең көбі 6 мақсат таңдаңыз",
+    "maxMinutes": "Аптасына ең көбі 600 минут",
+    "wholeNumber": "Бүтін сан енгізіңіз"
   },
   "greeting": {
     "morning": "Қайырлы таң",
@@ -247,5 +283,13 @@
   },
   "toast": {
     "saved": "Сақталды"
+  },
+  "format": {
+    "id": "№{{id}}",
+    "version": "{{n}}-нұсқа",
+    "numberHeader": "№"
+  },
+  "a11y": {
+    "opensInNewTab": "(жаңа қойындыда ашылады)"
   }
 }

@@ -8,7 +8,19 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.content_i18n import Translatable
@@ -19,7 +31,17 @@ from app.models.enums import BillingInterval, SubscriptionSource, SubscriptionSt
 class SubscriptionPlan(Versioned, Translatable, TimestampMixin, Base):
     __tablename__ = "subscription_plans"
     __translatable__ = ("name", "description")
-    __table_args__ = (CheckConstraint("price_cents >= 0", name="price_non_negative"),)
+    __table_args__ = (
+        CheckConstraint("price_cents >= 0", name="price_non_negative"),
+        # Exactly one default plan: at most one row may have is_default (the seed creates it).
+        Index(
+            "uq_subscription_plans_single_default",
+            "is_default",
+            unique=True,
+            postgresql_where=text("is_default"),
+            sqlite_where=text("is_default = 1"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(String(48), unique=True)
@@ -57,8 +79,21 @@ class PlanEntitlement(Base):
     limit_value: Mapped[int | None] = mapped_column(Integer)
 
 
+CURRENT_STATUSES_SQL = "status IN ('trialing', 'active', 'past_due', 'incomplete')"
+
+
 class UserSubscription(TimestampMixin, Base):
     __tablename__ = "user_subscriptions"
+    # A user has at most one current subscription (see services/subscriptions.py).
+    __table_args__ = (
+        Index(
+            "uq_user_subscriptions_user_current",
+            "user_id",
+            unique=True,
+            postgresql_where=text(CURRENT_STATUSES_SQL),
+            sqlite_where=text(CURRENT_STATUSES_SQL),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)

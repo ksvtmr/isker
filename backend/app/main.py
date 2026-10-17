@@ -80,9 +80,10 @@ def create_app() -> FastAPI:
         version="1.0.0",
         description=DESCRIPTION,
         openapi_tags=TAGS,
-        docs_url="/api/docs",
-        redoc_url="/api/redoc",
-        openapi_url="/api/openapi.json",
+        # Hidden in production unless API_DOCS_ENABLED=true (see core/config.py).
+        docs_url="/api/docs" if settings.docs_enabled else None,
+        redoc_url="/api/redoc" if settings.docs_enabled else None,
+        openapi_url="/api/openapi.json" if settings.docs_enabled else None,
     )
     app.add_middleware(
         CORSMiddleware,

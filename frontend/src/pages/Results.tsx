@@ -1,4 +1,5 @@
-import { AIInsight, Card, ChartCard, CompetencyCard, EmptyState, Icon, LevelBadge, PageHeader, ProgressBar, RadarChart, ScoreValue, SectionTitle, Tabs } from "@isker/design-system";
+import { AIInsight, Card, ChartCard, CompetencyCard, EmptyState, Icon, LevelBadge, ProgressBar, RadarChart, ScoreValue, SectionTitle, Tabs, tabPanelProps } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -61,7 +62,7 @@ export function ResultsPage() {
       {sorted.map((c) => (
         <div key={c.code} style={{ display: "grid", gridTemplateColumns: "minmax(0,220px) minmax(0,1fr) 32px", gap: 12, alignItems: "center" }}>
           <span style={{ fontSize: 13, color: "var(--color-neutral-700)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
-          <ProgressBar value={c.score ?? 0} target={c.target} showValue={false} ariaLabel={`${c.name}: ${c.score}`}
+          <ProgressBar value={c.score ?? 0} target={c.target} showValue={false} ariaLabel={t("results.barAria", { name: c.name, score: c.score ?? 0, target: c.target })}
             color={(c.gap ?? 0) >= 20 ? "var(--color-error)" : (c.gap ?? 0) >= 10 ? "var(--color-warning)" : "var(--color-brand-600)"} />
           <span style={{ fontSize: 13, fontWeight: 600, textAlign: "right" }}>{c.score}</span>
         </div>
@@ -91,7 +92,7 @@ export function ResultsPage() {
               <div style={{ marginTop: 8 }}><ScoreValue value={c.score} size={40} label={c.name} /></div>
               {c.change !== null && (
                 <p style={{ marginTop: 10, fontSize: 14, fontWeight: 500, color: c.change >= 0 ? "var(--color-growth-700)" : "var(--color-error)", display: "flex", alignItems: "center", gap: 4 }}>
-                  <Icon name="trending-up" size={16} />{t("results.pointsSincePrevious", { count: Math.abs(c.change), value: signed(c.change) })}
+                  <Icon name={c.change >= 0 ? "trending-up" : "trending-down"} size={16} />{t("results.pointsSincePrevious", { count: Math.abs(c.change), value: signed(c.change) })}
                 </p>
               )}
               <div style={{ marginTop: 12 }}><LinkButton to={`/competencies/${c.code}`} variant="secondary" size="sm">{t("results.whyScore")}</LinkButton></div>
@@ -116,10 +117,10 @@ export function ResultsPage() {
           <ChartCard
             title={t("results.allCompetencies", { count: comps.length })}
             description={t("results.chartDescription")}
-            action={<Tabs ariaLabel={t("results.chartType")} value={view} onChange={setView} tabs={[{ value: "radar", label: t("results.radar") }, { value: "bars", label: t("results.bars") }]} />}
+            action={<Tabs id="results-chart" ariaLabel={t("results.chartType")} value={view} onChange={setView} tabs={[{ value: "radar", label: t("results.radar") }, { value: "bars", label: t("results.bars") }]} />}
             summary={summary}
           >
-            {view === "radar" ? radar : bars}
+            <div {...tabPanelProps("results-chart", view)}>{view === "radar" ? radar : bars}</div>
           </ChartCard>
         </div>
       </div>

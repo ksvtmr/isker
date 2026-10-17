@@ -1,7 +1,7 @@
 import { Button, InlineAlert } from "@isker/design-system";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useResendVerification } from "../api/auth";
+import { messageText, useResendVerification } from "../api/auth";
 import { errorMessage } from "../api/client";
 import type { User, VerificationState } from "../types/api";
 
@@ -35,7 +35,7 @@ export function EmailVerificationBanner({ user }: { user: User }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <InlineAlert tone={resend.error ? "error" : "info"} title={t("notices.bannerTitle")}>
-        {resend.isSuccess ? resend.data.message : resend.error ? errorMessage(resend.error) : t("notices.bannerText", { email: user.email })}
+        {resend.isSuccess ? messageText(resend.data) : resend.error ? errorMessage(resend.error) : t("notices.bannerText", { email: user.email })}
         <span style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
           {!resend.isSuccess && <Button size="sm" variant="secondary" loading={resend.isPending} onClick={() => resend.mutate()}>{t("notices.resend")}</Button>}
           <Button size="sm" variant="ghost" onClick={dismiss}>{t("notices.hide")}</Button>

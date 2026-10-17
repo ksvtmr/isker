@@ -10,6 +10,7 @@ import { useGoals, useOnboarding } from "../api/profile";
 import { educationOptions, experienceOptions, formatOptions, weeklyOptions } from "../features/options";
 import { onboardingSchema, type OnboardingValues } from "../features/schemas";
 import { useFieldError } from "../i18n/useFieldError";
+import { usePageTitle } from "../components/PageTitle";
 
 const STEPS = [
   { id: "about", fields: ["full_name", "education", "background"] },
@@ -32,6 +33,7 @@ export function OnboardingPage() {
   const { register, handleSubmit, trigger, watch, setValue, formState: { errors } } = form;
   const selectedGoals = watch("goal_codes");
   const stepTitles = [t("onboarding.steps.about"), t("onboarding.steps.experience"), t("onboarding.steps.goals")];
+  usePageTitle(t("onboarding.pageTitle"));
 
   const next = async () => {
     if (await trigger(STEPS[step].fields as unknown as (keyof OnboardingValues)[])) setStep((s) => s + 1);

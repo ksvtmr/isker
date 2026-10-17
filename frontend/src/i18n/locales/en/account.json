@@ -22,7 +22,8 @@
     "loadingGoals": "Loading goals…",
     "format": "Preferred learning format",
     "weekly": "Weekly time for learning",
-    "submit": "Continue to assessment"
+    "submit": "Continue to assessment",
+    "pageTitle": "Getting started"
   },
   "profile": {
     "title": "My Profile",
@@ -48,7 +49,8 @@
     "historyScore": "Score",
     "reassessmentOf": "Reassessment · {{name}}",
     "assessmentNumber": "Assessment {{n}}",
-    "historyEmpty": "No completed assessments yet."
+    "historyEmpty": "No completed assessments yet.",
+    "historyError": "Couldn't load your assessment history"
   },
   "options": {
     "placeholder": "Choose…",

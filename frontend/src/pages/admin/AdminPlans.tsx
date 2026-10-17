@@ -9,10 +9,15 @@ import { ErrorState, PageSkeleton } from "../../components/States";
 import { useToast } from "../../components/Toaster";
 import { formatCurrency, formatNumber } from "../../utils/format";
 import { AdminPageHeader, Muted } from "./common";
-import { SaveError, TranslationFields, fromTranslationForm, toTranslationForm, type TranslationField, type TranslationForm } from "./contentSync";
+import { SaveError, TranslationFields, TranslationStatusBadge, fromTranslationForm, toTranslationForm, type TranslationField, type TranslationForm } from "./contentSync";
 
 const FEATURE_KEYS = ["assessment.full", "assessment.reassessment", "plan.personalized", "learning.advanced_resources", "practice.tasks", "practice.ai_feedback", "progress.history", "export.data"] as const;
 const LIMIT_FEATURES = new Set<string>(["assessment.full", "practice.tasks"]);
+/** Currencies offered in the editor (ISO 4217). USD is the API default; a plan's other currency stays selectable. */
+const CURRENCIES = ["USD", "KZT", "EUR", "RUB"];
+/** Limits are counted over the API's rolling window; 30 days is its default. */
+const LIMIT_WINDOW_DAYS = 30;
+const isInt = (v: string, min: number, max: number) => /^\d+$/.test(v.trim()) && Number(v) >= min && Number(v) <= max;
 type Form = { key: string; name: string; description: string; price: string; currency: string; billing_interval: "none" | "month" | "year"; trial_days: string; is_active: boolean; sort_order: string; ents: Record<string, { enabled: boolean; limit: string }>; tr: TranslationForm };
 
 function toForm(p: PlanWithVersion | undefined, trFields: TranslationField[]): Form {
@@ -39,7 +44,7 @@ export function AdminPlans() {
   const save = useAdminMutation(async (v: { reason: string }) => {
     const entitlements: PlanEntitlementInput[] = Object.entries(form.ents).map(([feature_key, e]) => ({ feature_key, enabled: e.enabled, limit_value: LIMIT_FEATURES.has(feature_key) && e.limit !== "" ? Number(e.limit) : null }));
     const base = { name: form.name.trim(), description: form.description.trim() || null, price_cents: Math.round(Number(form.price) * 100), currency: form.currency.toUpperCase(),
-      billing_interval: form.billing_interval, trial_days: Number(form.trial_days) || 0, is_active: form.is_active, sort_order: Number(form.sort_order) || 0, entitlements };
+      billing_interval: form.billing_interval, trial_days: Number(form.trial_days), is_active: form.is_active, sort_order: Number(form.sort_order), entitlements };
     const translations = fromTranslationForm(form.tr, trFields, (lang, field) => t("sync.translations.invalidJson", { lang, field }));
     if (editing === "new") return manageApi.createPlan({ key: form.key.trim(), ...base, translations } as Parameters<typeof manageApi.createPlan>[0]);
     const plan = editing as PlanWithVersion;
@@ -58,6 +63,10 @@ export function AdminPlans() {
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
   const isDefault = editing !== "new" && editing?.is_default;
   const priceValid = /^\d+(\.\d{1,2})?$/.test(form.price);
+  const trialValid = isInt(form.trial_days, 0, 365);
+  const sortValid = isInt(form.sort_order, 0, 1000);
+  const limitsValid = Object.entries(form.ents).every(([k, e]) => !LIMIT_FEATURES.has(k) || !e.enabled || e.limit === "" || isInt(e.limit, 0, 100000));
+  const currencyOpts = [...new Set([...CURRENCIES, form.currency.toUpperCase()])].filter(Boolean).map((c) => ({ value: c, label: c }));
   const featureLabel = (k: string) => t(`plans.features.${k.replace(/\./g, "_")}`);
   const intervalLabel = (i: PlanAdmin["billing_interval"]) => (i === "month" ? t("plans.perMonth") : t("plans.perYear"));
   const priceLabel = (p: PlanAdmin) => {
@@ -73,14 +82,14 @@ export function AdminPlans() {
           <Card key={p.id} padding={24}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <h2 style={{ fontSize: "var(--text-lg)", fontWeight: 600 }}>{p.name}</h2>
-              <span style={{ display: "inline-flex", gap: 4 }}>{p.is_default && <Badge tone="brand">{t("plans.badgeDefault")}</Badge>}{!p.is_active && <Badge tone="neutral">{t("plans.badgeInactive")}</Badge>}</span>
+              <span style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>{p.is_default && <Badge tone="brand">{t("plans.badgeDefault")}</Badge>}{!p.is_active && <Badge tone="neutral">{t("plans.badgeInactive")}</Badge>}<TranslationStatusBadge status={(p as PlanWithVersion).translation_status} /></span>
             </div>
             <p style={{ marginTop: 6, fontSize: 20, fontWeight: 600 }}>{priceLabel(p)}</p>
             <p style={{ marginTop: 4 }}><Muted>{t("plans.subscribers", { count: p.subscriber_count, n: formatNumber(p.subscriber_count) })} · {t("plans.keyLabel", { key: p.key })}</Muted></p>
             <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
               {FEATURE_KEYS.map((k) => {
                 const e = p.entitlements.find((x) => x.feature_key === k);
-                return <li key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>{featureLabel(k)}</span><b style={{ fontWeight: 500 }}>{!e?.enabled ? t("common:state.no") : e.limit_value != null ? t("plans.limitPer30Days", { limit: formatNumber(e.limit_value) }) : t("common:state.yes")}</b></li>;
+                return <li key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>{featureLabel(k)}</span><b style={{ fontWeight: 500 }}>{!e?.enabled ? t("common:state.no") : e.limit_value != null ? t("plans.limitPerPeriod", { limit: formatNumber(e.limit_value), period: t("common:time.days", { count: LIMIT_WINDOW_DAYS }) }) : t("common:state.yes")}</b></li>;
               })}
             </ul>
             {canManage && <div style={{ marginTop: 16 }}><Button size="sm" variant="secondary" iconLeft="pencil" onClick={() => { setForm(toForm(p, trFields)); setEditing(p); save.reset(); }}>{t("plans.editPlan")}</Button></div>}
@@ -89,7 +98,7 @@ export function AdminPlans() {
       </div>
       <ConfirmActionDialog open={!!editing} title={editing === "new" ? t("plans.newPlan") : t("plans.editTitle", { name: form.name })} confirmLabel={editing === "new" ? t("plans.createPlan") : t("plans.savePlan")} tone="primary"
         requireReason={editing !== "new"} busy={save.isPending} error={save.error && !isVersionConflict(save.error) ? errorMessage(save.error) : undefined} onCancel={() => setEditing(null)}
-        confirmDisabled={form.name.trim().length < 2 || !priceValid || (editing === "new" && !/^[a-z0-9_-]{2,48}$/.test(form.key))}
+        confirmDisabled={form.name.trim().length < 2 || !priceValid || !trialValid || !sortValid || !limitsValid || (editing === "new" && !/^[a-z0-9_-]{2,48}$/.test(form.key))}
         onConfirm={(reason) => save.mutate({ reason }, { onSuccess: () => { toast({ title: editing === "new" ? t("plans.created") : t("plans.saved") }); setEditing(null); } })}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "55vh", overflowY: "auto", paddingRight: 4 }}>
           {isVersionConflict(save.error) && <SaveError error={save.error} onReload={reload} />}
@@ -101,6 +110,11 @@ export function AdminPlans() {
             <Select label={t("plans.form.billing")} value={form.billing_interval} onChange={(e) => set("billing_interval", e.target.value as Form["billing_interval"])}
               options={[{ value: "none", label: t("plans.form.billingNone") }, { value: "month", label: t("plans.form.billingMonth") }, { value: "year", label: t("plans.form.billingYear") }]} />
           </div>
+          <div className="ik-form2">
+            <Select label={t("plans.form.currency")} value={form.currency.toUpperCase()} onChange={(e) => set("currency", e.target.value)} options={currencyOpts} />
+            <Input label={t("plans.form.trialDays")} type="number" min={0} max={365} value={form.trial_days} error={trialValid ? undefined : t("plans.form.trialDaysInvalid")} onChange={(e) => set("trial_days", e.target.value)} />
+          </div>
+          <Input label={t("plans.form.sortOrder")} type="number" min={0} max={1000} value={form.sort_order} hint={t("plans.form.sortOrderHint")} error={sortValid ? undefined : t("plans.form.sortOrderInvalid")} onChange={(e) => set("sort_order", e.target.value)} />
           <Checkbox label={t("plans.form.available")} description={isDefault ? t("plans.form.availableDefaultHint") : t("plans.form.availableHint")} disabled={!!isDefault} checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} />
           <fieldset style={{ border: 0, padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
             <legend style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{t("plans.form.features")}</legend>
@@ -108,7 +122,7 @@ export function AdminPlans() {
               <div key={k} style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                 <Checkbox label={featureLabel(k)} checked={form.ents[k].enabled} onChange={(e) => set("ents", { ...form.ents, [k]: { ...form.ents[k], enabled: e.target.checked } })} />
                 {LIMIT_FEATURES.has(k) && form.ents[k].enabled && (
-                  <div style={{ width: 170 }}><Input aria-label={t("plans.form.limitAria", { feature: featureLabel(k) })} placeholder={t("plans.form.unlimited")} type="number" min={0} value={form.ents[k].limit}
+                  <div style={{ width: 170 }}><Input aria-label={t("plans.form.limitAria", { feature: featureLabel(k), period: t("common:time.days", { count: LIMIT_WINDOW_DAYS }) })} placeholder={t("plans.form.unlimited")} type="number" min={0} value={form.ents[k].limit}
                     onChange={(e) => set("ents", { ...form.ents, [k]: { ...form.ents[k], limit: e.target.value } })} /></div>
                 )}
               </div>

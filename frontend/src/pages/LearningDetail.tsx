@@ -1,4 +1,6 @@
-import { Button, Card, EmptyState, Icon, PageHeader, Prose, ProgressBar, StatusBadge } from "@isker/design-system";
+import { Button, Card, EmptyState, Icon, Prose, ProgressBar, StatusBadge } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
+import { ExternalLink } from "../components/ExternalLink";
 import { useEffect, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -57,7 +59,7 @@ export function LearningDetailPage() {
           ) : (
             <article aria-label={r.title}>
               <Prose source={r.content} />
-              {r.url && <p style={{ marginTop: 16 }}><a href={r.url} target="_blank" rel="noreferrer">{t("learningDetail.openExternal")} <Icon name="external-link" size={14} /></a></p>}
+              {r.url && <p style={{ marginTop: 16 }}><ExternalLink href={r.url}>{t("learningDetail.openExternal")}</ExternalLink></p>}
               <div ref={endRef} />
             </article>
           )}

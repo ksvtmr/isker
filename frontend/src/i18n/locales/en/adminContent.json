@@ -19,7 +19,8 @@
       "duration": "Duration (minutes)",
       "slug": "Slug",
       "slugHint": "lowercase-with-dashes",
-      "rubric": "Rubric (JSON)"
+      "rubric": "Rubric (JSON)",
+      "rubricHint": "A JSON list of criteria: criterion, description, competency code and keywords. Example:"
     },
     "assessmentsPage": {
       "title": "Assessments",
@@ -39,6 +40,15 @@
     "aiPage": {
       "title": "AI governance",
       "subtitle": "Every AI evaluation is logged with its provider, prompt version, latency and fallback status."
+    },
+    "noMatchesTitle": "Nothing found",
+    "noMatchesText": "No records match the selected filters.",
+    "errors": {
+      "competency": "Choose a competency",
+      "duration": "Duration must be a whole number of minutes above zero",
+      "slug": "Slug: at least 2 characters, lowercase Latin letters, digits and “-” only",
+      "title": "Title: at least 3 characters",
+      "minLength": "Minimum answer length must be a whole number from 0"
     }
   },
   "subscriptions": {
@@ -93,7 +103,6 @@
     "subscribers_many": "{{n}} users",
     "subscribers_other": "{{n}} users",
     "keyLabel": "key “{{key}}”",
-    "limitPer30Days": "{{limit}} / 30 days",
     "features": {
       "assessment_full": "Full assessments",
       "assessment_reassessment": "Competency reassessment",
@@ -120,9 +129,16 @@
       "availableHint": "Inactive plans can't be assigned.",
       "availableDefaultHint": "The default plan can't be deactivated.",
       "features": "Features",
-      "limitAria": "{{feature}}: limit per 30 days (empty = unlimited)",
-      "unlimited": "Unlimited"
-    }
+      "limitAria": "{{feature}}: limit per {{period}} (empty = unlimited)",
+      "unlimited": "Unlimited",
+      "currency": "Currency",
+      "trialDays": "Trial period, days",
+      "trialDaysInvalid": "A whole number from 0 to 365",
+      "sortOrder": "Display order",
+      "sortOrderHint": "Plans with a lower number are shown first.",
+      "sortOrderInvalid": "A whole number from 0 to 1,000"
+    },
+    "limitPerPeriod": "{{limit}} per {{period}}"
   },
   "auditLogs": {
     "title": "Audit log",
@@ -210,7 +226,10 @@
       "checkout": "Online checkout",
       "available": "Available",
       "notAvailable": "Not available",
-      "termsVersion": "Terms version"
+      "termsVersion": "Terms version",
+      "noteNotConfigured": "No payment provider is connected: online payment is unavailable and paid plans are granted by administrators.",
+      "noteConfigured": "Payment-provider webhooks are configured, but checkout on the site is not available yet. Paid plans can be granted manually.",
+      "noteCheckout": "Online payment is connected: learners can buy a paid plan themselves."
     }
   },
   "assessments": {
@@ -233,7 +252,15 @@
       "minutes": "Estimated minutes"
     },
     "edit": "Edit assessment",
-    "saved": "Assessment saved"
+    "saved": "Assessment saved",
+    "errors": {
+      "code": "Code: 2–48 characters, lowercase Latin letters, digits, “-” and “_” only",
+      "title": "Title: 3 to 160 characters",
+      "description": "Description: at least 10 characters",
+      "minutes": "A whole number of minutes from 1 to 240"
+    },
+    "emptyTitle": "No assessments yet",
+    "emptyText": "Create an assessment, then add questions to it."
   },
   "questions": {
     "new": "New question",
@@ -258,7 +285,11 @@
     "deactivated": "Question deactivated",
     "errors": {
       "optionLine": "Option line {{line}} must look like \"Label | 75\".",
-      "unknownCompetency": "Unknown competency code \"{{code}}\"."
+      "unknownCompetency": "Unknown competency code \"{{code}}\".",
+      "weight": "Line {{line}}: the weight must be a number above 0 and at most 1",
+      "noCompetency": "Link the question to at least one competency",
+      "minLength": "Minimum answer length must be a whole number from 0 to 2,000",
+      "textShort": "The question text must be at least 10 characters"
     },
     "form": {
       "section": "Section",
@@ -270,6 +301,17 @@
       "competencies": "Measured competencies",
       "competenciesHint": "One per line: \"competency-code | weight (0–1)\"",
       "reverseScored": "Reverse scored"
+    },
+    "noAssessmentsTitle": "Create an assessment first",
+    "noAssessmentsText": "Every question belongs to an assessment. Create one on the Assessments tab, then add questions.",
+    "assessment": "Assessment",
+    "emptyTitle": "This assessment has no questions yet",
+    "emptyText": "Add the first question with “New question”.",
+    "sections": {
+      "self": "Self-assessment",
+      "situational": "Situational judgement",
+      "open": "Open answers",
+      "practical": "Practical task"
     }
   },
   "resources": {
@@ -288,7 +330,9 @@
     "form": {
       "content": "Content (Markdown: ## headings, lists, **bold**)",
       "url": "External URL (optional)"
-    }
+    },
+    "emptyTitle": "No learning resources yet",
+    "emptyText": "Add the first learning resource."
   },
   "tasks": {
     "new": "New task",
@@ -306,7 +350,9 @@
     "form": {
       "instructions": "Instructions",
       "minLength": "Minimum response length"
-    }
+    },
+    "emptyTitle": "No practical tasks yet",
+    "emptyText": "Add the first practical task."
   },
   "competencies": {
     "updated": "Competency updated",
@@ -328,7 +374,16 @@
       "learningPriority": "Learning priority (0–1)"
     },
     "new": "New competency",
-    "created": "Competency created"
+    "created": "Competency created",
+    "errors": {
+      "area": "Choose a competency area",
+      "code": "Code: at least 2 characters, lowercase Latin letters, digits, “-” and “_” only",
+      "numbers": "Importance and learning priority must be between 0 and 1, the default target between 40 and 100"
+    },
+    "emptyTitle": "No competencies yet",
+    "emptyText": "Create the first competency in one of the areas.",
+    "noAreas": "The server didn't provide competency area ids, so a new competency can't be created yet. Update the server or contact the developers.",
+    "noAreasShort": "No areas available"
   },
   "ai": {
     "tabEvaluations": "Evaluation log",
@@ -369,7 +424,7 @@
     "errors": "Errors",
     "inputExcerpt": "Input excerpt",
     "validatedOutput": "Validated output",
-    "promptActivated": "Prompt v{{version}} activated",
+    "promptActivated": "Prompt version {{version}} activated",
     "newVersionFrom": "New version from this",
     "showTemplate": "Show template",
     "newVersionTitle": "New {{key}} version",
@@ -381,7 +436,17 @@
       "placeholder": "Placeholder: {{list}}",
       "notes": "Notes",
       "activateNow": "Activate immediately"
-    }
+    },
+    "inputTypeUnknown": "Other type ({{code}})",
+    "emptyEvaluationsTitle": "No AI evaluations yet",
+    "emptyEvaluationsText": "They appear when learners answer open questions or submit practical tasks.",
+    "emptyEvaluationsFiltered": "No evaluations with this status.",
+    "readOnly": "You have view-only access. Creating and activating prompt versions requires the “Manage AI” permission.",
+    "emptyPromptsTitle": "No prompt versions yet",
+    "emptyPromptsText": "The built-in prompt is used for now.",
+    "versionLabel": "version {{n}}",
+    "activateTitle": "Activate “{{key}}” version {{version}}?",
+    "activateText": "All new AI evaluations will use this version. The currently active version is switched off; past results are unchanged."
   },
   "sync": {
     "status": {
@@ -436,6 +501,60 @@
       "rubricHint": "Same order as the base rubric: [{\"criterion\": \"…\", \"description\": \"…\", \"keywords\": [\"…\"]}]",
       "options": "Option labels · {{lang}}",
       "optionsHint": "One per line, in the same order as the options above."
+    },
+    "discard": {
+      "title": "Discard unsaved changes?",
+      "text": "The changes in this form have not been saved and will be lost.",
+      "confirm": "Discard changes"
+    }
+  },
+  "translations": {
+    "title": "Translations",
+    "subtitle": "How complete the Russian and Kazakh translations of the content are. English is the base text.",
+    "unavailableTitle": "The translation report is not available yet",
+    "unavailableText": "The server doesn't support this report yet. Each record's translation status appears in the content editors when the server provides it.",
+    "summaryTitle": "Summary by content type",
+    "summaryEmpty": "No summary data.",
+    "countState": "{{state}}: {{n}}",
+    "filtersLabel": "Translation filters",
+    "filters": {
+      "entity": "Content type",
+      "allEntities": "All types",
+      "language": "Language",
+      "allLanguages": "Russian and Kazakh",
+      "status": "Translation status"
+    },
+    "columns": {
+      "item": "Record"
+    },
+    "caption": "Records and their translation status",
+    "openEditor": "Open editor",
+    "noEditor": "No editor yet",
+    "emptyTitle": "Nothing to translate",
+    "emptyText": "No records with the selected statuses.",
+    "pagesLabel": "Translation list pages",
+    "states": {
+      "complete": "Complete",
+      "partial": "Partial",
+      "missing": "Missing",
+      "stale": "Outdated"
+    },
+    "badge": {
+      "complete": "Translated",
+      "lang": "{{lang}}: {{state}}",
+      "fields": "Fields: {{list}}"
+    },
+    "entities": {
+      "competency": "Competencies",
+      "question": "Questions",
+      "assessment": "Assessments",
+      "resource": "Learning resources",
+      "task": "Practical tasks",
+      "plan": "Plans",
+      "area": "Competency areas",
+      "goal": "Goals",
+      "level": "Levels",
+      "option": "Answer options"
     }
   }
 }

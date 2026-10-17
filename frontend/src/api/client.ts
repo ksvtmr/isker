@@ -23,15 +23,69 @@ export class ApiError extends Error {
     this.details = body.details;
   }
 
-  /** Field-level validation messages from a 422 response, keyed by field name. */
+  /**
+   * Field-level validation messages from a 422 response, keyed by field name, in the interface language.
+   * The API's (English, Pydantic) texts are never shown: common error kinds are mapped to translated messages and
+   * anything else becomes a translated "invalid value".
+   */
   fieldErrors(): Record<string, string> {
     if (!Array.isArray(this.details)) return {};
     const out: Record<string, string> = {};
-    for (const d of this.details as { field?: string; message?: string }[]) {
-      if (d.field && d.message) out[d.field] = d.message.replace(/^Value error, /, "");
+    for (const d of this.details as FieldErrorDetail[]) {
+      if (d && d.field) out[d.field] = translateFieldError(d);
     }
     return out;
   }
+}
+
+export interface FieldErrorDetail { field?: string; message?: string; type?: string; ctx?: Record<string, unknown> }
+
+type Rule = [RegExp, string, (m: RegExpMatchArray) => Record<string, unknown>];
+const num = (v: string) => Number(v.replace(/[^\d.-]/g, ""));
+/** Pydantic v2 message patterns → translation keys in common:validation.server. */
+const FIELD_RULES: Rule[] = [
+  [/^Field required/i, "required", () => ({})],
+  [/^String should have at least (\d+) characters?/i, "minLength", (m) => ({ count: num(m[1]) })],
+  [/^String should have at most (\d+) characters?/i, "maxLength", (m) => ({ count: num(m[1]) })],
+  [/email/i, "email", () => ({})],
+  [/^Input should be greater than or equal to (\S+)/i, "min", (m) => ({ value: num(m[1]) })],
+  [/^Input should be greater than (\S+)/i, "greaterThan", (m) => ({ value: num(m[1]) })],
+  [/^Input should be less than or equal to (\S+)/i, "max", (m) => ({ value: num(m[1]) })],
+  [/^Input should be less than (\S+)/i, "lessThan", (m) => ({ value: num(m[1]) })],
+  [/^Input should be a valid (integer|number)/i, "number", () => ({})],
+  [/^String should match pattern/i, "pattern", () => ({})],
+  [/^List should have at least (\d+) items?/i, "minItems", (m) => ({ count: num(m[1]) })],
+  [/^List should have at most (\d+) items?/i, "maxItems", (m) => ({ count: num(m[1]) })],
+  [/^Input should be /i, "choice", () => ({})],
+];
+/** Pydantic error `type`s (when the API includes them) → the same keys. */
+const FIELD_TYPES: Record<string, [string, (ctx: Record<string, unknown>) => Record<string, unknown>]> = {
+  missing: ["required", () => ({})],
+  string_too_short: ["minLength", (c) => ({ count: Number(c.min_length) })],
+  string_too_long: ["maxLength", (c) => ({ count: Number(c.max_length) })],
+  greater_than_equal: ["min", (c) => ({ value: Number(c.ge) })],
+  greater_than: ["greaterThan", (c) => ({ value: Number(c.gt) })],
+  less_than_equal: ["max", (c) => ({ value: Number(c.le) })],
+  less_than: ["lessThan", (c) => ({ value: Number(c.lt) })],
+  int_parsing: ["number", () => ({})],
+  float_parsing: ["number", () => ({})],
+  string_pattern_mismatch: ["pattern", () => ({})],
+  too_short: ["minItems", (c) => ({ count: Number(c.min_length) })],
+  too_long: ["maxItems", (c) => ({ count: Number(c.max_length) })],
+  enum: ["choice", () => ({})],
+  literal_error: ["choice", () => ({})],
+};
+
+/** Translated text for one field error from the API. */
+export function translateFieldError(d: FieldErrorDetail): string {
+  const byType = d.type ? FIELD_TYPES[d.type] : undefined;
+  if (byType) return i18n.t(`common:validation.server.${byType[0]}`, byType[1](d.ctx ?? {}));
+  const msg = (d.message ?? "").trim();
+  for (const [re, key, vars] of FIELD_RULES) {
+    const m = msg.match(re);
+    if (m) return i18n.t(`common:validation.server.${key}`, vars(m));
+  }
+  return i18n.t("common:validation.server.invalid");
 }
 
 import i18n, { currentLanguage } from "../i18n";
@@ -134,10 +188,11 @@ export function errorMessage(e: unknown, fallback?: string): string {
   if (e instanceof ApiError) {
     const details = e.details && typeof e.details === "object" && !Array.isArray(e.details) ? (e.details as Record<string, unknown>) : {};
     const retry = Number(details.retry_after_seconds);
+    // Codes the interface doesn't know yet get a translated generic text with the code, never the English message.
+    if (!i18n.exists(`errors:${e.code}`)) return i18n.t("common:state.requestFailedCode", { code: e.code });
     return i18n.t(`errors:${e.code}`, {
       ...details,
       minutes: Number.isFinite(retry) ? Math.max(1, Math.ceil(retry / 60)) : 1,
-      defaultValue: e.message,
     });
   }
   return fallback ?? i18n.t("errors:INTERNAL_ERROR");

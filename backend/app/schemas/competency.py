@@ -9,6 +9,7 @@ from app.schemas.common import ORM
 
 
 class AreaOut(ORM):
+    id: int
     code: str
     name: str
     color_token: str
@@ -92,6 +93,9 @@ class AIExplanationOut(BaseModel):
     strengths: list[str]
     development_areas: list[str]
     explanation: str | None
+    # Language of the texts above ("ru" | "kk" | "en"). Rule-based texts follow the request; model texts keep the
+    # language they were generated in, so the interface can mark them when it differs. None: unknown (older rows).
+    language: str | None = None
 
 
 class RecommendedItem(BaseModel):

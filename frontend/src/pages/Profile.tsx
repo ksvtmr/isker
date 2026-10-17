@@ -1,5 +1,5 @@
-import { Button, Card, CardHeader, Checkbox, InlineAlert, Input, Radio, Select, Textarea } from "@isker/design-system";
-import { PageHeader } from "@isker/design-system";
+import { Button, Card, CardHeader, Checkbox, InlineAlert, Input, Radio, Select, SkeletonCard, Textarea } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
@@ -86,7 +86,14 @@ export function ProfilePage() {
             <div style={{ marginTop: 16, maxWidth: 260 }}><Select label={t("profile.weekly")} options={weeklyOpts} {...register("weekly_learning_minutes")} /></div>
           </Section>
           <Section title={t("profile.history")}>
-            {history.data?.completed.length ? (
+            {history.isLoading ? (
+              <div aria-busy="true"><span className="isk-sr-only">{t("common:state.loading")}</span><SkeletonCard lines={3} /></div>
+            ) : history.error ? (
+              <InlineAlert title={t("profile.historyError")}>
+                {errorMessage(history.error)}{" "}
+                <Button type="button" size="sm" variant="secondary" onClick={() => history.refetch()}>{t("common:actions.tryAgain")}</Button>
+              </InlineAlert>
+            ) : history.data?.completed.length ? (
               <div className="ik-table-wrap">
                 <table className="ik-table">
                   <thead><tr><th>{t("profile.historyAssessment")}</th><th>{t("profile.historyDate")}</th><th className="num">{t("profile.historyScore")}</th></tr></thead>

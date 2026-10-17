@@ -10,7 +10,7 @@ import {
   CloudOff, Database, Dumbbell, ExternalLink, Eye, FileStack, FileText, Flag, GraduationCap, Info, LayoutDashboard,
   LayoutTemplate, Library, Lightbulb, ListChecks, Lock, LogOut, Menu, MessageSquareText, PencilRuler, Pencil, Play,
   Plus, Radar, RefreshCw, RotateCw, Route, Search, SearchX, Settings, Shield, Sparkles, Target, Trash2,
-  TrendingUp, TriangleAlert, User, Users, X,
+  TrendingDown, TrendingUp, TriangleAlert, User, Users, X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,7 +30,7 @@ export const ICONS: Record<string, LucideIcon> = {
   "log-out": LogOut, menu: Menu, "message-square-text": MessageSquareText, "pencil-ruler": PencilRuler,
   pencil: Pencil, play: Play, plus: Plus, radar: Radar, "refresh-cw": RefreshCw, "rotate-cw": RotateCw, route: Route,
   search: Search, "search-x": SearchX, settings: Settings, shield: Shield, sparkles: Sparkles, target: Target,
-  "trash-2": Trash2, "trending-up": TrendingUp, "triangle-alert": TriangleAlert, user: User, users: Users, x: X,
+  "trash-2": Trash2, "trending-down": TrendingDown, "trending-up": TrendingUp, "triangle-alert": TriangleAlert, user: User, users: Users, x: X,
 };
 
 export type IconName = keyof typeof ICONS | (string & {});

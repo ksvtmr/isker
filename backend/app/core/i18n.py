@@ -1,12 +1,13 @@
 """Server-side texts that the API generates (labels, explanations, recommendation reasons), in ru/kk/en.
 
 The interface itself is translated in the frontend; this catalog only covers text the backend composes. The
-language comes from the request's Accept-Language (see core/middleware.py → language_var). Missing languages fall
-back to English.
+language comes from the request's Accept-Language (see core/middleware.py → language_var). A missing text falls back
+along the same chain as database content (core/content_i18n.py): kk → ru → en, ru → en.
 """
 
 from __future__ import annotations
 
+from app.core.content_i18n import FALLBACK
 from app.core.context import language_var
 
 CATALOG: dict[str, dict[str, str]] = {
@@ -211,5 +212,5 @@ def tr(key: str, **values: object) -> str:
     entry = CATALOG.get(key)
     if entry is None:
         return key
-    text = entry.get(lang()) or entry["en"]
+    text = next((entry[c] for c in (*FALLBACK.get(lang(), ()), "en") if entry.get(c)), key)
     return text.format(**values) if values else text

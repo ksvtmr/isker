@@ -29,6 +29,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.database import as_utc, utcnow
 from app.core.errors import AppError, AuthenticationError, ValidationError
 from app.models import PaymentWebhookEvent, SubscriptionPlan, User, UserSubscription
 from app.models.enums import SubscriptionSource, SubscriptionStatus
@@ -102,7 +103,11 @@ def _apply(db: Session, provider: str, etype: str, data: dict) -> str:
         raise ValidationError("Webhook payload has no subscription reference.", "INVALID_PAYLOAD")
     src = SubscriptionSource.PAYMENT
     if etype == "subscription.activated":
-        user = db.get(User, int(data.get("user_id") or 0))
+        try:
+            user_id = int(data.get("user_id") or 0)
+        except (TypeError, ValueError) as e:
+            raise ValidationError("Invalid user_id in webhook payload.", "INVALID_PAYLOAD") from e
+        user = db.get(User, user_id)
         plan = db.scalar(select(SubscriptionPlan).where(SubscriptionPlan.key == str(data.get("plan_key") or "")))
         if user is None or plan is None:
             raise ValidationError("Unknown user or plan in webhook payload.", "INVALID_PAYLOAD")
@@ -118,19 +123,34 @@ def _apply(db: Session, provider: str, etype: str, data: dict) -> str:
     sub = _by_reference(db, provider, ref)
     if sub is None:
         raise ValidationError("No subscription matches this reference.", "UNKNOWN_REFERENCE")
-    subs.apply_expiry(db, sub)
     if etype == "subscription.renewed":
         new_end = _parse_dt(data.get("expires_at"))
         if new_end is None:
             raise ValidationError("Renewal events need expires_at.", "INVALID_PAYLOAD")
+        # The renewal may arrive after `expires_at` has passed: lazy expiry (on read, or right here) has then
+        # moved the paid subscription to `expired`. A successful payment reopens it instead of leaving a paying
+        # user on the free plan; a period that is still in the past expires again below.
+        subs.apply_expiry(db, sub)
+        if sub.status == SubscriptionStatus.EXPIRED and as_utc(new_end) > utcnow():
+            subs.reactivate_by_payment(db, sub, reason="Payment succeeded after the period ended")
+        if sub.status not in subs.CURRENT:
+            # Canceled, or replaced by a newer subscription: a late renewal must not resurrect it.
+            audit(db, None, "subscription.renewal_ignored_by_payment", "subscription", sub.id,
+                  user_id=sub.user_id, provider=provider, status=sub.status.value)
+            return "ignored"
         if sub.status == SubscriptionStatus.PAST_DUE:
             subs.transition(db, sub, SubscriptionStatus.ACTIVE, actor_id=None, source=src.value,
                             reason="Payment succeeded")
         prev = sub.expires_at
         sub.expires_at = new_end
+        sub.cancel_at_period_end = False
         subs.record(db, sub, "renewed", actor_id=None, source=src.value, from_status=sub.status.value,
                     previous_expires_at=prev.isoformat() if prev else None, expires_at=new_end.isoformat())
-    elif etype == "subscription.past_due":
+        subs.apply_expiry(db, sub)
+        audit(db, None, f"{etype}_by_payment", "subscription", sub.id, user_id=sub.user_id, provider=provider)
+        return "processed"
+    subs.apply_expiry(db, sub)
+    if etype == "subscription.past_due":
         subs.transition(db, sub, SubscriptionStatus.PAST_DUE, actor_id=None, source=src.value,
                         reason="Payment failed")
     elif etype == "subscription.canceled":
@@ -143,23 +163,58 @@ def _apply(db: Session, provider: str, etype: str, data: dict) -> str:
     return "processed"
 
 
+def _seen(db: Session, provider: str, event_id: str) -> PaymentWebhookEvent | None:
+    return db.scalar(select(PaymentWebhookEvent).where(PaymentWebhookEvent.provider == provider,
+                                                       PaymentWebhookEvent.event_id == event_id))
+
+
+def _record_failure(db: Session, provider: str, event_id: str, etype: str, error: AppError) -> None:
+    """Keep a `failed` row for an event that was rejected (bad payload, unknown reference, …). Nothing it changed
+    is kept: the failed attempt was rolled back before this is written."""
+    text = f"{error.code}: {error.message}"[:500]
+    row = _seen(db, provider, event_id)
+    if row is None:
+        db.add(PaymentWebhookEvent(provider=provider, event_id=event_id, event_type=etype[:64], status="failed",
+                                   error=text))
+    elif row.status == "failed":
+        row.error, row.received_at = text, utcnow()
+    else:  # pragma: no cover - a concurrent delivery succeeded meanwhile
+        return
+    try:
+        db.commit()
+    except IntegrityError:  # pragma: no cover - a concurrent delivery recorded it first
+        db.rollback()
+
+
 def handle_webhook(db: Session, provider: str, payload: dict) -> tuple[str, bool]:
-    """Process a verified event once. Returns (status, duplicate)."""
+    """Process a verified event once. Returns (status, duplicate).
+
+    Idempotency: an event that was processed or ignored is never applied again (repeats return the stored
+    outcome). An event that failed is stored with status `failed` and its error, and is re-processed when the
+    provider retries it (e.g. a renewal that arrived before its activation); a successful retry overwrites the row.
+    """
     event_id, etype = str(payload.get("id") or ""), str(payload.get("type") or "")
     if not event_id or len(event_id) > 128 or not etype:
         raise ValidationError("Webhook payload needs id and type.", "INVALID_PAYLOAD")
-    seen = db.scalar(select(PaymentWebhookEvent).where(PaymentWebhookEvent.provider == provider,
-                                                       PaymentWebhookEvent.event_id == event_id))
-    if seen is not None:
+    seen = _seen(db, provider, event_id)
+    if seen is not None and seen.status != "failed":
         return seen.status, True
-    if etype not in SUPPORTED:
-        result = "ignored"
+    try:
+        if etype not in SUPPORTED:
+            result = "ignored"
+        else:
+            data = payload.get("data")
+            if not isinstance(data, dict):
+                raise ValidationError("Webhook payload needs a data object.", "INVALID_PAYLOAD")
+            result = _apply(db, provider, etype, data)
+    except AppError as e:
+        db.rollback()
+        _record_failure(db, provider, event_id, etype, e)
+        raise
+    if seen is None:
+        db.add(PaymentWebhookEvent(provider=provider, event_id=event_id, event_type=etype[:64], status=result))
     else:
-        data = payload.get("data")
-        if not isinstance(data, dict):
-            raise ValidationError("Webhook payload needs a data object.", "INVALID_PAYLOAD")
-        result = _apply(db, provider, etype, data)
-    db.add(PaymentWebhookEvent(provider=provider, event_id=event_id, event_type=etype[:64], status=result))
+        seen.status, seen.error, seen.received_at = result, None, utcnow()
     try:
         db.commit()
     except IntegrityError:  # a concurrent delivery of the same event won the race

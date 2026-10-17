@@ -109,5 +109,10 @@
   "PASSWORD_NOT_SET": "This account has no password yet. Sign in with Google or reset your password.",
   "PASSWORD_ALREADY_SET": "A password is already set. Change it under Security.",
   "REAUTH_REQUIRED": "For your security, sign in again and repeat this action.",
-  "ALREADY_VERIFIED": "This email address is already confirmed."
+  "ALREADY_VERIFIED": "This email address is already confirmed.",
+  "DEMO_ACCOUNT_READ_ONLY": "The demo account is shared and can't be changed. Create your own account to do this.",
+  "CANNOT_MODIFY_SELF": "You can't do this to your own account.",
+  "INVALID_FILTER": "Unknown filter value.",
+  "NOTIFICATION_NOT_FOUND": "Notification not found.",
+  "PROMPT_NOT_FOUND": "Prompt version not found."
 }

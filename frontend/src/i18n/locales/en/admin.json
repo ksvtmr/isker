@@ -12,7 +12,8 @@
       "analytics": "Analytics",
       "ai": "AI governance",
       "auditLogs": "Audit log",
-      "settings": "Settings"
+      "settings": "Settings",
+      "translations": "Translations"
     },
     "backToApp": "Back to Isker",
     "signOut": "Sign out",
@@ -47,7 +48,7 @@
       "completedDesc": "{{rate}} of started assessments",
       "completedNone": "No assessments started yet",
       "paid": "Paid / granted plans",
-      "paidDesc": "{{free}} on Free · {{expired}} expired · {{canceled}} canceled"
+      "paidDesc": "{{free}} on the free plan · {{expired}} expired · {{canceled}} canceled"
     },
     "registrations": "Registrations",
     "registrationsDesc_one": "New accounts per day, last {{count}} day ({{total}} total)",
@@ -126,7 +127,7 @@
     "funnelTitle": "Journey funnel",
     "allTime": "All time",
     "subscriptions": "Subscriptions",
-    "freePlan": "On the Free plan",
+    "freePlan": "On the free plan",
     "paidPlans": "Paid plans",
     "granted": "Granted (no payment)",
     "expiring7": "Expiring in 7 days",
@@ -319,7 +320,7 @@
     "noSubscription": "No subscription: the user is on the default plan.",
     "canceledAtPeriodEnd": "(canceled at period end)",
     "noEndDate": "No end date",
-    "freeByDefault": "Users without a subscription automatically get the Free plan.",
+    "freeByDefault": "Users without a subscription automatically get the default plan.",
     "noSubscriptionEvents": "No subscription events.",
     "byUser": "by user #{{id}}",
     "byTheUser": "by the user",
@@ -414,7 +415,7 @@
       "cancel": {
         "title": "Cancel subscription?",
         "confirm": "Cancel subscription",
-        "description": "The user returns to the Free plan when the subscription ends.",
+        "description": "The user returns to the default plan when the subscription ends.",
         "atPeriodEnd": "Cancel at the end of the current period",
         "accessUntil": "Access continues until {{date}}."
       },
@@ -453,7 +454,6 @@
       "none": "None yet (password not set)"
     },
     "languageNotChosen": "Not chosen",
-    "permissionsList": "Permissions: {{list}}",
     "noPermissions": "No administrative permissions.",
     "form": {
       "title": "Edit profile",
@@ -503,7 +503,19 @@
     "entitlementLimit_one": "{{count}} per {{days}} days",
     "entitlementLimit_few": "{{count}} per {{days}} days",
     "entitlementLimit_many": "{{count}} per {{days}} days",
-    "entitlementLimit_other": "{{count}} per {{days}} days"
+    "entitlementLimit_other": "{{count}} per {{days}} days",
+    "unknownPermission": "Other permission ({{key}})",
+    "results": {
+      "notDelivered": "Email is not configured: the message was not delivered; the link was written to the server log.",
+      "sessionsRevoked_one": "{{count}} session ended",
+      "sessionsRevoked_few": "{{count}} sessions ended",
+      "sessionsRevoked_many": "{{count}} sessions ended",
+      "sessionsRevoked_other": "{{count}} sessions ended"
+    },
+    "permissionsSummary_one": "{{count}} permission",
+    "permissionsSummary_few": "{{count}} permissions",
+    "permissionsSummary_many": "{{count}} permissions",
+    "permissionsSummary_other": "{{count}} permissions"
   },
   "roles": {
     "title": "Roles & permissions",
@@ -580,7 +592,11 @@
       "learning_resource": "Learning resource",
       "learning_activity": "Learning activity",
       "practical_task": "Practical task",
-      "ai_prompt_version": "AI prompt version"
+      "ai_prompt_version": "AI prompt version",
+      "plan": "Plan",
+      "competency_area": "Competency area",
+      "goal": "Goal",
+      "translation": "Translation"
     },
     "actions": {
       "access": {
@@ -619,7 +635,37 @@
         "prompt_created": "AI prompt version created",
         "prompt_activated": "AI prompt version activated",
         "user_created": "Account created",
-        "verification_sent": "Confirmation email sent"
+        "verification_sent": "Confirmation email sent",
+        "competency_published": "Competency published",
+        "competency_archived": "Competency archived",
+        "competency_draft": "Competency moved to drafts",
+        "question_published": "Question published",
+        "question_archived": "Question archived",
+        "question_draft": "Question moved to drafts",
+        "learning_resource_published": "Learning resource published",
+        "learning_resource_archived": "Learning resource archived",
+        "learning_resource_draft": "Learning resource moved to drafts",
+        "learning_resource_updated": "Learning resource updated",
+        "practical_task_published": "Practical task published",
+        "practical_task_archived": "Practical task archived",
+        "practical_task_draft": "Practical task moved to drafts",
+        "practical_task_updated": "Practical task updated",
+        "assessment_published": "Assessment published",
+        "assessment_archived": "Assessment archived",
+        "assessment_draft": "Assessment moved to drafts",
+        "resource_published": "Learning resource published",
+        "resource_archived": "Learning resource archived",
+        "resource_draft": "Learning resource moved to drafts",
+        "task_published": "Practical task published",
+        "task_archived": "Practical task archived",
+        "task_draft": "Practical task moved to drafts",
+        "plan_published": "Plan published",
+        "plan_archived": "Plan archived",
+        "plan_draft": "Plan moved to drafts",
+        "competency_created": "Competency created",
+        "question_versioned": "New question version created",
+        "verification_resent": "Confirmation email resent",
+        "translation_updated": "Translation updated"
       },
       "auth": {
         "register": "Registered",
@@ -634,7 +680,13 @@
         "password_reset_requested": "Password reset requested",
         "password_reset": "Password reset",
         "session_revoked": "Session ended",
-        "sessions_revoked": "Other sessions ended"
+        "sessions_revoked": "Other sessions ended",
+        "oauth_failed": "Failed Google sign-in",
+        "oauth_linked": "Google account linked",
+        "oauth_unlinked": "Google account unlinked",
+        "oauth_link_conflict": "Google link conflict: the account belongs to another user",
+        "password_set": "Password set",
+        "token_reuse_detected": "Token reuse detected"
       },
       "assessment": {
         "started": "Assessment started",
@@ -668,7 +720,12 @@
         "renewed_by_payment": "Renewed by payment",
         "past_due_by_payment": "Payment failed",
         "canceled_by_payment": "Canceled at the payment provider",
-        "expired_by_payment": "Expired at the payment provider"
+        "expired_by_payment": "Expired at the payment provider",
+        "activated": "Subscription activated",
+        "renewed": "Subscription renewed",
+        "past_due": "Payment overdue",
+        "canceled": "Subscription canceled",
+        "expired": "Subscription expired"
       },
       "created": "Subscription created",
       "extended": "Subscription extended",
@@ -686,6 +743,8 @@
         "expired": "Status: expired",
         "incomplete": "Status: incomplete"
       }
-    }
+    },
+    "unknownAction": "Other event ({{code}})",
+    "unknownTarget": "Other object ({{code}})"
   }
 }

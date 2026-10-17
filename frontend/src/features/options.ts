@@ -46,6 +46,15 @@ export const EDUCATION_VALUES = EDUCATION.map(([v]) => v);
 export const WEEKLY_VALUES = WEEKLY.map(([v]) => v);
 
 export const educationOptions = (): Option[] => build(EDUCATION);
+
+/**
+ * Display text for a stored education value: the translated option label when it is one of the onboarding options,
+ * otherwise the value itself (free text entered by the person is user data and is shown as written).
+ */
+export function educationLabel(value: string): string {
+  const key = EDUCATION.find(([v]) => v === value)?.[1];
+  return key ? i18n.t(key) : value;
+}
 export const experienceOptions = (): Option[] => build(EXPERIENCE);
 export const formatOptions = (): Option[] => build(FORMAT);
 export const weeklyOptions = (): Option[] => build(WEEKLY);

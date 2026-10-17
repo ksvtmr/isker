@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -169,12 +169,22 @@ def start_attempt(
             return current, True
         # Only one attempt can be open at a time; the older one is abandoned (its answers are kept).
         current.status = AttemptStatus.ABANDONED
+        db.flush()  # leave the "one open attempt per user" index before the new attempt enters it
     assessment = active_assessment(db)
     att = AssessmentAttempt(
         user_id=user.id, assessment_id=assessment.id, scope=scope, scope_competency_id=competency_id
     )
-    db.add(att)
-    db.flush()
+    # Two concurrent starts: the partial unique index (one in_progress attempt per user) lets only one insert win;
+    # the other resumes the attempt that won instead of failing.
+    try:
+        with db.begin_nested():
+            db.add(att)
+            db.flush()
+    except IntegrityError:
+        winner = in_progress_attempt(db, user.id)
+        if winner is None:  # pragma: no cover - defensive
+            raise
+        return winner, True
     previous = db.scalar(
         select(AssessmentAttempt.id)
         .where(AssessmentAttempt.user_id == user.id, AssessmentAttempt.status == AttemptStatus.COMPLETED)
@@ -247,6 +257,21 @@ def is_answered(q: Question, a: Answer | None) -> bool:
     return len((a.text_response or "").strip()) >= max(1, q.min_length)
 
 
+def claim_for_submit(db: Session, attempt: AssessmentAttempt, now) -> None:
+    """Atomically move the attempt out of `in_progress` (conditional UPDATE). Of two concurrent submits only one
+    matches the row: on PostgreSQL the second waits for the first to commit and then finds nothing to update. The
+    loser gets 409 ATTEMPT_NOT_IN_PROGRESS instead of a unique-constraint error on competency_scores. If the
+    winner's transaction fails, its claim is rolled back with it and the attempt stays open."""
+    result = db.execute(
+        update(AssessmentAttempt)
+        .where(AssessmentAttempt.id == attempt.id, AssessmentAttempt.status == AttemptStatus.IN_PROGRESS)
+        .values(status=AttemptStatus.COMPLETED, completed_at=now)
+        .execution_options(synchronize_session=False)
+    )
+    if result.rowcount != 1:
+        raise ConflictError("This assessment is already finished.", "ATTEMPT_NOT_IN_PROGRESS")
+
+
 def submit(db: Session, user: User, attempt: AssessmentAttempt) -> AssessmentAttempt:
     if attempt.status != AttemptStatus.IN_PROGRESS:
         raise ConflictError("This assessment is already finished.", "ATTEMPT_NOT_IN_PROGRESS")
@@ -258,10 +283,12 @@ def submit(db: Session, user: User, attempt: AssessmentAttempt) -> AssessmentAtt
             "Answer every question before finishing.", "ASSESSMENT_INCOMPLETE", {"unanswered": missing}
         )
 
+    now = utcnow()
+    claim_for_submit(db, attempt, now)
+
     comp_ids = scope_competency_ids(db, attempt, questions)
     score_attempt(db, attempt, questions, comp_ids)
 
-    now = utcnow()
     attempt.status = AttemptStatus.COMPLETED
     attempt.completed_at = now
     attempt.sequence = 1 + (

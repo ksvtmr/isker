@@ -12,7 +12,8 @@
       "analytics": "Аналитика",
       "ai": "ЖИ басқаруы",
       "auditLogs": "Аудит журналы",
-      "settings": "Баптаулар"
+      "settings": "Баптаулар",
+      "translations": "Аудармалар"
     },
     "backToApp": "Isker-ге оралу",
     "signOut": "Шығу",
@@ -47,7 +48,7 @@
       "completedDesc": "Басталған бағалаулардың {{rate}}",
       "completedNone": "Әзірге бағалау басталмаған",
       "paid": "Ақылы және берілген тарифтер",
-      "paidDesc": "{{free}} Free тарифінде · {{expired}} мерзімі өткен · {{canceled}} тоқтатылған"
+      "paidDesc": "{{free}} тегін тарифте · {{expired}} мерзімі өткен · {{canceled}} тоқтатылған"
     },
     "registrations": "Тіркелулер",
     "registrationsDesc_one": "Соңғы {{count}} күндегі күн сайынғы жаңа аккаунттар (барлығы {{total}})",
@@ -126,7 +127,7 @@
     "funnelTitle": "Жол воронкасы",
     "allTime": "Барлық уақыт",
     "subscriptions": "Жазылымдар",
-    "freePlan": "Free тарифінде",
+    "freePlan": "Тегін тарифте",
     "paidPlans": "Ақылы тарифтер",
     "granted": "Төлемсіз берілген",
     "expiring7": "7 күн ішінде аяқталады",
@@ -209,7 +210,7 @@
     }
   },
   "userDetail": {
-    "userId": "Пайдаланушы #{{id}}",
+    "userId": "Пайдаланушы №{{id}}",
     "fallbackTitle": "Пайдаланушы",
     "registered": "тіркелген күні {{date}}",
     "thisIsYou": "бұл сіз",
@@ -319,9 +320,9 @@
     "noSubscription": "Жазылым жоқ: пайдаланушы әдепкі тарифте.",
     "canceledAtPeriodEnd": "(кезең соңында тоқтатылады)",
     "noEndDate": "Аяқталу күні жоқ",
-    "freeByDefault": "Жазылымы жоқ пайдаланушыларға Free тарифі автоматты түрде беріледі.",
+    "freeByDefault": "Жазылымы жоқ пайдаланушыларға әдепкі тариф автоматты түрде беріледі.",
     "noSubscriptionEvents": "Жазылым оқиғалары жоқ.",
-    "byUser": "орындаған: пайдаланушы #{{id}}",
+    "byUser": "орындаған: пайдаланушы №{{id}}",
     "byTheUser": "пайдаланушының өзі",
     "bySystem": "жүйе",
     "rolesDesc": "Рөлдер бұл адамның не істей алатынын анықтайды. Тек өз рөліңізден төмен рөлдерді бере аласыз.",
@@ -414,7 +415,7 @@
       "cancel": {
         "title": "Жазылым тоқтатылсын ба?",
         "confirm": "Жазылымды тоқтату",
-        "description": "Жазылым аяқталғанда пайдаланушы Free тарифіне оралады.",
+        "description": "Жазылым аяқталғанда пайдаланушы әдепкі тарифке оралады.",
         "atPeriodEnd": "Ағымдағы кезеңнің соңында тоқтату",
         "accessUntil": "Қолжетімділік {{date}} дейін сақталады."
       },
@@ -453,7 +454,6 @@
       "none": "Әзірге жоқ (құпиясөз орнатылмаған)"
     },
     "languageNotChosen": "Таңдалмаған",
-    "permissionsList": "Құқықтар: {{list}}",
     "noPermissions": "Әкімшілік құқықтар жоқ.",
     "form": {
       "title": "Профильді өңдеу",
@@ -503,7 +503,19 @@
     "entitlementLimit_one": "{{days}} күнде {{count}}",
     "entitlementLimit_few": "{{days}} күнде {{count}}",
     "entitlementLimit_many": "{{days}} күнде {{count}}",
-    "entitlementLimit_other": "{{days}} күнде {{count}}"
+    "entitlementLimit_other": "{{days}} күнде {{count}}",
+    "unknownPermission": "Басқа құқық ({{key}})",
+    "results": {
+      "notDelivered": "Пошта бапталмаған: хат жеткізілмеді, сілтеме сервер журналына жазылды.",
+      "sessionsRevoked_one": "{{count}} сеанс аяқталды",
+      "sessionsRevoked_few": "{{count}} сеанс аяқталды",
+      "sessionsRevoked_many": "{{count}} сеанс аяқталды",
+      "sessionsRevoked_other": "{{count}} сеанс аяқталды"
+    },
+    "permissionsSummary_one": "{{count}} құқық",
+    "permissionsSummary_few": "{{count}} құқық",
+    "permissionsSummary_many": "{{count}} құқық",
+    "permissionsSummary_other": "{{count}} құқық"
   },
   "roles": {
     "title": "Рөлдер мен құқықтар",
@@ -565,9 +577,9 @@
     }
   },
   "audit": {
-    "userId": "Пайдаланушы #{{id}}",
+    "userId": "Пайдаланушы №{{id}}",
     "systemOrAnonymous": "Жүйе / аноним",
-    "target": "{{type}} #{{id}}",
+    "target": "{{type}} №{{id}}",
     "targets": {
       "user": "Пайдаланушы",
       "role": "Рөл",
@@ -580,7 +592,11 @@
       "learning_resource": "Оқу материалы",
       "learning_activity": "Оқу белсенділігі",
       "practical_task": "Практикалық тапсырма",
-      "ai_prompt_version": "ЖИ промпт нұсқасы"
+      "ai_prompt_version": "ЖИ промпт нұсқасы",
+      "plan": "Тариф",
+      "competency_area": "Құзыреттер саласы",
+      "goal": "Мақсат",
+      "translation": "Аударма"
     },
     "actions": {
       "access": {
@@ -619,7 +635,37 @@
         "prompt_created": "ЖИ промпт нұсқасы құрылды",
         "prompt_activated": "ЖИ промпт нұсқасы белсендірілді",
         "user_created": "Аккаунт құрылды",
-        "verification_sent": "Растау хаты жіберілді"
+        "verification_sent": "Растау хаты жіберілді",
+        "competency_published": "Құзырет жарияланды",
+        "competency_archived": "Құзырет мұрағатқа жіберілді",
+        "competency_draft": "Құзырет жобаларға қайтарылды",
+        "question_published": "Сұрақ жарияланды",
+        "question_archived": "Сұрақ мұрағатқа жіберілді",
+        "question_draft": "Сұрақ жобаларға қайтарылды",
+        "learning_resource_published": "Оқу материалы жарияланды",
+        "learning_resource_archived": "Оқу материалы мұрағатқа жіберілді",
+        "learning_resource_draft": "Оқу материалы жобаларға қайтарылды",
+        "learning_resource_updated": "Оқу материалы өзгертілді",
+        "practical_task_published": "Практикалық тапсырма жарияланды",
+        "practical_task_archived": "Практикалық тапсырма мұрағатқа жіберілді",
+        "practical_task_draft": "Практикалық тапсырма жобаларға қайтарылды",
+        "practical_task_updated": "Практикалық тапсырма өзгертілді",
+        "assessment_published": "Бағалау жарияланды",
+        "assessment_archived": "Бағалау мұрағатқа жіберілді",
+        "assessment_draft": "Бағалау жобаларға қайтарылды",
+        "resource_published": "Оқу материалы жарияланды",
+        "resource_archived": "Оқу материалы мұрағатқа жіберілді",
+        "resource_draft": "Оқу материалы жобаларға қайтарылды",
+        "task_published": "Практикалық тапсырма жарияланды",
+        "task_archived": "Практикалық тапсырма мұрағатқа жіберілді",
+        "task_draft": "Практикалық тапсырма жобаларға қайтарылды",
+        "plan_published": "Тариф жарияланды",
+        "plan_archived": "Тариф мұрағатқа жіберілді",
+        "plan_draft": "Тариф жобаларға қайтарылды",
+        "competency_created": "Құзырет құрылды",
+        "question_versioned": "Сұрақтың жаңа нұсқасы құрылды",
+        "verification_resent": "Растау хаты қайта жіберілді",
+        "translation_updated": "Аударма өзгертілді"
       },
       "auth": {
         "register": "Тіркелу",
@@ -634,7 +680,13 @@
         "password_reset_requested": "Құпиясөзді қалпына келтіру сұралды",
         "password_reset": "Құпиясөз қалпына келтірілді",
         "session_revoked": "Сеанс аяқталды",
-        "sessions_revoked": "Басқа сеанстар аяқталды"
+        "sessions_revoked": "Басқа сеанстар аяқталды",
+        "oauth_failed": "Google арқылы кіру сәтсіз",
+        "oauth_linked": "Google аккаунты байланыстырылды",
+        "oauth_unlinked": "Google аккаунты ажыратылды",
+        "oauth_link_conflict": "Google байланыстыру қайшылығы: аккаунт басқа пайдаланушыға байланған",
+        "password_set": "Құпиясөз орнатылды",
+        "token_reuse_detected": "Токеннің қайта қолданылуы анықталды"
       },
       "assessment": {
         "started": "Бағалау басталды",
@@ -668,7 +720,12 @@
         "renewed_by_payment": "Төлем арқылы жаңартылды",
         "past_due_by_payment": "Төлем өтпеді",
         "canceled_by_payment": "Төлем провайдерінде тоқтатылды",
-        "expired_by_payment": "Төлем провайдерінде мерзімі өтті"
+        "expired_by_payment": "Төлем провайдерінде мерзімі өтті",
+        "activated": "Жазылым белсендірілді",
+        "renewed": "Жазылым ұзартылды",
+        "past_due": "Төлем мерзімі өтті",
+        "canceled": "Жазылым тоқтатылды",
+        "expired": "Жазылым мерзімі аяқталды"
       },
       "created": "Жазылым құрылды",
       "extended": "Жазылым ұзартылды",
@@ -686,6 +743,8 @@
         "expired": "Күйі: мерзімі өтті",
         "incomplete": "Күйі: аяқталмаған"
       }
-    }
+    },
+    "unknownAction": "Басқа оқиға ({{code}})",
+    "unknownTarget": "Басқа нысан ({{code}})"
   }
 }

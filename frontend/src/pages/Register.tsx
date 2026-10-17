@@ -5,6 +5,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { useRegister } from "../api/auth";
 import { ApiError, errorMessage } from "../api/client";
+import { NewTabRouteLink } from "../components/ExternalLink";
 import { AuthFrame } from "../components/AuthFrame";
 import { GoogleButton } from "../components/GoogleButton";
 import { registerSchema, type RegisterValues } from "../features/schemas";
@@ -49,8 +50,8 @@ export function RegisterPage() {
             aria-invalid={errors.accept_terms ? true : undefined}
             aria-describedby={errors.accept_terms ? "terms-error" : undefined}
             label={<Trans t={t} i18nKey="register.terms" components={{
-              terms: <Link to="/terms" target="_blank" rel="noopener" />,
-              privacy: <Link to="/privacy" target="_blank" rel="noopener" />,
+              terms: <NewTabRouteLink to="/terms" />,
+              privacy: <NewTabRouteLink to="/privacy" />,
             }} />}
           />
           {errors.accept_terms && <p id="terms-error" className="isk-hint isk-hint--error" style={{ marginTop: 6 }}>{fe(errors.accept_terms.message)}</p>}

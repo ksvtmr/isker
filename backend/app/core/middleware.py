@@ -74,8 +74,13 @@ def client_ip(request: Request) -> str | None:
     return chain[-hops] if len(chain) >= hops else chain[0]
 
 
+# Machine-to-machine callers (payment webhooks) send no Accept-Language; whatever they write must be the base text.
+# The translation completeness report compares the stored base text with its translations.
+NON_LOCALIZED_PATHS = ("/api/billing/webhooks", "/api/admin/translations")
+
+
 def localizes_content(path: str) -> bool:
-    return path.startswith("/api/") and not path.startswith(CONTENT_EDITOR_PATHS)
+    return path.startswith("/api/") and not path.startswith((*CONTENT_EDITOR_PATHS, *NON_LOCALIZED_PATHS))
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):

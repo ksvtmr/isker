@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     reset_token_minutes: int = 60
     terms_version: str = "2026-10"
 
+    # Interactive API docs (/api/docs, /api/redoc, /api/openapi.json). None = automatic: on outside production,
+    # off in production unless API_DOCS_ENABLED=true.
+    api_docs_enabled: bool | None = None
+
     # Abuse protection
     rate_limit_enabled: bool = True
     max_request_bytes: int = 1_000_000
@@ -80,6 +84,9 @@ class Settings(BaseSettings):
     seed_demo: bool = True
     demo_email: str = "demo@isker.local"
     demo_password: str = ""
+    # The demo account's password is public: block changes to its password, email, sign-in methods and status
+    # through the account itself (see services/accounts.assert_not_demo).
+    demo_read_only: bool = True
     admin_email: str = "admin@isker.local"
     admin_password: str = ""
 
@@ -141,6 +148,10 @@ class Settings(BaseSettings):
         if self.smtp_host:
             return "smtp"
         return "disabled" if self.is_production else "console"
+
+    @property
+    def docs_enabled(self) -> bool:
+        return not self.is_production if self.api_docs_enabled is None else self.api_docs_enabled
 
     @property
     def is_production(self) -> bool:

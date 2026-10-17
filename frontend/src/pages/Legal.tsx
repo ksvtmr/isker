@@ -1,24 +1,28 @@
-import { Card, PageHeader } from "@isker/design-system";
+import { Card } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import type { ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { supportEmail } from "../config";
 import { formatDate } from "../utils/format";
 
 /** Date of the current version of both documents. */
 const UPDATED = new Date(2026, 9, 1);
-const SUPPORT_EMAIL = "support@isker.local";
 
 function LegalFrame({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useTranslation("public");
+  const email = supportEmail();
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "40px 16px 80px" }}>
-      <p style={{ marginBottom: 16 }}><Link to="/" aria-label={t("legal.backHome")}>← Isker</Link></p>
+      <p style={{ marginBottom: 16 }}><Link to="/"><span aria-hidden="true">← </span>{t("legal.backHome")}</Link></p>
       <PageHeader title={title} subtitle={t("legal.lastUpdated", { date: formatDate(UPDATED, { month: "long", year: "numeric" }) })} />
       <Card padding={28}>
         <div className="isk-prose">
           {children}
           <h2>{t("legal.contactTitle")}</h2>
-          <p>{t("legal.contactText")} <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
+          {email
+            ? <p>{t("legal.contactText")} <a href={`mailto:${email}`}>{email}</a>.</p>
+            : <p>{t("legal.contactInApp")}</p>}
         </div>
       </Card>
     </main>

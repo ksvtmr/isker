@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminPlans, useAdminSubscriptions, type SubscriptionAdmin } from "../../api/adminManage";
+import { can, useMe } from "../../api/auth";
 import { ErrorState } from "../../components/States";
 import { formatDate } from "../../utils/format";
 import { AdminPageHeader, Muted, StatusPill } from "./common";
@@ -12,6 +13,9 @@ export function AdminSubscriptions() {
   const navigate = useNavigate();
   const { t } = useTranslation("adminContent");
   const plans = useAdminPlans();
+  const { data: me } = useMe();
+  // Rows link to the user only for viewers allowed to open user details (the API checks users.view_details).
+  const canOpenUser = can(me, "users.view_details");
   const [q, setQ] = useState(params.get("q") ?? "");
   const f = {
     status: params.get("status") ?? "", plan: params.get("plan") ?? "", source: params.get("source") ?? "", q: params.get("q") ?? "",
@@ -55,7 +59,7 @@ export function AdminSubscriptions() {
         {list.error ? <div style={{ padding: 16 }}><ErrorState error={list.error} onRetry={() => list.refetch()} /></div> : (
           <>
             <DataTable caption={t("subscriptions.title")} columns={columns} rows={list.data?.items ?? []} rowKey={(s) => s.id} loading={list.isLoading || list.isFetching}
-              rowHref={(s) => `/admin/users/${s.user_id}`} onRowOpen={(s) => navigate(`/admin/users/${s.user_id}`)}
+              rowHref={canOpenUser ? (s) => `/admin/users/${s.user_id}` : undefined} onRowOpen={canOpenUser ? (s) => navigate(`/admin/users/${s.user_id}`) : undefined}
               empty={<EmptyState icon="credit-card" title={t("subscriptions.emptyTitle")} description={t("subscriptions.emptyText")} />} />
             {list.data && <Pagination page={f.page} pageSize={list.data.page_size} total={list.data.total} onChange={(p) => update({ page: p }, false)} label={t("subscriptions.pagesLabel")} />}
           </>

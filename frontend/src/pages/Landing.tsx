@@ -4,12 +4,15 @@ import { Link } from "react-router-dom";
 import { useMe } from "../api/auth";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { LinkButton } from "../components/RouterLink";
+import { showDemo, supportEmail } from "../config";
+import { usePageTitle } from "../components/PageTitle";
 
-const SUPPORT_EMAIL = "support@isker.local";
 
 export function Landing() {
   const { t } = useTranslation("public");
   const { data: user } = useMe();
+  usePageTitle(null);
+  const email = supportEmail();
 
   const loop: [IconName, string][] = [
     ["clipboard-check", t("landing.loop.assess")], ["radar", t("landing.loop.profile")], ["target", t("landing.loop.gaps")],
@@ -95,14 +98,15 @@ export function Landing() {
         <section style={{ maxWidth: 1200, margin: "0 auto", padding: "0 16px 72px" }} aria-labelledby="landing-contact">
           <h2 id="landing-contact" style={{ fontSize: "var(--text-lg)", fontWeight: 600 }}>{t("landing.contact.title")}</h2>
           <p style={{ marginTop: 6, fontSize: 14, lineHeight: 1.6, ...muted }}>
-            {t("landing.contact.text")} <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+            {email ? <>{t("landing.contact.text")} <a href={`mailto:${email}`}>{email}</a></> : t("landing.contact.inApp")}
           </p>
           <nav aria-label={t("landing.contact.legalNav")} style={{ marginTop: 12, display: "flex", gap: 16, flexWrap: "wrap", fontSize: 14 }}>
             <Link to="/terms">{t("landing.contact.terms")}</Link>
             <Link to="/privacy">{t("landing.contact.privacy")}</Link>
           </nav>
           <p style={{ marginTop: 32, fontSize: 13, color: "var(--color-neutral-500)" }}>
-            <Trans t={t} i18nKey="landing.footnote" components={{ signInLink: <Link to="/login" /> }} />
+            {t("landing.footnote")}
+            {showDemo() && <>{" "}<Trans t={t} i18nKey="landing.demoNote" components={{ signInLink: <Link to="/login" /> }} /></>}
           </p>
         </section>
       </main>

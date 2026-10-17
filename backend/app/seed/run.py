@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.ai.prompts import DEFAULT_PROMPTS
 from app.core.config import get_settings
+from app.core.context import content_localization_var, language_var
 from app.core.database import SessionLocal
 from app.core.security import hash_password
 from app.models import (
@@ -477,6 +478,7 @@ def _work_on_plan(db: Session, user: User, start: datetime, full: bool) -> None:
 
 
 def seed_demo(db: Session, user: User) -> None:
+    """Demo history. Call with language_var = "en" (as `run` does) so stored texts are the English base."""
     p = user.profile or UserProfile(user_id=user.id)
     p.education, p.entrepreneurial_experience = "Bachelor, 3rd year", ExperienceLevel.SIDE_PROJECT
     p.background = "Information systems student at Astana IT University."
@@ -504,6 +506,10 @@ def seed_demo(db: Session, user: User) -> None:
 def run(with_demo: bool = True) -> None:
     s = get_settings()
     db = SessionLocal()
+    # Everything the seed composes (AI feedback, insights, plan steps, reasons) is stored in the base language
+    # (English) from untranslated content; screens render rule-based texts again in the reader's language.
+    lang_token = language_var.set("en")
+    loc_token = content_localization_var.set(False)
     try:
         seed_reference(db)
         admin_pw = _password(s.admin_password, DEV_ADMIN_PASSWORD, "Admin")
@@ -523,6 +529,8 @@ def run(with_demo: bool = True) -> None:
         raise
     finally:
         db.close()
+        content_localization_var.reset(loc_token)
+        language_var.reset(lang_token)
 
 
 if __name__ == "__main__":

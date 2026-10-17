@@ -59,7 +59,7 @@
     "total_other": "{{count}} resources",
     "emptyTitle": "No resources match these filters",
     "emptyText": "Try removing a filter or searching for a different topic.",
-    "pro": "Pro",
+    "pro": "Advanced access",
     "recommended": "Recommended",
     "review": "Review",
     "percentRead": "{{value}}% read",

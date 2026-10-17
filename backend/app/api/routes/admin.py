@@ -7,6 +7,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.api.deps import DB, require_permission
+from app.core.content_i18n import LANGS, pair_by_key, reconcile_translations, translation_status
 from app.core.errors import ConflictError, NotFoundError, ValidationError
 from app.models import (
     AIEvaluation,
@@ -15,13 +16,16 @@ from app.models import (
     AssessmentAttempt,
     Competency,
     CompetencyArea,
+    CompetencyLevel,
     CompetencyScore,
+    GoalDefinition,
     LearningResource,
     PracticalTask,
     PracticeSubmission,
     Question,
     QuestionCompetency,
     QuestionOption,
+    SubscriptionPlan,
     User,
     UserLearningProgress,
 )
@@ -57,7 +61,13 @@ from app.schemas.common import ERROR_RESPONSES, Message, Page
 from app.services import assessments as assessment_service
 from app.services import views
 from app.services.audit import audit
-from app.services.content_admin import clean_translations, question_answer_count, resolve_status, touch
+from app.services.content_admin import (
+    clean_translations,
+    question_answer_count,
+    question_translation_status,
+    resolve_status,
+    touch,
+)
 from app.services.locking import changes, check_version, snapshot
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], responses=ERROR_RESPONSES)
@@ -76,8 +86,9 @@ def stats(_: Analyst, db: DB) -> AdminStats:
     avg = db.scalar(
         select(func.avg(AssessmentAttempt.overall_score)).where(AssessmentAttempt.status == AttemptStatus.COMPLETED)
     )
+    # Select the Competency entity (not its columns) so its name is localized like everywhere else.
     comp_avgs = db.execute(
-        select(Competency.code, Competency.name, func.avg(CompetencyScore.score), func.count(CompetencyScore.id))
+        select(Competency, func.avg(CompetencyScore.score), func.count(CompetencyScore.id))
         .join(CompetencyScore, CompetencyScore.competency_id == Competency.id, isouter=True)
         .group_by(Competency.id)
         .order_by(Competency.sort_order)
@@ -101,8 +112,13 @@ def stats(_: Analyst, db: DB) -> AdminStats:
             select(func.count(PracticeSubmission.id)).where(PracticeSubmission.status == PracticeStatus.COMPLETED)
         ),
         competency_averages=[
-            {"code": c, "name": n, "average": round(float(a), 1) if a is not None else None, "measurements": k}
-            for c, n, a, k in comp_avgs
+            {
+                "code": c.code,
+                "name": c.name,
+                "average": round(float(a), 1) if a is not None else None,
+                "measurements": k,
+            }
+            for c, a, k in comp_avgs
         ],
     )
 
@@ -260,8 +276,10 @@ def _q_out(db, q: Question, replaced_id: int | None = None) -> QuestionAdminOut:
         version=q.version,
         previous_id=q.previous_id,
         translations=q.translations,
+        translation_status=question_translation_status(q),
         options=[
-            {"id": o.id, "label": o.label, "score": o.score, "value": o.value, "translations": o.translations}
+            {"id": o.id, "label": o.label, "score": o.score, "value": o.value, "translations": o.translations,
+             "translation_status": translation_status(o)}
             for o in q.options
         ],
         competencies=[{"competency_id": link.competency_id, "weight": link.weight} for link in q.competency_links],
@@ -323,17 +341,33 @@ def _apply_question(db, q: Question, body: QuestionIn, previous: Question | None
     q.assessment_id, q.type, q.section, q.text = body.assessment_id, body.type, body.section, body.text
     q.help_text, q.reverse_scored, q.min_length = body.help_text, body.reverse_scored, body.min_length
     q.rubric = [r.model_dump() for r in body.rubric] or None
-    if "translations" in body.model_fields_set:
+    sent = "translations" in body.model_fields_set
+    if sent:
         q.translations = clean_translations(Question, body.translations, rubric_len=len(body.rubric))
     elif previous is not None:
         q.translations = old_translations
+    if previous is not None:
+        # A new version is a new row (the flush hook only sees edits in place): translations of English fields that
+        # changed are marked stale, and rubric translations follow their criterion.
+        fields = (*Question.__translatable__, "rubric")
+        q.translations = reconcile_translations(
+            Question, old_translations, q.translations,
+            {f: getattr(previous, f) for f in fields}, {f: getattr(q, f) for f in fields}, confirm_from_client=sent,
+        )
     if body.sort_order is not None:
         q.sort_order = body.sort_order
+    # The translation of an option follows its English label (reordering keeps it); an edited label keeps the old
+    # translation of the option it replaced, marked stale. A changed score or value never touches translations.
+    match = pair_by_key([label for label, _ in old_options], [o.label for o in body.options])
     for i, o in enumerate(body.options):
-        if o.translations is not None or "translations" in o.model_fields_set:
-            tr = clean_translations(QuestionOption, o.translations)
-        else:
-            tr = old_options[i][1] if i < len(old_options) and old_options[i][0] == o.label else None
+        k = match[i]
+        client = o.translations is not None or "translations" in o.model_fields_set
+        old_label, old_tr = old_options[k] if k is not None else (None, None)
+        tr = clean_translations(QuestionOption, o.translations) if client else old_tr
+        if k is not None:
+            tr = reconcile_translations(
+                QuestionOption, old_tr, tr, {"label": old_label}, {"label": o.label}, confirm_from_client=client
+            )
         q.options.append(QuestionOption(sort_order=i, label=o.label, score=o.score, value=o.value, translations=tr))
     for link in body.competencies:
         q.competency_links.append(QuestionCompetency(competency_id=link.competency_id, weight=link.weight))
@@ -413,7 +447,7 @@ def question_status(question_id: int, body: StatusIn, admin: ContentManager, db:
 def archive_question(question_id: int, admin: ContentManager, db: DB) -> Message:
     q = _get_q(db, question_id)
     _set_status(db, admin, q, StatusIn(status=ContentStatus.ARCHIVED), QUESTION_FIELDS, "question")
-    return Message(message="Question archived")
+    return Message(message="Question archived", code="QUESTION_ARCHIVED")
 
 
 # --- Assessments -----------------------------------------------------------------------------------
@@ -562,7 +596,7 @@ def resource_status(resource_id: int, body: StatusIn, admin: ContentManager, db:
 def archive_resource(resource_id: int, admin: ContentManager, db: DB) -> Message:
     r = _get_resource(db, resource_id)
     _set_status(db, admin, r, StatusIn(status=ContentStatus.ARCHIVED), RESOURCE_FIELDS, "learning_resource")
-    return Message(message="Resource archived")
+    return Message(message="Resource archived", code="RESOURCE_ARCHIVED")
 
 
 @router.get("/tasks", response_model=list[TaskAdminOut])
@@ -625,7 +659,7 @@ def task_status(task_id: int, body: StatusIn, admin: ContentManager, db: DB) -> 
 def archive_task(task_id: int, admin: ContentManager, db: DB) -> Message:
     t = _get_task(db, task_id)
     _set_status(db, admin, t, StatusIn(status=ContentStatus.ARCHIVED), TASK_FIELDS, "practical_task")
-    return Message(message="Task archived")
+    return Message(message="Task archived", code="TASK_ARCHIVED")
 
 
 # --- AI governance ---------------------------------------------------------------------------------
@@ -698,9 +732,105 @@ def _activate(db, pv: AIPromptVersion) -> None:
 def activate_prompt(prompt_id: int, admin: AIManager, db: DB) -> AIPromptVersion:
     pv = db.get(AIPromptVersion, prompt_id)
     if pv is None:
-        raise NotFoundError("Prompt version not found")
+        raise NotFoundError("Prompt version not found", "PROMPT_NOT_FOUND")
     _activate(db, pv)
     audit(db, admin.id, "admin.prompt_activated", "ai_prompt_version", pv.id)
     db.commit()
     db.refresh(pv)
     return pv
+
+
+# --- Translation completeness ----------------------------------------------------------------------------------------
+#
+# Publishing never requires translations: a learner sees the English base text of a field that has no translation in
+# their language (fallback kk → ru → en). This report makes those gaps, and translations left outdated by an edit of
+# the English text ("stale"), visible. Archived content is left out.
+
+TRANSLATION_ENTITIES: dict[str, tuple[type, str]] = {
+    "area": (CompetencyArea, "name"),
+    "competency": (Competency, "name"),
+    "level": (CompetencyLevel, "name"),
+    "goal": (GoalDefinition, "title"),
+    "assessment": (Assessment, "title"),
+    "question": (Question, "text"),
+    "option": (QuestionOption, "label"),
+    "resource": (LearningResource, "title"),
+    "task": (PracticalTask, "title"),
+    "plan": (SubscriptionPlan, "name"),
+}
+TRANSLATION_STATUSES = ("complete", "partial", "missing", "stale")
+
+
+def _split(value: str | None, allowed: tuple[str, ...], what: str) -> list[str]:
+    items = [v.strip() for v in (value or "").split(",") if v.strip()]
+    unknown = sorted(set(items) - set(allowed))
+    if unknown:
+        raise ValidationError(f"Unknown {what}.", "INVALID_FILTER", {what: unknown, "allowed": list(allowed)})
+    return items or list(allowed)
+
+
+def _translation_rows(db, entity: str) -> list[tuple[int, str, dict]]:
+    model, label_field = TRANSLATION_ENTITIES[entity]
+    stmt = select(model)
+    if entity == "question":
+        stmt = stmt.options(selectinload(Question.options))
+    if entity == "option":
+        stmt = stmt.join(Question, Question.id == QuestionOption.question_id).order_by(
+            QuestionOption.question_id, QuestionOption.sort_order
+        )
+    if hasattr(model, "status") and entity not in ("plan", "option"):
+        stmt = stmt.where(model.status != ContentStatus.ARCHIVED)
+    if entity == "option":
+        stmt = stmt.where(Question.status != ContentStatus.ARCHIVED)
+    else:
+        stmt = stmt.order_by(model.id)
+    out = []
+    for row in db.scalars(stmt):
+        st = question_translation_status(row) if entity == "question" else translation_status(row)
+        label = str(getattr(row, label_field) or "")
+        out.append((row.id, label[:160], st))
+    return out
+
+
+@router.get("/translations/status", summary="Translation completeness of the content (ru, kk)")
+def translations_status(
+    _: ContentManager,
+    db: DB,
+    entity: Annotated[str | None, Query(description="Comma-separated: " + ", ".join(TRANSLATION_ENTITIES))] = None,
+    language: Annotated[str | None, Query(description="Comma-separated: ru, kk")] = None,
+    status_filter: Annotated[
+        str | None, Query(alias="status", description="Comma-separated: complete, partial, missing, stale")
+    ] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> dict:
+    """`summary` counts every row of the selected entities per language and status (ignoring the status filter);
+    `items` lists the rows whose status, in any selected language, is one of the selected statuses."""
+    entities = _split(entity, tuple(TRANSLATION_ENTITIES), "entity")
+    langs = _split(language, LANGS, "language")
+    statuses = set(_split(status_filter, TRANSLATION_STATUSES, "status"))
+    summary: dict[str, dict] = {}
+    items: list[dict] = []
+    for name in entities:
+        counts = {lang: dict.fromkeys(TRANSLATION_STATUSES, 0) for lang in LANGS}
+        for row_id, label, st in _translation_rows(db, name):
+            for lang in LANGS:
+                counts[lang][st[lang]["status"]] += 1
+            if any(st[lang]["status"] in statuses for lang in langs):
+                items.append({
+                    "entity": name,
+                    "id": row_id,
+                    "label": label,
+                    "status": {lang: st[lang]["status"] for lang in LANGS},
+                    "missing": {lang: st[lang]["missing"] for lang in LANGS},
+                    "stale": {lang: st[lang]["stale"] for lang in LANGS},
+                })
+        summary[name] = counts
+    start = (page - 1) * page_size
+    return {
+        "summary": summary,
+        "items": items[start : start + page_size],
+        "total": len(items),
+        "page": page,
+        "page_size": page_size,
+    }

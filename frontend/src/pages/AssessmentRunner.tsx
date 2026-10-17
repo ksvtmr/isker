@@ -6,6 +6,7 @@ import { assessmentsApi, useAttempt, useSubmitAttempt } from "../api/assessments
 import { ApiError, errorMessage } from "../api/client";
 import { LinkButton } from "../components/RouterLink";
 import { ErrorState } from "../components/States";
+import { usePageTitle } from "../components/PageTitle";
 import type { Question } from "../types/api";
 
 type Draft = { option_id?: number | null; text?: string };
@@ -52,7 +53,7 @@ function ChoiceGroup({ q, value, onChange }: { q: Question; value: number | null
 function Analyzing() {
   const { t } = useTranslation("assessment");
   return (
-    <div style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }} role="status" aria-live="polite">
+    <main style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }} role="status" aria-live="polite">
       <Card padding={32}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--color-brand-700)" }}>
           <Icon name="sparkles" size={18} />
@@ -65,7 +66,7 @@ function Analyzing() {
           <Skeleton height={10} width="80%" /><Skeleton height={10} width="65%" /><Skeleton height={10} width="72%" />
         </div>
       </Card>
-    </div>
+    </main>
   );
 }
 
@@ -76,6 +77,7 @@ export function AssessmentRunner() {
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useAttempt(id);
   const submit = useSubmitAttempt();
+  usePageTitle(t("common:nav.assessment"));
 
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
   const [index, setIndex] = useState(0);
@@ -142,21 +144,21 @@ export function AssessmentRunner() {
   if (!Number.isFinite(id)) return <Navigate to="/assessment" replace />;
   if (submit.isPending) return <Analyzing />;
   if (isLoading || (data && !initialised.current)) {
-    return <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 24px" }} aria-busy="true"><Skeleton height={10} /><div style={{ height: 24 }} /><Skeleton height={220} radius={14} /></div>;
+    return <main style={{ maxWidth: 720, margin: "0 auto", padding: "40px 24px" }} aria-busy="true"><span className="isk-sr-only">{t("common:state.loading")}</span><Skeleton height={10} /><div style={{ height: 24 }} /><Skeleton height={220} radius={14} /></main>;
   }
   if (error || !data) {
     const notFound = error instanceof ApiError && error.status === 404;
     return (
-      <div style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }}>
+      <main style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }}>
         {notFound
           ? <EmptyState icon="search-x" title={t("runner.notFoundTitle")} description={t("runner.notFoundText")} action={<LinkButton to="/assessment">{t("runner.backToAssessment")}</LinkButton>} />
           : <ErrorState error={error} onRetry={() => refetch()} />}
-      </div>
+      </main>
     );
   }
   if (data.attempt.status === "completed") return <Navigate to={`/results?attempt=${id}`} replace />;
   if (data.attempt.status === "abandoned") {
-    return <div style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }}><EmptyState icon="clipboard-list" title={t("runner.closedTitle")} description={t("runner.closedText")} action={<LinkButton to="/assessment">{t("runner.goToAssessment")}</LinkButton>} /></div>;
+    return <main style={{ maxWidth: 560, margin: "12vh auto 0", padding: 16 }}><EmptyState icon="clipboard-list" title={t("runner.closedTitle")} description={t("runner.closedText")} action={<LinkButton to="/assessment">{t("runner.goToAssessment")}</LinkButton>} /></main>;
   }
 
   const questions = data.questions;
@@ -201,7 +203,7 @@ export function AssessmentRunner() {
   const status = saveState === "saving" ? t("common:state.saving") : saveState === "error" ? t("runner.notSaved") : t("runner.savedAutomatically");
 
   return (
-    <div className="ik-assess">
+    <main className="ik-assess" id="main" aria-label={title}>
       <div className="ik-assess__top">
         <button type="button" className="ik-back" onClick={saveAndExit}><Icon name="x" size={16} />{t("runner.saveAndExit")}</button>
         <span style={{ fontSize: 13, fontWeight: 500, color: "var(--color-neutral-700)" }} className="hidden md:inline">{title}</span>
@@ -266,8 +268,9 @@ export function AssessmentRunner() {
                 return (
                   <button key={x.id} type="button" onClick={() => goTo(i)} aria-label={ok ? t("runner.questionAnswered", { n: i + 1 }) : t("runner.questionNotAnswered", { n: i + 1 })}
                     aria-current={i === index ? "step" : undefined}
-                    style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${i === index ? "var(--color-brand-600)" : "var(--color-neutral-200)"}`, background: ok ? "var(--color-brand-50)" : "#fff", color: ok ? "var(--color-brand-700)" : "var(--color-neutral-500)", fontSize: 12, fontWeight: 500 }}>
-                    {i + 1}
+                    style={{ minWidth: 32, height: 32, padding: "0 6px", borderRadius: 8, border: `1px ${ok ? "solid" : "dashed"} ${i === index ? "var(--color-brand-600)" : ok ? "var(--color-brand-300, var(--color-brand-600))" : "var(--color-neutral-300, var(--color-neutral-200))"}`, background: ok ? "var(--color-brand-50)" : "#fff", color: ok ? "var(--color-brand-700)" : "var(--color-neutral-600)", fontSize: 12, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                    {/* Not colour alone: answered questions also get a check mark and a solid border. */}
+                    {ok && <Icon name="check" size={12} />}{i + 1}
                   </button>
                 );
               })}
@@ -288,6 +291,6 @@ export function AssessmentRunner() {
           <Button variant="secondary" onClick={() => setExitOpen(false)}>{t("runner.stay")}</Button>
           <Button variant="danger" onClick={() => { pending.current = null; navigate("/assessment"); }}>{t("runner.leaveWithoutSaving")}</Button>
         </>} />
-    </div>
+    </main>
   );
 }

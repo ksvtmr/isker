@@ -39,8 +39,8 @@
       "progressDescription_many": "выполнено {{done}} из {{count}} заданий плана",
       "progressDescription_other": "выполнено {{done}} из {{count}} задания плана",
       "nextAssessment": "Следующая оценка",
-      "reassessCompetency": "Переоценка: {{name}}",
-      "fullReassessment": "Полная переоценка"
+      "reassessCompetency": "Повторная оценка: {{name}}",
+      "fullReassessment": "Полная повторная оценка"
     },
     "profile": {
       "title": "Ваш профиль компетенций",
@@ -58,8 +58,8 @@
       "alsoBelow": "Также ниже цели",
       "noOther": "Других компетенций на 10+ баллов ниже цели нет.",
       "emptyTitle": "Нет открытых приоритетных разрывов",
-      "emptyDescription": "Все компетенции соответствуют вашим целям. Пройдите переоценку, чтобы отслеживать своё развитие.",
-      "reassess": "Пройти переоценку"
+      "emptyDescription": "Все компетенции соответствуют вашим целям. Пройдите повторную оценку, чтобы отслеживать своё развитие.",
+      "reassess": "Пройти повторную оценку"
     },
     "strongest": "Самые сильные компетенции"
   },
@@ -77,7 +77,7 @@
     "activities_many": "{{done}} из {{count}} заданий",
     "activities_other": "{{done}} из {{count}} задания",
     "personalPlan": "Персональный план",
-    "reassess": "Переоценка",
+    "reassess": "Повторная оценка",
     "availableNow": "Доступна сейчас",
     "afterPlan": "После выполнения плана"
   },
@@ -112,7 +112,7 @@
       "title": "История баллов",
       "overall": "Общий",
       "summary": "Балл изменился с {{first}} до {{last}} ({{change}}).",
-      "single": "Пройдите переоценку, чтобы увидеть, как меняются ваши баллы.",
+      "single": "Пройдите повторную оценку, чтобы увидеть, как меняются ваши баллы.",
       "chartAria": "История баллов по областям"
     },
     "stats": {
@@ -122,7 +122,7 @@
       "practiceDescription": "Практические задания с обратной связью",
       "reflections": "Рефлексии",
       "reflectionsDescription": "Шаги рефлексии в плане",
-      "reassessments": "Переоценки",
+      "reassessments": "Повторные оценки",
       "reassessmentsDescription_one": "Всего {{count}} измерение",
       "reassessmentsDescription_few": "Всего {{count}} измерения",
       "reassessmentsDescription_many": "Всего {{count}} измерений",
@@ -140,6 +140,9 @@
     "recent": {
       "title": "Последние действия",
       "empty": "Выполняйте учебные и практические задания — они появятся здесь."
-    }
+    },
+    "pointAssessment": "Оценка {{n}}",
+    "pointReassessment": "Повторная оценка: {{name}}",
+    "pointLabel": "{{kind}} · {{date}}"
   }
 }

@@ -1,8 +1,10 @@
-import { Button, Card, Icon, Modal, PageHeader, Select, type IconName } from "@isker/design-system";
+import { Button, Card, Icon, InlineAlert, Modal, Select, type IconName } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { assessmentsApi, useAssessmentOverview, useStartAttempt } from "../api/assessments";
+import { useAbandonAttempt, useAssessmentOverview, useStartAttempt } from "../api/assessments";
+import { errorMessage } from "../api/client";
 import { useScoreProfile } from "../api/competencies";
 import { useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
@@ -17,7 +19,7 @@ export function AssessmentIntro() {
   const spa = useSpaClick();
   const [competency, setCompetency] = useState("");
   const [confirmRestart, setConfirmRestart] = useState(false);
-  const [restarting, setRestarting] = useState(false);
+  const abandon = useAbandonAttempt();
 
   if (overview.isLoading) return <PageSkeleton cards={0} />;
   if (overview.error || !overview.data) return <><PageHeader title={t("assessmentIntro.title")} /><ErrorState error={overview.error} onRetry={() => overview.refetch()} /></>;
@@ -27,17 +29,16 @@ export function AssessmentIntro() {
   const go = (scope: "full" | "competency", competency_id?: number) =>
     start.mutate({ scope, competency_id }, { onSuccess: (r) => navigate(`/assessment/${r.attempt.id}`) });
 
-  const restart = async () => {
+  // Abandon (invalidates overview, dashboard, plan and usage), then start a fresh attempt. A failure stays visible
+  // in the dialog instead of silently starting nothing.
+  const restart = () => {
     if (!current) return;
-    setRestarting(true);
-    try {
-      await assessmentsApi.abandon(current.id);
-      go("full");
-    } finally {
-      setRestarting(false);
-      setConfirmRestart(false);
-    }
+    abandon.mutate(current.id, {
+      onSuccess: () => { setConfirmRestart(false); go("full"); },
+    });
   };
+  const closeRestart = () => { setConfirmRestart(false); abandon.reset(); };
+  const sectionState = (st: "done" | "current" | "todo") => t(`assessmentIntro.sectionState.${st}`);
 
   const facts: [IconName, string, string][] = [
     ["list-checks", t("assessmentIntro.facts.questions", { count: assessment.question_count }), t("assessmentIntro.facts.questionsText")],
@@ -52,7 +53,7 @@ export function AssessmentIntro() {
 
   return (
     <>
-      <PageHeader title={assessment.title} subtitle={t("assessmentIntro.subtitle")} />
+      <PageHeader title={assessment.title} subtitle={profile.data?.competencies.length ? t("assessmentIntro.subtitle", { count: profile.data.competencies.length }) : t("assessmentIntro.subtitleGeneric")} />
       {start.error && <div style={{ marginBottom: 16 }}><ApiErrorAlert error={start.error} /></div>}
       <div className="ik-grid3" style={{ alignItems: "start", marginBottom: 24 }}>
         <Card padding={28} className="ik-span2">
@@ -90,7 +91,7 @@ export function AssessmentIntro() {
                 <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 999, display: "grid", placeItems: "center", background: st === "done" ? "var(--color-growth-50)" : st === "current" ? "var(--color-brand-50)" : "var(--color-neutral-100)", color: st === "done" ? "var(--color-growth-600)" : st === "current" ? "var(--color-brand-600)" : "var(--color-neutral-400)" }}>
                   <Icon name={st === "done" ? "check" : "circle-dot"} size={12} />
                 </span>
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{s.name}</span>
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{s.name}{current && <span className="isk-sr-only"> — {sectionState(st)}</span>}</span>
                 <span style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{t("assessmentIntro.sectionQuestions", { count: s.count })}</span>
               </div>
             );
@@ -136,9 +137,11 @@ export function AssessmentIntro() {
         </div>
       )}
 
-      <Modal open={confirmRestart} onClose={() => setConfirmRestart(false)} title={t("assessmentIntro.restartTitle")}
+      <Modal open={confirmRestart} onClose={closeRestart} title={t("assessmentIntro.restartTitle")}
         description={t("assessmentIntro.restartText")}
-        footer={<><Button variant="secondary" onClick={() => setConfirmRestart(false)}>{t("assessmentIntro.keepGoing")}</Button><Button variant="danger" loading={restarting} onClick={restart}>{t("assessmentIntro.startOver")}</Button></>} />
+        footer={<><Button variant="secondary" onClick={closeRestart}>{t("assessmentIntro.keepGoing")}</Button><Button variant="danger" loading={abandon.isPending || start.isPending} onClick={restart}>{t("assessmentIntro.startOver")}</Button></>}>
+        {abandon.error ? <InlineAlert title={t("assessmentIntro.restartFailed")}>{errorMessage(abandon.error)}</InlineAlert> : undefined}
+      </Modal>
     </>
   );
 }

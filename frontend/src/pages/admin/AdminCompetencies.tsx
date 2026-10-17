@@ -1,11 +1,12 @@
-import { Button, Card, Input, Modal, Select, Textarea } from "@isker/design-system";
+import { Button, Card, EmptyState, InlineAlert, Input, Select, Textarea } from "@isker/design-system";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { adminApi, useAdminCompetencies, useAdminMutation, type AdminCompetency, type ContentStatus } from "../../api/admin";
+import { useCatalog } from "../../api/competencies";
 import { ErrorState, PageSkeleton } from "../../components/States";
 import { useToast } from "../../components/Toaster";
 import { formatNumber } from "../../utils/format";
-import { ContentStatusBadge, EditorFooter, SaveError, TranslationFields, fromTranslationForm, toTranslationForm, useStatusActions, useStatusOptions, type TranslationField, type TranslationForm } from "./contentSync";
+import { ContentStatusBadge, EditorFooter, EditorModal, SaveError, TranslationStatusBadge, TranslationFields, fromTranslationForm, toTranslationForm, useStatusActions, useStatusOptions, type TranslationField, type TranslationForm } from "./contentSync";
 
 interface Form {
   id?: number; lock_version?: number; code: string; area_id: string; name: string; short_name: string; description: string; hint: string; reflection_prompt: string;
@@ -33,12 +34,25 @@ export function AdminCompetencies() {
     { key: "description", label: t("content.form.description"), multiline: true }, { key: "hint", label: t("competencies.form.hint"), multiline: true },
     { key: "reflection_prompt", label: t("competencies.form.reflectionPrompt"), multiline: true },
   ], [t]);
+  const catalog = useCatalog();
+  /**
+   * Area options come from the catalogue (GET /api/competencies lists every area, even one without competencies),
+   * so a competency can be created in any area — also when there are none yet. Ids come from the catalogue when the
+   * API includes them, otherwise from existing competencies of that area.
+   */
   const areas = useMemo(() => {
-    const seen = new Map<number, string>();
-    for (const c of data ?? []) seen.set(c.area_id, c.area.name);
-    return [...seen].map(([value, label]) => ({ value: String(value), label }));
-  }, [data]);
-  if (isLoading) return <PageSkeleton chart={false} />;
+    const idByCode = new Map<string, number>();
+    for (const c of data ?? []) idByCode.set(c.area.code, c.area_id);
+    const out: { value: string; label: string }[] = [];
+    const seen = new Set<number>();
+    for (const a of catalog.data?.areas ?? []) {
+      const id = a.id ?? idByCode.get(a.code);
+      if (id !== undefined && !seen.has(id)) { seen.add(id); out.push({ value: String(id), label: a.name }); }
+    }
+    for (const c of data ?? []) if (!seen.has(c.area_id)) { seen.add(c.area_id); out.push({ value: String(c.area_id), label: c.area.name }); }
+    return out;
+  }, [data, catalog.data]);
+  if (isLoading || catalog.isLoading) return <PageSkeleton chart={false} />;
   if (error || !data) return <ErrorState error={error} onRetry={() => refetch()} />;
 
   const toForm = (c?: AdminCompetency): Form => ({
@@ -55,11 +69,16 @@ export function AdminCompetencies() {
   const submit = () => {
     if (!form) return;
     setLocalError(null);
+    if (!form.area_id) { setLocalError(t("competencies.errors.area")); return; }
+    if (!form.id && !/^[a-z0-9_-]{2,}$/.test(form.code)) { setLocalError(t("competencies.errors.code")); return; }
+    const nums: [string, number, number][] = [[form.importance, 0, 1], [form.learning_priority, 0, 1], [form.default_target, 40, 100]];
+    if (nums.some(([v, min, max]) => v.trim() === "" || !Number.isFinite(Number(v)) || Number(v) < min || Number(v) > max)) { setLocalError(t("competencies.errors.numbers")); return; }
     try { fromTranslationForm(form.tr, trFields, (lang, field) => t("sync.translations.invalidJson", { lang, field })); } catch (e) { setLocalError((e as Error).message); return; }
     save.mutate(form, { onSuccess: () => { toast({ title: form.id ? t("competencies.updated") : t("competencies.created") }); setForm(null); } });
   };
   const set = (k: keyof Form) => (e: { target: { value: string } }) => form && setForm({ ...form, [k]: e.target.value });
   const rows = data.filter((c) => !filter || c.status === filter);
+  const dirty = !!form && JSON.stringify(form) !== initial;
 
   return (
     <>
@@ -72,11 +91,14 @@ export function AdminCompetencies() {
         <div className="ik-table-wrap">
           <table className="ik-table">
             <thead><tr><th>{t("competencies.columns.competency")}</th><th>{t("competencies.columns.area")}</th><th className="num">{t("competencies.columns.importance")}</th><th className="num">{t("competencies.columns.defaultTarget")}</th><th>{t("content.status")}</th><th><span className="isk-sr-only">{t("content.actions")}</span></th></tr></thead>
-            <tbody>{rows.map((c) => (
+            <tbody>{rows.length === 0 && (
+              <tr><td colSpan={6}><EmptyState icon="radar" title={data.length ? t("content.noMatchesTitle") : t("competencies.emptyTitle")}
+                description={data.length ? t("content.noMatchesText") : t("competencies.emptyText")} /></td></tr>
+            )}{rows.map((c) => (
               <tr key={c.id}>
                 <td><b style={{ fontWeight: 500 }}>{c.name}</b><div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{c.code}</div></td>
                 <td>{c.area.name}</td><td className="num">{formatNumber(c.importance)}</td><td className="num">{formatNumber(c.default_target)}</td>
-                <td><ContentStatusBadge status={c.status} /></td>
+                <td><ContentStatusBadge status={c.status} /> <TranslationStatusBadge status={c.translation_status} /></td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                   <Button size="sm" variant="ghost" iconLeft="pencil" onClick={() => open(c)}>{t("common:actions.edit")}</Button>
                   {status.buttons({ entity: "competencies", id: c.id, status: c.status as ContentStatus, lock_version: c.lock_version, title: c.name })}
@@ -86,13 +108,14 @@ export function AdminCompetencies() {
           </table>
         </div>
       </Card>
-      <Modal open={!!form} onClose={() => setForm(null)} title={form?.id ? t("competencies.editTitle", { name: form.name }) : t("competencies.new")}
-        footer={<EditorFooter dirty={!!form && JSON.stringify(form) !== initial} saving={save.isPending} onCancel={() => setForm(null)} onReset={() => setForm(JSON.parse(initial))} onSave={submit} />}>
+      <EditorModal open={!!form} dirty={dirty} onDiscard={() => setForm(null)} title={form?.id ? t("competencies.editTitle", { name: form.name }) : t("competencies.new")}
+        footer={(requestClose) => <EditorFooter dirty={dirty} saving={save.isPending} onCancel={requestClose} onReset={() => setForm(JSON.parse(initial))} onSave={submit} />}>
         {form && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto", paddingRight: 4 }}>
             <SaveError error={save.error} local={localError} onReload={reload} />
             {!form.id && <Input label={t("competencies.form.code")} hint={t("competencies.form.codeHint")} value={form.code} onChange={set("code")} />}
-            <Select label={t("competencies.columns.area")} value={form.area_id} onChange={set("area_id")} options={areas} />
+            {areas.length === 0 && <InlineAlert tone="warning">{t("competencies.noAreas")}</InlineAlert>}
+            <Select label={t("competencies.columns.area")} value={form.area_id} onChange={set("area_id")} options={areas} placeholder={areas.length ? undefined : t("competencies.noAreasShort")} />
             <Input label={t("competencies.form.name")} value={form.name} onChange={set("name")} />
             <Input label={t("competencies.form.shortName")} value={form.short_name} onChange={set("short_name")} />
             <Textarea label={t("content.form.description")} rows={4} value={form.description} onChange={set("description")} />
@@ -107,7 +130,7 @@ export function AdminCompetencies() {
             {!form.id && <p className="isk-hint">{t("sync.draftHint")}</p>}
           </div>
         )}
-      </Modal>
+      </EditorModal>
     </>
   );
 }

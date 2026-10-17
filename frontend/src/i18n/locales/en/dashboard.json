@@ -140,6 +140,9 @@
     "recent": {
       "title": "Recent activities",
       "empty": "Complete learning or practice activities to see them here."
-    }
+    },
+    "pointAssessment": "Assessment {{n}}",
+    "pointReassessment": "Reassessment: {{name}}",
+    "pointLabel": "{{kind}} · {{date}}"
   }
 }

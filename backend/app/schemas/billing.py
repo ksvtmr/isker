@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from app.models.enums import BillingInterval, SubscriptionSource, SubscriptionStatus
 from app.schemas.common import ORM
@@ -25,6 +25,15 @@ class PlanEntitlementOut(ORM):
     enabled: bool
     limit_value: int | None
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def window_days(self) -> int | None:
+        """Rolling window of a limit (e.g. 30 days), so plan pages don't have to assume it."""
+        from app.services.entitlements import FEATURES
+
+        feature = FEATURES.get(self.feature_key)
+        return feature.window_days if feature else None
+
 
 class PlanOut(ORM):
     id: int
@@ -45,6 +54,8 @@ class PlanAdminOut(PlanOut):
     subscriber_count: int = 0
     lock_version: int
     translations: dict | None = None
+    # Per language: {"status": "complete"|"partial"|"missing"|"stale", "missing": [...], "stale": [...]}
+    translation_status: dict | None = None
 
 
 class PlanEntitlementIn(BaseModel):
@@ -82,6 +93,17 @@ class PlanUpdate(BaseModel):
     # The lock_version the editor loaded; a stale value is refused with 409 VERSION_CONFLICT.
     expected_version: int | None = Field(default=None, ge=1)
     reason: str = Field(min_length=3, max_length=500)
+
+    @model_validator(mode="after")
+    def _no_explicit_nulls(self) -> PlanUpdate:
+        # Omitting a field leaves it unchanged; sending null for a required column is invalid (was a 500).
+        nulls = sorted(f for f in NOT_NULL_PLAN_FIELDS if f in self.model_fields_set and getattr(self, f) is None)
+        if nulls:
+            raise ValueError(f"These fields can't be empty: {', '.join(nulls)}.")
+        return self
+
+
+NOT_NULL_PLAN_FIELDS = ("name", "price_cents", "currency", "billing_interval", "trial_days", "is_active", "sort_order")
 
 
 class SubscriptionOut(ORM):

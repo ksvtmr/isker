@@ -1,11 +1,10 @@
 import { BottomNav, ISKER_NAV, ISKER_NAV_FOOTER, Modal, NavItem, Sidebar, Wordmark, Icon } from "@isker/design-system";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { hasAdminAccess, useLogout, useMe } from "../api/auth";
 import { EmailVerificationBanner } from "../components/AccountNotices";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
-import { useLanguageSync } from "../i18n/useLanguage";
 import type { User } from "../types/api";
 import { initials } from "../utils/format";
 import { NAV_PATHS, navIdForPath } from "./nav";
@@ -17,11 +16,13 @@ function primaryRole(user: User): string {
   return ROLE_PRIORITY.find((r) => user.roles.includes(r)) ?? "user";
 }
 
-/** Desktop: sidebar + content. Tablet: collapsed sidebar. Mobile: top bar + bottom nav + menu sheet. */
-export function AppShell() {
+/**
+ * Desktop: sidebar + content. Tablet: collapsed sidebar. Mobile: top bar + bottom nav + menu sheet.
+ * Used as a route layout (renders the matched child route) or directly with `children` (the public /plans page).
+ */
+export function AppShell({ children }: { children?: ReactNode } = {}) {
   const { t } = useTranslation("public");
   const { data: user } = useMe();
-  useLanguageSync(user);
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useLogout();
@@ -44,7 +45,7 @@ export function AppShell() {
   const footer = (
     <>
       <div style={{ padding: "4px 12px 8px" }}><LanguageSwitcher /></div>
-      <NavItem icon="award" label={t("common:nav.plans")} href="/plans" active={location.pathname === "/plans"} onClick={() => navigate("/plans")} />
+      <NavItem icon="award" label={t("common:nav.plans")} href="/plans" active={active === "plans"} onClick={() => navigate("/plans")} />
       {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href="/admin" onClick={() => navigate("/admin")} />}
       <NavItem icon="log-out" label={t("common:actions.signOut")} onClick={doLogout} />
     </>
@@ -77,7 +78,7 @@ export function AppShell() {
       <main id="main" ref={mainRef} tabIndex={-1} className="ik-main">
         <div className="ik-content">
           {user && <EmailVerificationBanner user={user} />}
-          <Outlet />
+          {children ?? <Outlet />}
         </div>
       </main>
       <div className="ik-bottom"><BottomNav active={active} onNavigate={go} hrefFor={hrefFor} /></div>
@@ -86,7 +87,7 @@ export function AppShell() {
           {[...ISKER_NAV, ...ISKER_NAV_FOOTER].map((it) => (
             <NavItem key={it.id} icon={it.icon} label={t(`common:nav.${it.id}`, { defaultValue: it.label })} active={active === it.id} href={hrefFor(it.id)} onClick={() => go(it.id)} />
           ))}
-          <NavItem icon="award" label={t("common:nav.plans")} href="/plans" onClick={() => { setMenu(false); navigate("/plans"); }} />
+          <NavItem icon="award" label={t("common:nav.plans")} href="/plans" active={active === "plans"} onClick={() => { setMenu(false); navigate("/plans"); }} />
           {isAdmin && <NavItem icon="shield" label={t("common:nav.admin")} href="/admin" onClick={() => { setMenu(false); navigate("/admin"); }} />}
           <NavItem icon="log-out" label={t("common:actions.signOut")} onClick={doLogout} />
         </nav>

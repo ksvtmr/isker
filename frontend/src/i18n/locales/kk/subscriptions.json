@@ -1,7 +1,7 @@
 {
   "plans": {
     "title": "Тарифтер",
-    "subtitle": "Free тарифі бүкіл жолды қамтиды: бағалау, профиліңізді түсіну, жоспар, оқу, тәжірибе және қайта бағалау.",
+    "subtitle": "«{{name}}» тегін тарифі бүкіл жолды қамтиды: бағалау, өз профиліңізді түсіну, даму жоспары, оқу, практика және қайта бағалау.",
     "yourPlan": "Сіздің тарифіңіз: {{name}}",
     "ends": "Аяқталу күні: {{date}}",
     "validUntil": "{{date}} дейін жарамды",
@@ -12,7 +12,14 @@
     "usageLabel_other": "{{label}} (соңғы {{count}} күн)",
     "usageAria": "{{label}}: {{limit}} ішінен {{used}} пайдаланылды",
     "currentPlan": "Ағымдағы тариф",
-    "notIncluded": "Кірмейді:"
+    "notIncluded": "Кірмейді:",
+    "subtitleGeneric": "Тарифтерді салыстырыңыз: әрқайсысына не кіреді және қандай шектеулер бар.",
+    "createAccountCta": "Аккаунт құру",
+    "startFree": "Тегін бастау",
+    "trial_one": "Сынақ кезеңі — {{count}} күн",
+    "trial_few": "Сынақ кезеңі — {{count}} күн",
+    "trial_many": "Сынақ кезеңі — {{count}} күн",
+    "trial_other": "Сынақ кезеңі — {{count}} күн"
   },
   "features": {
     "assessmentFull": "Толық бағалаулар",
@@ -20,20 +27,19 @@
     "planPersonalized": "Жеке даму жоспары",
     "learningAdvancedResources": "Кеңейтілген оқу материалдары",
     "practiceTasks": "Практикалық тапсырмалар",
-    "practiceAiFeedback": "Тәжірибе бойынша ЖИ пікірі",
+    "practiceAiFeedback": "Практика бойынша ЖИ кері байланысы",
     "progressHistory": "Прогрестің толық тарихы",
     "exportData": "Деректерді экспорттау",
     "unlimitedAssessments": "Шектеусіз толық бағалаулар",
     "unlimitedTasks": "Шектеусіз практикалық тапсырмалар",
-    "limit_one": "{{label}}: 30 күнде {{count}}",
-    "limit_few": "{{label}}: 30 күнде {{count}}",
-    "limit_many": "{{label}}: 30 күнде {{count}}",
-    "limit_other": "{{label}}: 30 күнде {{count}}"
+    "limit_one": "{{label}}: {{period}} ішінде {{count}}",
+    "limit_few": "{{label}}: {{period}} ішінде {{count}}",
+    "limit_many": "{{label}}: {{period}} ішінде {{count}}",
+    "limit_other": "{{label}}: {{period}} ішінде {{count}}"
   },
   "upgrade": {
     "title": "Тарифті қалай ауыстыруға болады",
-    "text": "Онлайн төлем әзірге қолжетімсіз. Егер Сіз бағдарламаға немесе инкубаторға қатысатын болсаңыз, оның әкімшісінен Pro қолжетімділігін беруді сұраңыз.",
-    "createAccount": "Бастау үшін <registerLink>тегін аккаунт құрыңыз</registerLink>."
+    "text": "Онлайн төлем әзірге қолжетімсіз. Егер сіз бағдарламаға немесе инкубаторға қатыссаңыз, оның әкімшісінен сізге ақылы тарифті қосуды сұраңыз."
   },
   "price": {
     "free": "Тегін",

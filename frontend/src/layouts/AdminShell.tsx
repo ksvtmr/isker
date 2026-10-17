@@ -22,6 +22,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { id: "assessments", labelKey: "admin:shell.sections.assessments", icon: "clipboard-check", path: "/admin/assessments", permission: "content.manage" },
   { id: "competencies", labelKey: "admin:shell.sections.competencies", icon: "radar", path: "/admin/competencies", permission: "content.manage" },
   { id: "learning-resources", labelKey: "admin:shell.sections.learningResources", icon: "library", path: "/admin/learning-resources", permission: "content.manage" },
+  { id: "translations", labelKey: "admin:shell.sections.translations", icon: "languages", path: "/admin/translations", permission: "content.manage" },
   { id: "analytics", labelKey: "admin:shell.sections.analytics", icon: "chart-column", path: "/admin/analytics", permission: "analytics.view" },
   { id: "ai", labelKey: "admin:shell.sections.ai", icon: "bot", path: "/admin/ai", permission: "ai.view" },
   { id: "audit-logs", labelKey: "admin:shell.sections.auditLogs", icon: "scroll-text", path: "/admin/audit-logs", permission: "audit.view" },

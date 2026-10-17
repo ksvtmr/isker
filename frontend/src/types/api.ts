@@ -144,6 +144,8 @@ export interface Profile {
 }
 
 export interface Area {
+  /** Database id (needed to create competencies); sent by API versions that expose it. */
+  id?: number;
   code: string;
   name: string;
   color_token: string;

@@ -1,4 +1,5 @@
-import { Badge, Breadcrumbs, ConfirmActionDialog, PageHeader, type Crumb } from "@isker/design-system";
+import { Badge, Breadcrumbs, ConfirmActionDialog, type Crumb } from "@isker/design-system";
+import { PageHeader } from "../../components/PageTitle";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -14,14 +15,14 @@ export function formatDateTime(iso: string | null | undefined): string {
 }
 
 /** Page header for admin pages: breadcrumbs + title. Crumb hrefs navigate client-side. */
-export function AdminPageHeader({ crumbs, title, subtitle, action }: { crumbs?: { label: string; to?: string }[]; title: ReactNode; subtitle?: ReactNode; action?: ReactNode }) {
+export function AdminPageHeader({ crumbs, title, subtitle, action, docTitle }: { crumbs?: { label: string; to?: string }[]; title: ReactNode; subtitle?: ReactNode; action?: ReactNode; docTitle?: string }) {
   const { t } = useTranslation("admin");
   const navigate = useNavigate();
   const items: Crumb[] = [{ label: t("crumbs.admin"), href: "/admin", onClick: () => navigate("/admin") }, ...(crumbs ?? []).map((c) => ({ label: c.label, href: c.to, onClick: c.to ? () => navigate(c.to!) : undefined }))];
   return (
     <>
       {crumbs && crumbs.length > 0 && <Breadcrumbs items={items} />}
-      <PageHeader title={title} subtitle={subtitle} action={action} />
+      <PageHeader title={title} subtitle={subtitle} action={action} docTitle={docTitle} />
     </>
   );
 }
@@ -42,12 +43,34 @@ export function useStatusLabel() {
   return (status: string, kind?: StatusKind) => t(`common:${KIND_NS[kind ?? guessKind(status)]}.${status}`, { defaultValue: humanize(status) });
 }
 
-/** Translated labels for audit actions / subscription event types and audit target types (raw codes as fallback). */
+function lookup(key: string): string | null {
+  if (!i18n.exists(key)) return null;
+  const v = i18n.t(key, { returnObjects: true }) as unknown;
+  return typeof v === "string" && v ? v : null; // a group of labels (an object) is not a label
+}
+
+/**
+ * Translated label of an audit action or subscription event type ("admin.question_published"). Codes without a
+ * translation (added to the backend later) get a translated generic label that includes the raw code — never an
+ * English "humanized" guess.
+ */
+export function auditActionLabel(action: string): string {
+  return lookup(`admin:audit.actions.${action}`) ?? i18n.t("admin:audit.unknownAction", { code: action });
+}
+
+/** Translated label of an audit target type ("learning_resource"), with the same generic fallback. */
+export function auditTargetLabel(type: string): string {
+  return lookup(`admin:audit.targets.${type}`) ?? i18n.t("admin:audit.unknownTarget", { code: type });
+}
+
+/** Translated labels for audit actions / subscription event types and audit target types. */
 export function useAuditLabels() {
-  const { t } = useTranslation("admin");
+  useTranslation("admin"); // re-render on language change
   return {
-    action: (action: string) => t(`admin:audit.actions.${action}`, { defaultValue: humanize(action) }),
-    target: (type: string) => t(`admin:audit.targets.${type}`, { defaultValue: humanize(type) }),
+    action: auditActionLabel,
+    target: auditTargetLabel,
+    /** "Question №12" / "Question" when there is no id. */
+    targetWithId: (type: string, id: number | null) => (id !== null ? i18n.t("admin:audit.target", { type: auditTargetLabel(type), id }) : auditTargetLabel(type)),
   };
 }
 

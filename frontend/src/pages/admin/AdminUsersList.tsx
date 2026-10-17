@@ -106,8 +106,8 @@ export function AdminUsersList() {
               loading={list.isLoading || list.isFetching}
               sort={{ key: f.sort ?? "created_at", order: f.order ?? "desc" }}
               onSortChange={(key, order) => update({ sort: key, order }, false)}
-              rowHref={(u) => `/admin/users/${u.id}`}
-              onRowOpen={(u) => navigate(`/admin/users/${u.id}`)}
+              rowHref={can(me, "users.view_details") ? (u) => `/admin/users/${u.id}` : undefined}
+              onRowOpen={can(me, "users.view_details") ? (u) => navigate(`/admin/users/${u.id}`) : undefined}
               empty={<EmptyState icon="search-x" title={anyFilter ? t("users.emptyFilteredTitle") : t("users.emptyTitle")} description={anyFilter ? t("users.emptyFilteredText") : t("users.emptyText")} />}
             />
             {list.data && <Pagination page={f.page ?? 1} pageSize={list.data.page_size} total={list.data.total} onChange={(p) => update({ page: p }, false)} label={t("users.pagination")} />}

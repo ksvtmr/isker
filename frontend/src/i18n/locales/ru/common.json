@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "Isker",
-    "home": "Главная Isker"
+    "home": "Главная Isker",
+    "pageTitle": "{{page}} · Isker",
+    "metaDescription": "Isker — оценка и развитие предпринимательских компетенций по модели EntreComp."
   },
   "language": {
     "label": "Язык",
@@ -51,7 +53,8 @@
     "never": "Никогда",
     "none": "—",
     "yes": "Да",
-    "no": "Нет"
+    "no": "Нет",
+    "requestFailedCode": "Не удалось выполнить запрос (код: {{code}}). Попробуйте ещё раз."
   },
   "nav": {
     "dashboard": "Главная",
@@ -125,7 +128,7 @@
       "learn": "Изучить",
       "practice": "Практика",
       "reflect": "Рефлексия",
-      "reassess": "Переоценка"
+      "reassess": "Повторная оценка"
     },
     "stepStatus": {
       "done": "Выполнено",
@@ -143,7 +146,7 @@
   },
   "gaps": {
     "High": "Высокий",
-    "Medium": "Средний",
+    "Medium": "Умеренный",
     "Low": "Низкий"
   },
   "confidence": {
@@ -160,9 +163,9 @@
     "template": "Шаблон"
   },
   "difficulty": {
-    "beginner": "Начальный",
-    "intermediate": "Средний",
-    "advanced": "Продвинутый"
+    "beginner": "Для начинающих",
+    "intermediate": "Средняя сложность",
+    "advanced": "Высокая сложность"
   },
   "roles": {
     "user": "Слушатель",
@@ -224,7 +227,40 @@
     "chooseGoal": "Выберите хотя бы одну цель",
     "chooseFormat": "Выберите формат",
     "minMinutes": "Не менее 15 минут",
-    "tooLong": "Слишком длинный текст"
+    "tooLong": "Слишком длинный текст",
+    "server": {
+      "required": "Заполните это поле",
+      "email": "Введите корректный адрес электронной почты",
+      "min": "Значение должно быть не меньше {{value}}",
+      "greaterThan": "Значение должно быть больше {{value}}",
+      "max": "Значение должно быть не больше {{value}}",
+      "lessThan": "Значение должно быть меньше {{value}}",
+      "number": "Введите число",
+      "pattern": "Значение в неверном формате",
+      "choice": "Выберите одно из допустимых значений",
+      "invalid": "Недопустимое значение",
+      "minLength_one": "Минимум {{count}} символ",
+      "minLength_few": "Минимум {{count}} символа",
+      "minLength_many": "Минимум {{count}} символов",
+      "minLength_other": "Минимум {{count}} символа",
+      "maxLength_one": "Максимум {{count}} символ",
+      "maxLength_few": "Максимум {{count}} символа",
+      "maxLength_many": "Максимум {{count}} символов",
+      "maxLength_other": "Максимум {{count}} символа",
+      "minItems_one": "Выберите хотя бы {{count}} вариант",
+      "minItems_few": "Выберите хотя бы {{count}} варианта",
+      "minItems_many": "Выберите хотя бы {{count}} вариантов",
+      "minItems_other": "Выберите хотя бы {{count}} варианта",
+      "maxItems_one": "Выберите не больше {{count}} варианта",
+      "maxItems_few": "Выберите не больше {{count}} вариантов",
+      "maxItems_many": "Выберите не больше {{count}} вариантов",
+      "maxItems_other": "Выберите не больше {{count}} варианта"
+    },
+    "backgroundMax": "Не больше 1000 символов",
+    "businessExperienceMax": "Не больше 1000 символов",
+    "goalsMax": "Выберите не больше 6 целей",
+    "maxMinutes": "Не больше 600 минут в неделю",
+    "wholeNumber": "Введите целое число"
   },
   "greeting": {
     "morning": "Доброе утро",
@@ -247,5 +283,13 @@
   },
   "toast": {
     "saved": "Сохранено"
+  },
+  "format": {
+    "id": "№{{id}}",
+    "version": "версия {{n}}",
+    "numberHeader": "№"
+  },
+  "a11y": {
+    "opensInNewTab": "(откроется в новой вкладке)"
   }
 }

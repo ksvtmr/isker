@@ -1,7 +1,6 @@
 {
   "assessmentIntro": {
     "title": "Assessment",
-    "subtitle": "Measure the 15 EntreComp competencies and get a profile with strengths, gaps and a development plan.",
     "facts": {
       "questions_one": "{{count}} question",
       "questions_few": "{{count}} questions",
@@ -43,7 +42,18 @@
     },
     "restartTitle": "Start over?",
     "restartText": "Your open assessment will be discarded and a new one will start from question 1.",
-    "keepGoing": "Keep going"
+    "keepGoing": "Keep going",
+    "sectionState": {
+      "done": "completed",
+      "current": "current section",
+      "todo": "not started yet"
+    },
+    "restartFailed": "Couldn't start over",
+    "subtitle_one": "Measure {{count}} EntreComp competency and get a profile with strengths, gaps and a development plan.",
+    "subtitle_few": "Measure {{count}} EntreComp competencies and get a profile with strengths, gaps and a development plan.",
+    "subtitle_many": "Measure {{count}} EntreComp competencies and get a profile with strengths, gaps and a development plan.",
+    "subtitle_other": "Measure {{count}} EntreComp competencies and get a profile with strengths, gaps and a development plan.",
+    "subtitleGeneric": "Measure your EntreComp competencies and get a profile with strengths, gaps and a development plan."
   },
   "runner": {
     "analyzingTitle": "Scoring your answers",
@@ -125,15 +135,14 @@
     "insightContext_other": "Profile · {{count}} competencies",
     "noInsight": "No AI insight was generated for this attempt.",
     "scoresTitle": "Competency scores",
-    "scoresText": "Open a competency to see the evidence and explanation behind its score."
+    "scoresText": "Open a competency to see the evidence and explanation behind its score.",
+    "barAria": "{{name}}: {{score}} out of 100, target {{target}}"
   },
   "competencies": {
     "title": "Competencies",
-    "emptySubtitle": "The 15 EntreComp competencies in three areas.",
     "emptyTitle": "Your profile is empty",
     "emptyText": "Complete the assessment to see a score, level and gap for each competency.",
     "viewsAria": "Competency views",
-    "tabProfile": "15 Competencies",
     "tabGaps": "Gap analysis",
     "gapsTitle": "Your Competency Gaps",
     "profileTitle": "Competency Profile",
@@ -169,7 +178,19 @@
     "topRank_other": "ranks first: {{count}} points below your target of {{target}}.",
     "nextStep": "Next step",
     "nextStepTitle": "Close your top gap with a 4-step plan",
-    "openPlan": "Open development plan"
+    "openPlan": "Open development plan",
+    "emptySubtitle_one": "{{count}} EntreComp competency: {{areas}}.",
+    "emptySubtitle_few": "{{count}} EntreComp competencies: {{areas}}.",
+    "emptySubtitle_many": "{{count}} EntreComp competencies: {{areas}}.",
+    "emptySubtitle_other": "{{count}} EntreComp competencies: {{areas}}.",
+    "areasCount_one": "{{count}} area",
+    "areasCount_few": "{{count}} areas",
+    "areasCount_many": "{{count}} areas",
+    "areasCount_other": "{{count}} areas",
+    "tabProfile_one": "{{count}} competency",
+    "tabProfile_few": "{{count}} competencies",
+    "tabProfile_many": "{{count}} competencies",
+    "tabProfile_other": "{{count}} competencies"
   },
   "competencyDetail": {
     "notFoundTitle": "Competency not found",
@@ -201,9 +222,6 @@
     "measured": "Measured",
     "whyTitle": "Why this score?",
     "rubricCriteria": "Rubric criteria (open answers)",
-    "evaluatedBy": "Open answers evaluated by {{engine}}. Scores are computed from rubric ratings, not set by the model.",
-    "evaluatedByVersion": "Open answers evaluated by {{engine}} · prompt v{{version}}. Scores are computed from rubric ratings, not set by the model.",
-    "mockEngine": "the rubric engine (mock AI)",
     "evidenceTitle": "Your evidence",
     "evidenceText": "Taken from your latest assessment responses",
     "noEvidence": "No evidence recorded for this measurement.",
@@ -233,6 +251,8 @@
     "reassessCount_one": "Reassessing only this competency takes {{count}} question.",
     "reassessCount_few": "Reassessing only this competency takes {{count}} questions.",
     "reassessCount_many": "Reassessing only this competency takes {{count}} questions.",
-    "reassessCount_other": "Reassessing only this competency takes {{count}} questions."
+    "reassessCount_other": "Reassessing only this competency takes {{count}} questions.",
+    "ruleBasedFeedback": "Open answers were checked automatically against the rubric criteria (rule-based, no AI). Scores are computed from the criterion ratings.",
+    "aiFeedback": "Open answers were evaluated with AI against the rubric criteria. Scores are computed from the criterion ratings, not set by the model."
   }
 }

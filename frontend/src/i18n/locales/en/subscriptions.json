@@ -1,7 +1,7 @@
 {
   "plans": {
     "title": "Plans",
-    "subtitle": "The Free plan covers the full journey: assess, understand your profile, plan, learn, practise and reassess.",
+    "subtitle": "The free {{name}} plan covers the full journey: assess, understand your profile, plan, learn, practise and reassess.",
     "yourPlan": "Your plan: {{name}}",
     "ends": "Ends {{date}}",
     "validUntil": "Valid until {{date}}",
@@ -12,7 +12,14 @@
     "usageLabel_other": "{{label}} (last {{count}} days)",
     "usageAria": "{{label}}: {{used}} of {{limit}} used",
     "currentPlan": "Current plan",
-    "notIncluded": "Not included:"
+    "notIncluded": "Not included:",
+    "subtitleGeneric": "Compare the plans: what each one includes and which limits apply.",
+    "createAccountCta": "Create account",
+    "startFree": "Start for free",
+    "trial_one": "{{count}}-day free trial",
+    "trial_few": "{{count}}-day free trial",
+    "trial_many": "{{count}}-day free trial",
+    "trial_other": "{{count}}-day free trial"
   },
   "features": {
     "assessmentFull": "Full assessments",
@@ -25,15 +32,14 @@
     "exportData": "Data export",
     "unlimitedAssessments": "Unlimited full assessments",
     "unlimitedTasks": "Unlimited practical tasks",
-    "limit_one": "{{label}}: {{count}} per 30 days",
-    "limit_few": "{{label}}: {{count}} per 30 days",
-    "limit_many": "{{label}}: {{count}} per 30 days",
-    "limit_other": "{{label}}: {{count}} per 30 days"
+    "limit_one": "{{label}}: {{count}} per {{period}}",
+    "limit_few": "{{label}}: {{count}} per {{period}}",
+    "limit_many": "{{label}}: {{count}} per {{period}}",
+    "limit_other": "{{label}}: {{count}} per {{period}}"
   },
   "upgrade": {
     "title": "How to upgrade",
-    "text": "Online payment isn't available yet. If you're part of a programme or incubator, ask its administrator to grant you Pro access.",
-    "createAccount": "<registerLink>Create a free account</registerLink> to get started."
+    "text": "Online payment isn't available yet. If you're part of a programme or incubator, ask its administrator to give you a paid plan."
   },
   "price": {
     "free": "Free",

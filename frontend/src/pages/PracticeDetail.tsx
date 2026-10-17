@@ -1,4 +1,5 @@
-import { AIInsight, Button, Card, EmptyState, LevelBadge, PageHeader, ProgressBar, ScoreValue, StatusBadge, Textarea } from "@isker/design-system";
+import { AIInsight, Button, Card, EmptyState, LevelBadge, ProgressBar, ScoreValue, StatusBadge, Textarea } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";

@@ -1,4 +1,5 @@
-import { Badge, Button, Card, CardHeader, Checkbox, ConfirmActionDialog, InlineAlert, KeyValueList, LanguageSelect, PageHeader, PasswordInput } from "@isker/design-system";
+import { Badge, Button, Card, CardHeader, Checkbox, ConfirmActionDialog, InlineAlert, KeyValueList, LanguageSelect, PasswordInput } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";

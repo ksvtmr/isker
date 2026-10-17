@@ -6,6 +6,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.ai.providers import heuristic_insight
+from app.ai.service import RULE_BASED as AI_RULE_BASED
+from app.core.i18n import lang as tr_lang
 from app.core.i18n import tr
 from app.models import (
     AIEvaluation,
@@ -63,7 +65,7 @@ def attempt_summary(db: Session, att: AssessmentAttempt, total: int | None = Non
     )
 
 
-RULE_BASED = ("mock", "fallback")
+RULE_BASED = AI_RULE_BASED
 
 
 def _rerendered(db: Session, o: dict) -> dict:
@@ -88,8 +90,10 @@ def insight_out(ev: AIEvaluation | None, db: Session | None = None) -> InsightOu
     if ev is None or not ev.output:
         return None
     o = ev.output
+    language = ev.language
     if db is not None and ev.provider in RULE_BASED and o.get("refs"):
         o = _rerendered(db, o)
+        language = tr_lang()
     return InsightOut(
         headline=o.get("headline", ""),
         body=o.get("body", ""),
@@ -98,6 +102,7 @@ def insight_out(ev: AIEvaluation | None, db: Session | None = None) -> InsightOu
         provider=ev.provider,
         evaluation_id=ev.id,
         generated_at=ev.created_at,
+        language=language,
     )
 
 

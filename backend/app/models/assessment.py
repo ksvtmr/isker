@@ -9,10 +9,12 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -102,7 +104,8 @@ class QuestionCompetency(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), index=True)
-    competency_id: Mapped[int] = mapped_column(ForeignKey("competencies.id", ondelete="CASCADE"), index=True)
+    # RESTRICT: a competency with mapped questions is archived, never deleted (scores and answers reference it).
+    competency_id: Mapped[int] = mapped_column(ForeignKey("competencies.id", ondelete="RESTRICT"), index=True)
     weight: Mapped[float] = mapped_column(Float, default=1.0)
 
     question: Mapped[Question] = relationship(back_populates="competency_links")
@@ -111,6 +114,16 @@ class QuestionCompetency(Base):
 
 class AssessmentAttempt(TimestampMixin, Base):
     __tablename__ = "assessment_attempts"
+    # At most one open attempt per user: concurrent "start" requests can't both create one.
+    __table_args__ = (
+        Index(
+            "uq_assessment_attempts_user_in_progress",
+            "user_id",
+            unique=True,
+            postgresql_where=text("status = 'in_progress'"),
+            sqlite_where=text("status = 'in_progress'"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
@@ -137,7 +150,8 @@ class Answer(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     attempt_id: Mapped[int] = mapped_column(ForeignKey("assessment_attempts.id", ondelete="CASCADE"), index=True)
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), index=True)
+    # RESTRICT: answered questions are versioned/archived, never deleted (completed attempts stay reproducible).
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="RESTRICT"), index=True)
     option_id: Mapped[int | None] = mapped_column(ForeignKey("question_options.id", ondelete="SET NULL"))
     text_response: Mapped[str | None] = mapped_column(Text)
     # Item score 0..100 after scoring (option score, or rubric-constrained AI score).

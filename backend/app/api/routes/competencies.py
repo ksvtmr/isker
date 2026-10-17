@@ -8,8 +8,9 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.ai.providers import heuristic_evaluation
 from app.api.deps import DB, CurrentUser
+from app.core.content_i18n import base_text, match_ratings, rubric_aliases
 from app.core.errors import NotFoundError
-from app.core.i18n import tr
+from app.core.i18n import lang, tr
 from app.models import (
     AIEvaluation,
     Answer,
@@ -152,15 +153,19 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
                 if ev is None:
                     continue
                 out = ev.output or {}
-                if ev.provider in views.RULE_BASED and q.rubric:
-                    # Deterministic: re-rate with the rubric in the current language so the texts follow it.
-                    out = heuristic_evaluation(c.name, ans.text_response or "", q.rubric)
                 rubric = q.rubric or []
-                stored = out.get("criteria", [])
+                # Stored ratings are matched to the rubric by criterion name in any language, by position only when
+                # no name matches (the names depend on the language the evaluation was made in).
+                aliases = rubric_aliases(base_text(q, "rubric"), q.translations)
+                ratings = match_ratings(out.get("criteria") or [], aliases)
+                language = ev.language
+                if ev.provider in views.RULE_BASED and q.rubric:
+                    # Deterministic: compose the texts again with the rubric in the current language.
+                    out = heuristic_evaluation(c.name, ans.text_response or "", q.rubric, ratings)
+                    language = lang()
                 for i, r in enumerate(rubric):
-                    # Ratings are matched by position: names depend on the language the evaluation was made in.
-                    if r.get("competency") in (None, c.code) and i < len(stored):
-                        criteria_acc[r["criterion"]].append(int(stored[i]["rating"]) * 25)
+                    if r.get("competency") in (None, c.code) and i < len(ratings) and ratings[i] is not None:
+                        criteria_acc[r["criterion"]].append(int(ratings[i]) * 25)
                 excerpt = (ans.text_response or "")[:280]
                 positive = (ev.score or 0) >= 60
                 tag = (
@@ -183,6 +188,7 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
                         strengths=out.get("strengths") or ev.strengths or [],
                         development_areas=out.get("development_areas") or ev.development_areas or [],
                         explanation=out.get("explanation") or ev.explanation,
+                        language=language,
                     )
                 )
             elif ans.option is not None:

@@ -1,5 +1,6 @@
-import { Button, Card, EmptyState, Icon, Input, PageHeader, ProgressBar, Select, StatusBadge } from "@isker/design-system";
-import { useState } from "react";
+import { Button, Card, EmptyState, Icon, Input, ProgressBar, Select, StatusBadge } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCatalog } from "../api/competencies";
 import { useResources, type ResourceFilters } from "../api/learning";
@@ -45,7 +46,18 @@ function ResourceCard({ r }: { r: Resource }) {
 
 export function LearningPage() {
   const { t } = useTranslation("learning");
-  const [f, setF] = useState<ResourceFilters>(EMPTY);
+  // Filters live in the URL: they survive refresh and navigation, and links can open a filtered list.
+  const [params, setParams] = useSearchParams();
+  const f: ResourceFilters = {
+    ...EMPTY,
+    ...Object.fromEntries([...params.entries()].filter(([k]) => k in EMPTY && k !== "page")),
+    page: Math.max(1, Number(params.get("page")) || 1),
+  };
+  const setF = (next: ResourceFilters) => {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(next)) if (v !== "" && v != null && !(k === "page" && v === 1)) q.set(k, String(v));
+    setParams(q, { replace: true });
+  };
   const catalog = useCatalog();
   const { data, isLoading, error, refetch, isFetching } = useResources(f);
   const set = (k: keyof ResourceFilters) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value, page: 1 });

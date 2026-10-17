@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import httpx
 
 from app.core.config import get_settings
+from app.core.content_i18n import normalize
 from app.core.i18n import tr
 
 
@@ -57,7 +59,12 @@ class AIProvider(ABC):
 # Mock provider: deterministic rubric heuristics. Used in development and tests.
 # ---------------------------------------------------------------------------
 
-_WORD = re.compile(r"[A-Za-zА-Яа-яЁёҚқҒғҮүҰұӨөҺһІі0-9']+")
+# Letters and digits of any script (Latin, Russian and Kazakh Cyrillic incl. Ә Ғ Қ Ң Ө Ұ Ү Һ І), apostrophes inside.
+_WORD = re.compile(r"[^\W_]+(?:'[^\W_]+)*")
+
+
+def tokens(text: str) -> list[str]:
+    return [normalize(t) for t in _WORD.findall(unicodedata.normalize("NFC", text or ""))]
 
 
 def _sentences(text: str) -> list[str]:
@@ -65,17 +72,51 @@ def _sentences(text: str) -> list[str]:
     return [p.strip() for p in parts if len(p.strip()) > 3]
 
 
-def heuristic_evaluation(competency_name: str, answer: str, rubric: list[dict]) -> dict:
-    """Rate each rubric criterion 0–4 from answer length + criterion keyword evidence."""
-    words = _WORD.findall(answer.lower())
-    n = len(words)
+def keyword_hits(text: str, keywords: list[str]) -> int:
+    """Distinct answer words (or phrases) that start with a keyword stem.
+
+    A word is counted once however many keywords (of any language) match it, and repeating a word doesn't add more.
+    Multi-word keywords match consecutive words; keywords without letters or digits ("%", "-") match as substrings.
+    """
+    toks = tokens(text)
+    flat = normalize(text)
+    claimed: set[int] = set()
+    units: set[tuple[str, ...]] = set()
+    symbols = 0
+    stems = sorted({tuple(tokens(k)) or (normalize(k),) for k in keywords if normalize(k)}, key=len, reverse=True)
+    for stem in stems:
+        if not tokens(" ".join(stem)):
+            symbols += 1 if stem[0] in flat else 0
+            continue
+        n = len(stem)
+        for i in range(len(toks) - n + 1):
+            span = range(i, i + n)
+            if any(j in claimed for j in span):
+                continue
+            if all(toks[i + m].startswith(stem[m]) for m in range(n)):
+                claimed.update(span)
+                units.add(tuple(toks[j] for j in span))
+    return len(units) + symbols
+
+
+def heuristic_evaluation(
+    competency_name: str, answer: str, rubric: list[dict], ratings: list[int | None] | None = None
+) -> dict:
+    """Rate each rubric criterion 0–4 from answer length + criterion keyword evidence.
+
+    `ratings` (by rubric position) re-renders a stored evaluation: the given ratings are kept and only the texts are
+    composed again, in the current language.
+    """
+    n = len(tokens(answer))
     sents = _sentences(answer)
     criteria, evidence, strengths, dev = [], [], [], []
-    for c in rubric:
-        kws = [k.lower() for k in c.get("keywords", [])]
-        hit_sents = [s for s in sents if any(k in s.lower() for k in kws)]
-        hits = sum(1 for k in kws if k in answer.lower())
+    for i, c in enumerate(rubric):
+        kws = list(c.get("keywords", []))
+        hit_sents = [s for s in sents if keyword_hits(s, kws)]
+        hits = keyword_hits(answer, kws)
         rating = (1 if n >= 12 else 0) + (1 if n >= 40 else 0) + min(hits, 2)
+        if ratings is not None and i < len(ratings) and ratings[i] is not None:
+            rating = int(ratings[i])  # type: ignore[arg-type]
         rating = max(0, min(4, rating))
         ev = hit_sents[0][:240] if hit_sents else ""
         criteria.append({"criterion": c["criterion"], "rating": rating, "evidence": ev})

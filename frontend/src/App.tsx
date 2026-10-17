@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { SIGN_OUT_CODES, setUnauthorizedHandler } from "./api/client";
 import { keys } from "./api/keys";
+import { useMe } from "./api/auth";
+import { useLanguageSync } from "./i18n/useLanguage";
 import { AppShell } from "./layouts/AppShell";
 import { FocusLayout } from "./layouts/FocusLayout";
 import { AdminShell } from "./layouts/AdminShell";
@@ -15,6 +17,7 @@ import { AdminPlans } from "./pages/admin/AdminPlans";
 import { AdminRoles } from "./pages/admin/AdminRoles";
 import { AdminSettings } from "./pages/admin/AdminSettings";
 import { AdminSubscriptions } from "./pages/admin/AdminSubscriptions";
+import { AdminTranslations } from "./pages/admin/AdminTranslations";
 import { AdminUserDetailPage } from "./pages/admin/AdminUserDetail";
 import { AdminUsersList } from "./pages/admin/AdminUsersList";
 import { AssessmentIntro } from "./pages/AssessmentIntro";
@@ -25,7 +28,7 @@ import { DashboardPage } from "./pages/Dashboard";
 import { DevelopmentPlanPage } from "./pages/DevelopmentPlan";
 import { ForgotPasswordPage } from "./pages/ForgotPassword";
 import { PrivacyPage, TermsPage } from "./pages/Legal";
-import { PlansPage } from "./pages/Plans";
+import { PlansRoute } from "./pages/Plans";
 import { ResetPasswordPage } from "./pages/ResetPassword";
 import { VerifyEmailPage } from "./pages/VerifyEmail";
 import { Landing } from "./pages/Landing";
@@ -46,6 +49,9 @@ export function App() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  // The signed-in user's saved language applies everywhere (app, admin area, assessment and onboarding).
+  const { data: me } = useMe();
+  useLanguageSync(me);
   const here = useRef(location.pathname);
   here.current = location.pathname;
   useEffect(() => {
@@ -70,6 +76,8 @@ export function App() {
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      {/* Public: anonymous visitors see the plans with a sign-up call to action, signed-in users their current plan. */}
+      <Route path="/plans" element={<PlansRoute />} />
       <Route element={<RedirectIfAuthed />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -100,7 +108,6 @@ export function App() {
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/plans" element={<PlansPage />} />
         </Route>
       </Route>
 
@@ -126,6 +133,7 @@ export function App() {
             <Route path="/admin/assessments" element={<AdminAssessmentsPage />} />
             <Route path="/admin/competencies" element={<AdminCompetenciesPage />} />
             <Route path="/admin/learning-resources" element={<AdminLearningPage />} />
+            <Route path="/admin/translations" element={<AdminTranslations />} />
             <Route path="/admin/questions" element={<Navigate to="/admin/assessments?tab=questions" replace />} />
             <Route path="/admin/resources" element={<Navigate to="/admin/learning-resources" replace />} />
           </Route>

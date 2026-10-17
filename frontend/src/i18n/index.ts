@@ -36,10 +36,15 @@ export const i18nReady = i18n
     react: { useSuspense: false },
   });
 
+/** <html lang> and the meta description follow the interface language (index.html ships the Russian default). */
 function applyDocumentLanguage(lng: string) {
-  if (typeof document !== "undefined") document.documentElement.lang = toLanguage(lng) ?? DEFAULT_LANGUAGE;
+  if (typeof document === "undefined") return;
+  document.documentElement.lang = toLanguage(lng) ?? DEFAULT_LANGUAGE;
+  const meta = document.querySelector('meta[name="description"]');
+  if (meta && i18n.isInitialized) meta.setAttribute("content", i18n.t("common:app.metaDescription"));
 }
 applyDocumentLanguage(i18n.language);
+void i18nReady.then(() => applyDocumentLanguage(i18n.language));
 i18n.on("languageChanged", applyDocumentLanguage);
 
 export function currentLanguage(): Language {

@@ -1,4 +1,5 @@
-import { Card, ChartCard, InlineAlert, CompareBars, EmptyState, Icon, LineChart, PageHeader, ScoreValue, StatCard, Tabs } from "@isker/design-system";
+import { Card, ChartCard, InlineAlert, CompareBars, EmptyState, Icon, LineChart, ScoreValue, StatCard, Tabs, tabPanelProps } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useProgress } from "../api/progress";
@@ -24,7 +25,14 @@ export function ProgressPage() {
   }
 
   const snaps = p.snapshots;
-  const labels = snaps.map((s) => `${s.label.split(" · ")[0]} · ${shortMonth(s.date)}`);
+  // Chart labels from structured fields (scope, competency, order of full assessments), not by parsing the API label.
+  let fullN = 0;
+  const labels = snaps.map((s) => {
+    const kind = s.scope === "competency"
+      ? t("progress.pointReassessment", { name: s.competency_name ?? "" })
+      : t("progress.pointAssessment", { n: ++fullN });
+    return t("progress.pointLabel", { kind, date: shortMonth(s.date) });
+  });
   const pick = (s: (typeof snaps)[number]) => (area === "all" ? s.overall : s[area as "ideas" | "resources" | "action"]);
   const series = area === "all"
     ? [{ values: snaps.map((s) => s.overall), color: "var(--color-brand-600)" }, ...AREAS.map((a) => ({ values: snaps.map((s) => s[a.value]), color: AREA_COLOR[a.value], width: 1.5 }))]
@@ -46,9 +54,9 @@ export function ProgressPage() {
         </div>
       )}
       <div style={{ marginBottom: 24, overflowX: "auto" }}>
-        <Tabs ariaLabel={t("progress.filterAria")} value={area} onChange={setArea} tabs={[{ value: "all", label: t("progress.allCompetencies") }, ...AREAS]} />
+        <Tabs id="progress-area" ariaLabel={t("progress.filterAria")} value={area} onChange={setArea} tabs={[{ value: "all", label: t("progress.allCompetencies") }, ...AREAS]} />
       </div>
-      <div className="ik-grid3" style={{ marginBottom: 24 }}>
+      <div {...tabPanelProps("progress-area", area)} className="ik-grid3" style={{ marginBottom: 24 }}>
         <Card padding={24}>
           <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{area === "all" ? t("dashboard.score.title") : AREAS.find((a) => a.value === area)?.label}</p>
           <div style={{ marginTop: 8 }}><ScoreValue value={last} label={t("progress.currentScore")} /></div>

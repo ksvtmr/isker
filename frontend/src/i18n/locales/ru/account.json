@@ -22,7 +22,8 @@
     "loadingGoals": "Загружаем цели…",
     "format": "Предпочтительный формат обучения",
     "weekly": "Время на обучение в неделю",
-    "submit": "Перейти к оценке"
+    "submit": "Перейти к оценке",
+    "pageTitle": "Знакомство"
   },
   "profile": {
     "title": "Мой профиль",
@@ -46,9 +47,10 @@
     "historyAssessment": "Оценка",
     "historyDate": "Дата",
     "historyScore": "Балл",
-    "reassessmentOf": "Переоценка · {{name}}",
+    "reassessmentOf": "Повторная оценка · {{name}}",
     "assessmentNumber": "Оценка {{n}}",
-    "historyEmpty": "Завершённых оценок пока нет."
+    "historyEmpty": "Завершённых оценок пока нет.",
+    "historyError": "Не удалось загрузить историю оценок"
   },
   "options": {
     "placeholder": "Выберите…",

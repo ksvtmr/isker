@@ -1,4 +1,4 @@
-import { Badge, Button, Card, CardHeader, Checkbox, ConfirmActionDialog, EmptyState, InlineAlert, Input, KeyValueList, LevelBadge, Select, Tabs } from "@isker/design-system";
+import { Badge, Button, Card, CardHeader, Checkbox, ConfirmActionDialog, EmptyState, InlineAlert, Input, KeyValueList, LevelBadge, Select, Tabs, tabPanelProps } from "@isker/design-system";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -11,6 +11,8 @@ import { ErrorState, PageSkeleton } from "../../components/States";
 import { useToast } from "../../components/Toaster";
 import { LANGUAGE_NAMES, LANGUAGES, isLanguage } from "../../i18n/config";
 import type { SubscriptionStatus } from "../../types/api";
+import { educationLabel } from "../../features/options";
+import i18n from "../../i18n";
 import { formatDate, formatNumber } from "../../utils/format";
 import { AdminPageHeader, formatDateTime, Muted, RoleBadges, StatusPill, useAuditLabels, useStatusLabel } from "./common";
 
@@ -24,6 +26,23 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 function Section({ title, description, action, children }: { title: string; description?: string; action?: ReactNode; children: ReactNode }) {
   return <Card><CardHeader title={title} description={description} action={action} /><div style={{ padding: "0 24px 24px" }}>{children}</div></Card>;
+}
+
+/** Translated label of a permission key (the key itself is shown next to it for administrators). */
+export function permissionLabel(key: string): string {
+  return i18n.t(`admin:permissions.${key}`, { defaultValue: i18n.t("admin:userDetail.unknownPermission", { key }) });
+}
+
+/**
+ * Description for a success toast: only a translated message — the API's English `message` is never shown.
+ * Known `code`s are translated; otherwise the toast title (already a translated success text) is enough.
+ */
+export function resultDescription(r: unknown): string | undefined {
+  const res = (r ?? {}) as { code?: string | null; delivered?: boolean | null; revoked_sessions?: number | null };
+  if (res.code && i18n.exists(`admin:userDetail.results.${res.code}`)) return i18n.t(`admin:userDetail.results.${res.code}`, { count: res.revoked_sessions ?? 0 });
+  if (res.delivered === false) return i18n.t("admin:userDetail.results.notDelivered");
+  if (typeof res.revoked_sessions === "number") return i18n.t("admin:userDetail.results.sessionsRevoked", { count: res.revoked_sessions });
+  return undefined;
 }
 
 const languageName = (code: string | null | undefined, none: string) => (code && isLanguage(code) ? LANGUAGE_NAMES[code] : none);
@@ -59,7 +78,7 @@ export function AdminUserDetailPage() {
 
   return (
     <>
-      <AdminPageHeader crumbs={[{ label: t("crumbs.users"), to: "/admin/users" }, { label: u.full_name }]}
+      <AdminPageHeader crumbs={[{ label: t("crumbs.users"), to: "/admin/users" }, { label: u.full_name }]} docTitle={u.full_name}
         title={<span style={{ display: "inline-flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>{u.full_name} <StatusPill status={u.status} kind="account" /></span>}
         subtitle={<>{u.email} · {t("userDetail.registered", { date: formatDate(u.created_at) })}{isSelf ? ` · ${t("userDetail.thisIsYou")}` : ""}</>} action={actions} />
       {u.status !== "active" && (
@@ -70,8 +89,8 @@ export function AdminUserDetailPage() {
           </InlineAlert>
         </div>
       )}
-      <div style={{ marginBottom: 20, overflowX: "auto" }}><Tabs variant="line" ariaLabel={t("userDetail.tabsAria")} tabs={tabs} value={tab} onChange={setTab} /></div>
-      <div role="tabpanel" aria-label={tabs.find((x) => x.value === tab)?.label} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ marginBottom: 20, overflowX: "auto" }}><Tabs id="admin-user" variant="line" ariaLabel={t("userDetail.tabsAria")} tabs={tabs} value={tab} onChange={setTab} /></div>
+      <div {...tabPanelProps("admin-user", tab)} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {tab === "profile" && <ProfileTab u={u} canSupport={canSupport} open={open} onReload={() => refetch()} />}
         {tab === "subscription" && <SubscriptionTab u={u} canManage={canSubs} open={open} />}
         {tab === "progress" && <Progress u={u} />}
@@ -94,7 +113,7 @@ function ProfileTab({ u, canSupport, open, onReload }: { u: AdminUserDetail; can
       <div className="ik-grid2" style={{ alignItems: "start" }}>
         <Section title={t("userDetail.sections.account")}>
           <KeyValueList items={[
-            { label: t("userDetail.fields.id"), value: `#${u.id}` },
+            { label: t("userDetail.fields.id"), value: t("common:format.id", { id: u.id }) },
             { label: t("userDetail.fields.registered"), value: formatDateTime(u.created_at) },
             { label: t("userDetail.fields.email"), value: <>{u.email} {u.email_verified ? <Badge tone="success">{t("userDetail.emailConfirmed")}</Badge> : <Badge tone="warning">{t("userDetail.emailNotConfirmed")}</Badge>}</> },
             { label: t("userDetail.fields.language"), value: languageName(u.language, t("userDetail.languageNotChosen")) },
@@ -126,7 +145,14 @@ function ProfileTab({ u, canSupport, open, onReload }: { u: AdminUserDetail; can
             </li>
           ))}
         </ul>
-        <p style={{ marginTop: 12 }}><Muted>{u.permissions.length ? t("userDetail.permissionsList", { list: u.permissions.join(", ") }) : t("userDetail.noPermissions")}</Muted></p>
+        {u.permissions.length ? (
+          <details style={{ marginTop: 12 }}>
+            <summary style={{ cursor: "pointer", fontSize: 13 }}>{t("userDetail.permissionsSummary", { count: u.permissions.length })}</summary>
+            <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
+              {u.permissions.map((p) => <li key={p}>{permissionLabel(p)} <Muted><code>{p}</code></Muted></li>)}
+            </ul>
+          </details>
+        ) : <p style={{ marginTop: 12 }}><Muted>{t("userDetail.noPermissions")}</Muted></p>}
       </Section>
       <Section title={t("userDetail.sections.lifecycle")}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -147,7 +173,7 @@ function QuestionnaireList({ u }: { u: AdminUserDetail }) {
   if (!p) return null;
   return (
     <KeyValueList items={[
-      { label: t("userDetail.fields.education"), value: p.education ?? none },
+      { label: t("userDetail.fields.education"), value: p.education ? educationLabel(String(p.education)) : none },
       { label: t("userDetail.fields.experience"), value: p.entrepreneurial_experience ? t(`admin:userDetail.experience.${p.entrepreneurial_experience}`, { defaultValue: humanize(String(p.entrepreneurial_experience)) }) : none },
       { label: t("userDetail.fields.format"), value: p.preferred_learning_format ? t(`admin:userDetail.format.${p.preferred_learning_format}`, { defaultValue: humanize(String(p.preferred_learning_format)) }) : none },
       { label: t("userDetail.fields.weeklyTime"), value: p.weekly_learning_minutes ? t("common:time.minutes", { count: Number(p.weekly_learning_minutes) }) : none },
@@ -434,7 +460,7 @@ function UserDialogs({ u, dialog, close }: { u: AdminUserDetail; dialog: Dialog 
   const m = useAdminMutation(async ({ run }: { run: () => Promise<{ message?: string } | unknown> }) => run());
   const done = (title: string, description?: string) => { toast({ title, description }); close(); m.reset(); };
   const run = (fn: () => Promise<unknown>, title: string, after?: () => void) =>
-    m.mutate({ run: fn }, { onSuccess: (r) => { const msg = (r as { message?: string } | undefined)?.message; done(title, msg); after?.(); } });
+    m.mutate({ run: fn }, { onSuccess: (r) => { done(title, resultDescription(r)); after?.(); } });
   const cancel = () => { m.reset(); close(); };
   const err = m.error ? errorMessage(m.error) : undefined;
   const k = dialog?.kind;

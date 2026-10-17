@@ -13,7 +13,7 @@ from sqlalchemy.orm.attributes import set_committed_value
 from app.core.config import get_settings
 from app.core.context import client_ip_var, user_agent_var
 from app.core.database import as_utc, utcnow
-from app.core.errors import ValidationError
+from app.core.errors import AuthorizationError, ValidationError
 from app.models import EmailVerificationToken, PasswordResetToken, User, UserSession
 from app.services import email as email_service
 from app.services import email_templates
@@ -21,6 +21,25 @@ from app.services import email_templates
 
 def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+
+
+# --- Public demo account ----------------------------------------------------------------------------
+
+
+def is_demo_account(user: User) -> bool:
+    """The seeded public demo account (DEMO_EMAIL; its password is published in the README / render.yaml).
+
+    It is identified by the configured DEMO_EMAIL while the demo is enabled (SEED_DEMO) and DEMO_READ_ONLY is on.
+    """
+    s = get_settings()
+    return bool(s.seed_demo and s.demo_read_only and s.demo_email and user.email == s.demo_email.strip().lower())
+
+
+def assert_not_demo(user: User) -> None:
+    """Anyone can sign in to the demo account, so its credentials and status can't be changed through it."""
+    if is_demo_account(user):
+        raise AuthorizationError("The demo account is shared and can't be changed. Create your own account to do this.",
+                                 "DEMO_ACCOUNT_READ_ONLY")
 
 
 # --- Sessions -------------------------------------------------------------------------------------
@@ -166,6 +185,17 @@ def start_password_reset(db: Session, user: User, requested_by_id: int | None = 
     subject, text = email_templates.render("reset_password", email_templates.email_language(user), name=user.full_name,
                                            link=link, minutes=s.reset_token_minutes)
     return email_service.send(user.email, subject, text)
+
+
+def invalidate_pending_tokens(db: Session, user_id: int) -> int:
+    """Mark every unused password-reset and email-verification token of the user as used (e.g. after an email
+    change: links sent to the old address must stop working). Returns the number of tokens invalidated."""
+    n = 0
+    for model in (PasswordResetToken, EmailVerificationToken):
+        result = db.execute(update(model).where(model.user_id == user_id, model.used_at.is_(None))
+                            .values(used_at=utcnow()).execution_options(synchronize_session=False))
+        n += int(getattr(result, "rowcount", 0) or 0)
+    return n
 
 
 def consume_reset_token(db: Session, raw: str) -> User:

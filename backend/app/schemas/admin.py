@@ -68,6 +68,8 @@ class CompetencyAdminOut(ORM):
     status: ContentStatus
     lock_version: int
     translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
 
 
 class CompetencyUpdate(Versioned):
@@ -147,6 +149,7 @@ class QuestionAdminOut(BaseModel):
     version: int
     previous_id: int | None
     translations: dict | None
+    translation_status: dict | None = None
     options: list[dict]
     competencies: list[dict]
     rubric: list[dict]
@@ -181,6 +184,8 @@ class AssessmentAdminOut(ORM):
     is_active: bool
     lock_version: int
     translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
     question_count: int = 0
     attempt_count: int = 0
 
@@ -216,6 +221,8 @@ class ResourceAdminOut(ORM):
     status: ContentStatus
     lock_version: int
     translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
 
 
 class TaskIn(Versioned):
@@ -248,6 +255,8 @@ class TaskAdminOut(ORM):
     status: ContentStatus
     lock_version: int
     translations: dict | None
+    # {"ru": {"status": "complete"|"partial"|"missing"|"stale", "missing": [fields], "stale": [fields]}, "kk": {...}}
+    translation_status: dict | None = None
 
 
 class AIEvaluationAdminOut(ORM):
@@ -267,6 +276,7 @@ class AIEvaluationAdminOut(ORM):
     error: str | None
     input_excerpt: str | None
     output: dict | None
+    language: str | None = None
     created_at: datetime
 
 

@@ -1,4 +1,5 @@
-import { AIInsight, Card, CompetencyCard, EmptyState, GapBadge, PageHeader, ProgressBar, SectionTitle, Tabs, Button } from "@isker/design-system";
+import { AIInsight, Card, CompetencyCard, EmptyState, GapBadge, ProgressBar, SectionTitle, Tabs, Button, tabPanelProps } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -22,7 +23,7 @@ function GapTable() {
         <div className="ik-table-wrap">
           <table className="ik-table">
             <caption className="isk-sr-only">{t("competencies.gapTable.caption")}</caption>
-            <thead><tr><th>#</th><th>{t("competencies.gapTable.competency")}</th><th className="num">{t("competencies.gapTable.score")}</th><th className="num">{t("competencies.gapTable.target")}</th><th style={{ width: "24%" }}>{t("competencies.gapTable.distance")}</th><th>{t("competencies.gapTable.gap")}</th><th>{t("competencies.gapTable.priority")}</th><th><span className="isk-sr-only">{t("competencies.gapTable.action")}</span></th></tr></thead>
+            <thead><tr><th>{t("common:format.numberHeader")}</th><th>{t("competencies.gapTable.competency")}</th><th className="num">{t("competencies.gapTable.score")}</th><th className="num">{t("competencies.gapTable.target")}</th><th style={{ width: "24%" }}>{t("competencies.gapTable.distance")}</th><th>{t("competencies.gapTable.gap")}</th><th>{t("competencies.gapTable.priority")}</th><th><span className="isk-sr-only">{t("competencies.gapTable.action")}</span></th></tr></thead>
             <tbody>
               {rows.map((g) => (
                 <tr key={g.code}>
@@ -76,12 +77,12 @@ export function CompetenciesPage() {
   if (isLoading) return <PageSkeleton />;
   if (error || !p) return <><PageHeader title={t("competencies.title")} /><ErrorState error={error} onRetry={() => refetch()} /></>;
 
-  const tabs = <div style={{ marginBottom: 24 }}><Tabs variant="line" ariaLabel={t("competencies.viewsAria")} value={tab} onChange={(v) => setParams(v === "gaps" ? { tab: "gaps" } : {})} tabs={[{ value: "profile", label: t("competencies.tabProfile") }, { value: "gaps", label: t("competencies.tabGaps") }]} /></div>;
+  const tabs = <div style={{ marginBottom: 24 }}><Tabs id="competency-views" variant="line" ariaLabel={t("competencies.viewsAria")} value={tab} onChange={(v) => setParams(v === "gaps" ? { tab: "gaps" } : {})} tabs={[{ value: "profile", label: t("competencies.tabProfile", { count: p.competencies.length }) }, { value: "gaps", label: t("competencies.tabGaps") }]} /></div>;
 
   if (!p.has_profile) {
     return (
       <>
-        <PageHeader title={t("competencies.title")} subtitle={t("competencies.emptySubtitle")} />
+        <PageHeader title={t("competencies.title")} subtitle={t("competencies.emptySubtitle", { count: p.competencies.length, areas: t("competencies.areasCount", { count: p.areas.length }) })} />
         <EmptyState icon="radar" title={t("competencies.emptyTitle")} description={t("competencies.emptyText")} action={<LinkButton to="/assessment">{t("assessmentIntro.startButton")}</LinkButton>} />
         <div style={{ marginTop: 32 }} className="ik-grid-cards">
           {p.competencies.map((c) => <CompetencyCard key={c.code} name={c.name} area={c.area_name} score={0} notAssessed description={c.description} />)}
@@ -98,11 +99,13 @@ export function CompetenciesPage() {
         subtitle={tab === "gaps" ? t("competencies.gapsSubtitle") : t("competencies.profileSubtitle", { date: formatDate(p.assessed_at) })}
       />
       {tabs}
+      <div {...tabPanelProps("competency-views", tab)}>
       {tab === "gaps" ? <GapTable /> : (
         <>
           <div style={{ marginBottom: 24, overflowX: "auto" }}>
-            <Tabs ariaLabel={t("competencies.areaFilterAria")} value={area} onChange={setArea} tabs={[{ value: "all", label: t("competencies.allCompetencies") }, ...p.areas.map((a) => ({ value: a.code, label: a.name }))]} />
+            <Tabs id="competency-areas" ariaLabel={t("competencies.areaFilterAria")} value={area} onChange={setArea} tabs={[{ value: "all", label: t("competencies.allCompetencies") }, ...p.areas.map((a) => ({ value: a.code, label: a.name }))]} />
           </div>
+          <div {...tabPanelProps("competency-areas", area)}>
           {areas.map((a) => (
             <section key={a.code} style={{ marginBottom: 32 }} aria-labelledby={`area-${a.code}`}>
               <SectionTitle
@@ -119,8 +122,10 @@ export function CompetenciesPage() {
               </div>
             </section>
           ))}
+          </div>
         </>
       )}
+      </div>
     </>
   );
 }

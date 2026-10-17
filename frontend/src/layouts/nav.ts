@@ -10,10 +10,12 @@ export const NAV_PATHS: Record<string, string> = {
   profile: "/profile",
   settings: "/settings",
   admin: "/admin",
+  plans: "/plans",
 };
 
+/** The nav entry to highlight; "" when the page has no entry of its own (nothing is highlighted then). */
 export function navIdForPath(pathname: string): string {
   const seg = pathname.split("/")[1] ?? "";
   if (seg === "results") return "assessment";
-  return Object.keys(NAV_PATHS).find((id) => NAV_PATHS[id] === `/${seg}`) ?? "dashboard";
+  return Object.keys(NAV_PATHS).find((id) => NAV_PATHS[id] === `/${seg}`) ?? "";
 }

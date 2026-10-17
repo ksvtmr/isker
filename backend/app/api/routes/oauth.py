@@ -23,7 +23,7 @@ from app.models import OAuthIdentity, User, UserProfile
 from app.models.enums import AccountStatus
 from app.schemas.auth import UserOut
 from app.schemas.common import ERROR_RESPONSES
-from app.services import accounts
+from app.services import accounts, maintenance
 from app.services import google_oidc as google
 from app.services.audit import audit, audit_now
 from app.services.permissions import DEFAULT_ROLE, give_role, has_permission
@@ -53,8 +53,16 @@ def providers() -> dict:
             responses={302: {"description": "Redirect to Google, or back to /login with oauth_error"}})
 def google_start(db: DB, next: Annotated[str | None, Query(max_length=255)] = None,  # noqa: A002
                  remember: bool = False) -> RedirectResponse:
+    from app.core.context import client_ip_var
+
     if not get_settings().google_enabled:
         return _fail("GOOGLE_NOT_CONFIGURED")
+    # Each start stores an OAuthState row: rate-limit per IP and purge expired rows now and then.
+    try:
+        enforce("oauth_ip", client_ip_var.get())
+    except AppError as e:
+        return _fail(e.code)
+    maintenance.maybe_purge()
     url, state = google.start(db, mode="login", user_id=None, next_path=google.safe_next(next), remember=remember,
                               language=language_var.get())
     db.commit()
@@ -66,6 +74,7 @@ def google_start(db: DB, next: Annotated[str | None, Query(max_length=255)] = No
 @router.post("/google/link", summary="Start linking Google to the signed-in account (returns the Google URL)")
 def google_link_start(auth: Auth, db: DB) -> JSONResponse:
     google.require_configured()
+    accounts.assert_not_demo(auth.user)
     if any(i.provider == PROVIDER for i in auth.user.oauth_identities):
         raise ConflictError("Google is already linked to this account.", "OAUTH_ALREADY_LINKED")
     url, state = google.start(db, mode="link", user_id=auth.user.id, next_path="/settings",
@@ -78,6 +87,7 @@ def google_link_start(auth: Auth, db: DB) -> JSONResponse:
 
 @router.delete("/google", response_model=UserOut, summary="Unlink Google (only if the account keeps a password)")
 def google_unlink(user: CurrentUser, db: DB) -> UserOut:
+    accounts.assert_not_demo(user)
     ident = next((i for i in user.oauth_identities if i.provider == PROVIDER), None)
     if ident is None:
         raise ConflictError("Google is not linked to this account.", "OAUTH_NOT_LINKED")
@@ -136,6 +146,8 @@ def google_callback(request: Request, db: DB, code: str | None = None, state: st
         user = db.get(User, req.user_id) if req.user_id else None
         if user is None or user.status != AccountStatus.ACTIVE:
             return _fail("OAUTH_FAILED", "/settings")
+        if accounts.is_demo_account(user):
+            return _fail("DEMO_ACCOUNT_READ_ONLY", "/settings")
         if existing is not None and existing.user_id != user.id:
             audit(db, user.id, "auth.oauth_link_conflict", "user", user.id, outcome="denied", provider=PROVIDER)
             db.commit()
@@ -144,7 +156,13 @@ def google_callback(request: Request, db: DB, code: str | None = None, state: st
             db.add(OAuthIdentity(user_id=user.id, provider=PROVIDER, subject=ident.subject, email=ident.email,
                                  last_used_at=utcnow()))
         audit(db, user.id, "auth.oauth_linked", "user", user.id, provider=PROVIDER)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            # A concurrent callback linked this Google account (or another one to this user) first.
+            db.rollback()
+            audit_now(user.id, "auth.oauth_link_conflict", "user", user.id, outcome="denied", provider=PROVIDER)
+            return _fail("OAUTH_ALREADY_LINKED", "/settings")
         return RedirectResponse("/settings?google=linked", status_code=302)
 
     created = False

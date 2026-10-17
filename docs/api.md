@@ -1,6 +1,6 @@
 # API reference
 
-Generated from the FastAPI OpenAPI schema (`docs/openapi.json`). Interactive docs: **`/api/docs`** (Swagger UI) and `/api/redoc`.
+Generated from the FastAPI OpenAPI schema (`docs/openapi.json`). Interactive docs: **`/api/docs`** (Swagger UI) and `/api/redoc`. They are on in development and off in production unless `API_DOCS_ENABLED=true`.
 
 ## Conventions
 

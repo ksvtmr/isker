@@ -1,4 +1,4 @@
-import { Tabs } from "@isker/design-system";
+import { Tabs, tabPanelProps } from "@isker/design-system";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { AdminAI } from "./AdminAI";
@@ -16,10 +16,10 @@ export function AdminAssessmentsPage() {
     <>
       <AdminPageHeader crumbs={[{ label: t("content.assessmentsPage.title") }]} title={t("content.assessmentsPage.title")} subtitle={t("content.assessmentsPage.subtitle")} />
       <div style={{ marginBottom: 20 }}>
-        <Tabs variant="line" ariaLabel={t("content.assessmentsPage.tabsLabel")} value={tab} onChange={(v) => setParams(v === "questions" ? { tab: v } : {}, { replace: true })}
+        <Tabs id="admin-assessments" variant="line" ariaLabel={t("content.assessmentsPage.tabsLabel")} value={tab} onChange={(v) => setParams(v === "questions" ? { tab: v } : {}, { replace: true })}
           tabs={[{ value: "assessments", label: t("content.assessmentsPage.tabAssessments") }, { value: "questions", label: t("content.assessmentsPage.tabQuestions") }]} />
       </div>
-      <div role="tabpanel" aria-label={tab === "questions" ? t("content.assessmentsPage.tabQuestions") : t("content.assessmentsPage.tabAssessments")}>{tab === "questions" ? <AdminQuestions /> : <AdminAssessments />}</div>
+      <div {...tabPanelProps("admin-assessments", tab)}>{tab === "questions" ? <AdminQuestions /> : <AdminAssessments />}</div>
     </>
   );
 }

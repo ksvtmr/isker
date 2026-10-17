@@ -27,6 +27,7 @@ from app.schemas.billing import EntitlementOut, MySubscriptionOut, PlanOut, Subs
 from app.schemas.common import ERROR_RESPONSES
 from app.services import entitlements as ent
 from app.services import payments
+from app.services import recommendations as rec_service
 from app.services import subscriptions as subs
 from app.services.audit import audit
 
@@ -115,7 +116,9 @@ def export_me(user: CurrentUser, db: DB) -> JSONResponse:
              "confidence": s.confidence, "created_at": _dt(s.created_at)}
             for s in db.scalars(select(CompetencyScore).where(CompetencyScore.user_id == user.id))],
         "recommendations": [
-            {"id": r.id, "competency_id": r.competency_id, "status": r.status.value, "reason": r.reason,
+            # Texts are rendered in the language of this request (the stored reason is the English base text).
+            {"id": r.id, "competency_id": r.competency_id, "competency": r.competency.name if r.competency else None,
+             "status": r.status.value, "reason": rec_service.localized_reason(r),
              "created_at": _dt(r.created_at)}
             for r in db.scalars(select(Recommendation).where(Recommendation.user_id == user.id))],
         "learning_progress": [

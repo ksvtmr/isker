@@ -1,7 +1,8 @@
-import { Button, Card, Checkbox, InlineAlert, Modal, Select, StatusBadge, Tabs, Textarea } from "@isker/design-system";
+import { Button, Card, Checkbox, ConfirmActionDialog, EmptyState, InlineAlert, Modal, Select, StatusBadge, Tabs, Textarea, tabPanelProps } from "@isker/design-system";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { adminApi, useAdminEvaluations, useAdminMutation, useAdminPrompts, type AIEvaluationRow, type PromptVersion } from "../../api/admin";
+import { can, useMe } from "../../api/auth";
 import { errorMessage } from "../../api/client";
 import { ErrorState, PageSkeleton } from "../../components/States";
 import { useToast } from "../../components/Toaster";
@@ -17,7 +18,7 @@ function Evaluations() {
   if (error || !data) return <ErrorState error={error} onRetry={() => refetch()} />;
   const statusLabel = (s: AIEvaluationRow["status"]) => t(`ai.statuses.${s}`);
   const badge = (s: AIEvaluationRow["status"]) => <StatusBadge status={s === "success" ? "done" : s === "retried" ? "progress" : "locked"}>{statusLabel(s)}</StatusBadge>;
-  const inputLabel = (v: string) => t(`ai.inputTypes.${v}`, { defaultValue: v.replace(/_/g, " ") });
+  const inputLabel = (v: string) => t(`ai.inputTypes.${v}`, { defaultValue: t("ai.inputTypeUnknown", { code: v }) });
   return (
     <>
       <div style={{ width: 220, marginBottom: 16 }}>
@@ -26,10 +27,12 @@ function Evaluations() {
       <Card style={{ overflow: "hidden" }}>
         <div className="ik-table-wrap">
           <table className="ik-table">
-            <thead><tr><th>#</th><th>{t("ai.columns.input")}</th><th>{t("ai.columns.provider")}</th><th>{t("content.status")}</th><th className="num">{t("ai.columns.score")}</th><th className="num">{t("ai.columns.confidence")}</th><th className="num">{t("ai.columns.latency")}</th><th>{t("ai.columns.date")}</th><th><span className="isk-sr-only">{t("content.actions")}</span></th></tr></thead>
-            <tbody>{data.items.map((e) => (
+            <thead><tr><th>{t("common:format.numberHeader")}</th><th>{t("ai.columns.input")}</th><th>{t("ai.columns.provider")}</th><th>{t("content.status")}</th><th className="num">{t("ai.columns.score")}</th><th className="num">{t("ai.columns.confidence")}</th><th className="num">{t("ai.columns.latency")}</th><th>{t("ai.columns.date")}</th><th><span className="isk-sr-only">{t("content.actions")}</span></th></tr></thead>
+            <tbody>{data.items.length === 0 && (
+              <tr><td colSpan={9}><EmptyState icon="bot" title={t("ai.emptyEvaluationsTitle")} description={status ? t("ai.emptyEvaluationsFiltered") : t("ai.emptyEvaluationsText")} /></td></tr>
+            )}{data.items.map((e) => (
               <tr key={e.id}>
-                <td className="num">{e.id}</td><td>{inputLabel(e.input_type)}</td><td>{e.provider} · {e.model}</td><td>{badge(e.status)}</td>
+                <td className="num">{t("common:format.id", { id: e.id })}</td><td>{inputLabel(e.input_type)}</td><td>{e.provider} · {e.model}</td><td>{badge(e.status)}</td>
                 <td className="num">{e.score ?? "—"}</td><td className="num">{e.confidence != null ? formatNumber(e.confidence, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</td><td className="num">{e.latency_ms != null ? t("ai.latencyMs", { n: formatNumber(e.latency_ms) }) : "—"}</td>
                 <td>{formatDate(e.created_at)}</td><td><Button size="sm" variant="ghost" iconLeft="eye" onClick={() => setOpen(e)}>{t("ai.inspect")}</Button></td>
               </tr>))}
@@ -61,32 +64,49 @@ function Evaluations() {
 function Prompts() {
   const { t } = useTranslation("adminContent");
   const { data, isLoading, error, refetch } = useAdminPrompts();
+  const { data: me } = useMe();
+  // The API requires ai.manage to create or activate a version; ai.view alone is read-only.
+  const canManage = can(me, "ai.manage");
   const toast = useToast();
   const activate = useAdminMutation(adminApi.activatePrompt);
   const create = useAdminMutation(adminApi.createPrompt);
   const [draft, setDraft] = useState<{ key: string; system_prompt: string; user_template: string; notes: string; activate: boolean } | null>(null);
+  const [toActivate, setToActivate] = useState<PromptVersion | null>(null);
   if (isLoading) return <PageSkeleton chart={false} />;
   if (error || !data) return <ErrorState error={error} onRetry={() => refetch()} />;
-  const newVersion = (p: PromptVersion) => setDraft({ key: p.key, system_prompt: p.system_prompt, user_template: p.user_template, notes: "", activate: false });
+  const newVersion = (p: PromptVersion) => { create.reset(); setDraft({ key: p.key, system_prompt: p.system_prompt, user_template: p.user_template, notes: "", activate: false }); };
+  const askActivate = (p: PromptVersion) => { activate.reset(); setToActivate(p); };
   return (
     <>
+      {!canManage && <div style={{ marginBottom: 16 }}><InlineAlert tone="info">{t("ai.readOnly")}</InlineAlert></div>}
+      {data.length === 0 && <EmptyState icon="bot" title={t("ai.emptyPromptsTitle")} description={t("ai.emptyPromptsText")} />}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {data.map((p) => (
           <Card key={p.id} padding={20}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-              <div><b>{p.key}</b> · v{p.version} <span style={{ marginLeft: 8 }}>{p.is_active ? <StatusBadge status="done">{t("content.active")}</StatusBadge> : <StatusBadge status="todo">{t("content.inactive")}</StatusBadge>}</span>
+              <div><b>{p.key}</b> · {t("ai.versionLabel", { n: p.version })} <span style={{ marginLeft: 8 }}>{p.is_active ? <StatusBadge status="done">{t("content.active")}</StatusBadge> : <StatusBadge status="todo">{t("content.inactive")}</StatusBadge>}</span>
                 <div style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>{formatDate(p.created_at)}{p.notes ? ` · ${p.notes}` : ""}</div></div>
-              <span style={{ display: "flex", gap: 8 }}>
-                {!p.is_active && <Button size="sm" variant="secondary" loading={activate.isPending} onClick={() => activate.mutate(p.id, { onSuccess: () => toast({ title: t("ai.promptActivated", { version: p.version }) }) })}>{t("content.activate")}</Button>}
-                <Button size="sm" variant="ghost" iconLeft="plus" onClick={() => newVersion(p)}>{t("ai.newVersionFrom")}</Button>
-              </span>
+              {canManage && (
+                <span style={{ display: "flex", gap: 8 }}>
+                  {!p.is_active && <Button size="sm" variant="secondary" onClick={() => askActivate(p)}>{t("content.activate")}</Button>}
+                  <Button size="sm" variant="ghost" iconLeft="plus" onClick={() => newVersion(p)}>{t("ai.newVersionFrom")}</Button>
+                </span>
+              )}
             </div>
             <details style={{ marginTop: 12 }}><summary style={{ cursor: "pointer", fontSize: 13 }}>{t("ai.showTemplate")}</summary><pre className="ik-pre" style={{ marginTop: 8 }}>{p.system_prompt}{"\n\n---\n\n"}{p.user_template}</pre></details>
           </Card>
         ))}
       </div>
+      <ConfirmActionDialog open={!!toActivate} tone="primary" busy={activate.isPending}
+        title={t("ai.activateTitle", { key: toActivate?.key ?? "", version: toActivate?.version ?? "" })}
+        description={t("ai.activateText")} confirmLabel={t("content.activate")}
+        error={activate.error ? errorMessage(activate.error) : undefined}
+        onCancel={() => { setToActivate(null); activate.reset(); }}
+        onConfirm={() => toActivate && activate.mutate(toActivate.id, {
+          onSuccess: () => { toast({ title: t("ai.promptActivated", { version: toActivate.version }) }); setToActivate(null); },
+        })} />
       <Modal open={!!draft} onClose={() => setDraft(null)} title={t("ai.newVersionTitle", { key: draft?.key ?? "" })}
-        footer={<><Button variant="secondary" onClick={() => setDraft(null)}>{t("common:actions.cancel")}</Button><Button loading={create.isPending} onClick={() => draft && create.mutate(draft, { onSuccess: () => { setDraft(null); toast({ title: t("ai.versionCreated") }); } })}>{t("common:actions.create")}</Button></>}>
+        footer={<><Button variant="secondary" onClick={() => setDraft(null)}>{t("common:actions.cancel")}</Button><Button loading={create.isPending} disabled={!draft?.system_prompt.trim() || !draft?.user_template.trim()} onClick={() => draft && create.mutate(draft, { onSuccess: () => { setDraft(null); toast({ title: t("ai.versionCreated") }); } })}>{t("common:actions.create")}</Button></>}>
         {draft && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto" }}>
             {create.error && <InlineAlert>{errorMessage(create.error)}</InlineAlert>}
@@ -106,8 +126,8 @@ export function AdminAI() {
   const [tab, setTab] = useState("evaluations");
   return (
     <>
-      <div style={{ marginBottom: 16 }}><Tabs ariaLabel={t("content.aiPage.title")} value={tab} onChange={setTab} tabs={[{ value: "evaluations", label: t("ai.tabEvaluations") }, { value: "prompts", label: t("ai.tabPrompts") }]} /></div>
-      {tab === "evaluations" ? <Evaluations /> : <Prompts />}
+      <div style={{ marginBottom: 16 }}><Tabs id="admin-ai" ariaLabel={t("content.aiPage.title")} value={tab} onChange={setTab} tabs={[{ value: "evaluations", label: t("ai.tabEvaluations") }, { value: "prompts", label: t("ai.tabPrompts") }]} /></div>
+      <div {...tabPanelProps("admin-ai", tab)}>{tab === "evaluations" ? <Evaluations /> : <Prompts />}</div>
     </>
   );
 }

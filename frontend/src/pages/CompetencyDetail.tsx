@@ -1,7 +1,5 @@
-import {
-  AIInsight, Button, Card, ChartCard, EmptyState, GapBadge, Icon, LevelBadge, LineChart, PageHeader, ProgressBar,
-  ScoreValue, SectionTitle, StatusBadge,
-} from "@isker/design-system";
+import { AIInsight, Button, Card, ChartCard, EmptyState, GapBadge, Icon, LevelBadge, LineChart, ProgressBar, ScoreValue, SectionTitle, StatusBadge } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStartAttempt } from "../api/assessments";
@@ -123,16 +121,12 @@ export function CompetencyDetailPage() {
                 </div>
               </div>
             )}
-            {d.ai[0] && (() => {
-              const engine = d.ai[0].provider === "mock" ? t("competencyDetail.mockEngine") : d.ai[0].model;
-              return (
-                <p style={{ marginTop: 12, fontSize: 12, color: "var(--color-neutral-500)" }}>
-                  {d.ai[0].prompt_version
-                    ? t("competencyDetail.evaluatedByVersion", { engine, version: d.ai[0].prompt_version })
-                    : t("competencyDetail.evaluatedBy", { engine })}
-                </p>
-              );
-            })()}
+            {d.ai[0] && (
+              // Learners see only what kind of feedback this is; engine, model and prompt versions are admin details.
+              <p style={{ marginTop: 12, fontSize: 12, color: "var(--color-neutral-500)" }}>
+                {d.ai[0].provider === "mock" ? t("competencyDetail.ruleBasedFeedback") : t("competencyDetail.aiFeedback")}
+              </p>
+            )}
           </AIInsight>
         </div>
       </div>

@@ -22,7 +22,7 @@
     "featuresAria": "Features",
     "features": {
       "assessmentTitle": "Evidence-based assessment",
-      "assessmentText": "30 questions across self-assessment, situations, open answers and a practical task — mapped to the 15 EntreComp competencies.",
+      "assessmentText": "Self-assessment, situational questions, open answers and a practical task — all mapped to the competencies of the EntreComp framework.",
       "gapsTitle": "Gaps you can act on",
       "gapsText": "Every score is explained, compared with your target and ranked by how much it matters for your goals.",
       "planTitle": "A plan, not a quiz",
@@ -31,11 +31,11 @@
     "faq": {
       "title": "Frequently asked questions",
       "whatIsQ": "What is Isker and what is EntreComp?",
-      "whatIsA": "Isker is an educational platform for developing entrepreneurial competencies. It is built on EntreComp, the European Entrepreneurship Competence Framework: 15 competencies grouped into three areas — Ideas and opportunities, Resources, and Into action. You assess yourself, get a competency profile, follow a personal plan, learn, practise and reassess to see your growth.",
+      "whatIsA": "Isker is an educational platform for developing entrepreneurial competencies. It is built on EntreComp, the European Entrepreneurship Competence Framework, which groups the competencies into three areas — Ideas and opportunities, Resources, and Into action. You assess yourself, get a competency profile, follow a personal development plan, learn, practise and reassess to see your growth.",
       "freeQ": "Is it free?",
-      "freeA": "Yes. The Free plan covers the whole journey: assessment, results, a development plan, learning and practice. The Pro plan with extended limits is currently granted by administrators (for example, to programme or incubator participants); online payment is not available yet.",
+      "freeA": "Yes. The free plan covers the whole journey: assessment, results, a development plan, learning and practice. Paid plans with extended limits are currently granted by administrators (for example, to programme or incubator participants); online payment is not available yet.",
       "durationQ": "How long does the assessment take?",
-      "durationA": "About 25 minutes: 30 questions, including self-assessment, situations, open answers and a short practical task. Your answers are saved automatically, so you can stop and come back later.",
+      "durationA": "Usually about half an hour. The assessment combines self-assessment, situational questions, open answers and a short practical task. Your answers are saved automatically, so you can stop and come back later. You see the exact number of questions and time before you start.",
       "privacyQ": "Is my data private?",
       "privacyA": "Your results are visible only to you and to authorised staff whose role requires it; their access is logged. Your password is stored only as a salted hash, and nobody, including staff, can see it. You can download your data or close your account in Settings.",
       "languagesQ": "Which languages are available?",
@@ -46,15 +46,18 @@
       "text": "Questions, feedback or a request about your data? Write to us:",
       "terms": "Terms of Use",
       "privacy": "Privacy Policy",
-      "legalNav": "Legal information"
+      "legalNav": "Legal information",
+      "inApp": "Questions or a request about your data? Contact the administrator of your programme. After signing in, you can export or delete your data in Settings."
     },
-    "footnote": "Diploma MVP · Astana IT University. <signInLink>Sign in</signInLink> with the demo account to explore a complete profile."
+    "footnote": "Isker is a diploma project, Astana IT University.",
+    "demoNote": "<signInLink>Sign in</signInLink> with the demo account to explore a complete profile."
   },
   "legal": {
     "lastUpdated": "Last updated: {{date}}",
-    "backHome": "Back to the Isker home page",
+    "backHome": "Back to home",
     "contactTitle": "Contact",
-    "contactText": "If you have questions about this document, write to"
+    "contactText": "If you have questions about this document, write to",
+    "contactInApp": "If you have questions about this document, contact the administrator of your programme, or use Settings in your account to export or delete your data."
   },
   "terms": {
     "title": "Terms of Use",
@@ -65,7 +68,7 @@
     "accountClose": "You can close your account at any time in Settings. Closed accounts can be restored by support; permanent deletion is done on request.",
     "accountSuspend": "We may suspend accounts that abuse the service, attack it, or harm other people. We record the reason.",
     "plansTitle": "Plans",
-    "plansText": "The Free plan includes the core journey: assessment, results, a development plan, learning and practice, with the limits shown on the <plansLink>plans page</plansLink>. Paid plans can currently be granted by an administrator; online payment is not yet available, and no payment provider is connected.",
+    "plansText": "The free plan includes the core journey: assessment, results, a development plan, learning and practice, with the limits shown on the <plansLink>plans page</plansLink>. Paid plans can currently be granted by an administrator; online payment is not yet available, and no payment provider is connected.",
     "aiTitle": "AI feedback",
     "aiText": "Some feedback is generated automatically. It can be wrong. Use it as one input among others.",
     "useTitle": "Acceptable use",

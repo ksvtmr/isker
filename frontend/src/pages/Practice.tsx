@@ -1,4 +1,5 @@
-import { Card, EmptyState, Icon, PageHeader, StatusBadge, Tabs } from "@isker/design-system";
+import { Card, EmptyState, Icon, StatusBadge, Tabs, tabPanelProps } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTasks } from "../api/learning";
@@ -19,8 +20,9 @@ export function PracticePage() {
     <>
       <PageHeader title={t("common:nav.practice")} subtitle={t("practice.subtitle")} />
       <div style={{ marginBottom: 20, overflowX: "auto" }}>
-        <Tabs ariaLabel={t("practice.filterAria")} value={filter} onChange={setFilter} tabs={[{ value: "all", label: t("practice.allTasks") }, { value: "recommended", label: t("practice.recommended") }, { value: "active", label: t("common:progressStatus.in_progress") }, { value: "done", label: t("common:progressStatus.completed") }]} />
+        <Tabs id="practice-filter" ariaLabel={t("practice.filterAria")} value={filter} onChange={setFilter} tabs={[{ value: "all", label: t("practice.allTasks") }, { value: "recommended", label: t("practice.recommended") }, { value: "active", label: t("common:progressStatus.in_progress") }, { value: "done", label: t("common:progressStatus.completed") }]} />
       </div>
+      <div {...tabPanelProps("practice-filter", filter)}>
       {items.length ? (
         <div className="ik-grid-cards">
           {items.map((task) => {
@@ -49,6 +51,7 @@ export function PracticePage() {
           })}
         </div>
       ) : <EmptyState icon="pencil-ruler" title={t("practice.emptyTitle")} description={t("practice.emptyText")} />}
+      </div>
     </>
   );
 }

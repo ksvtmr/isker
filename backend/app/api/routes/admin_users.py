@@ -290,14 +290,15 @@ def _detail(db: Session, viewer: User, u: User) -> AdminUserDetail:
             "weekly_learning_minutes": p.weekly_learning_minutes,
             "language": p.language,
         },
-        goals=list(
-            db.scalars(
-                select(GoalDefinition.title)
+        goals=[
+            g.title  # entity, not column: titles are localized
+            for g in db.scalars(
+                select(GoalDefinition)
                 .join(UserGoal, UserGoal.goal_id == GoalDefinition.id)
                 .where(UserGoal.user_id == u.id)
                 .order_by(GoalDefinition.sort_order)
             )
-        ),
+        ],
         attempts=[
             AdminAttemptOut.model_validate(a)
             for a in db.scalars(
@@ -484,9 +485,14 @@ def update_user(user_id: int, body: AdminUserUpdate, actor: Manager, db: DB) -> 
     before = _profile_snapshot(u)
     if body.full_name and body.full_name != u.full_name:
         u.full_name = body.full_name
+    old_email = None
     if body.email and body.email != u.email:
+        # Staff change their own email through the normal account flow, not with admin powers.
+        assert_not_self(actor, u, "change the email of")
+        accounts.assert_not_demo(u)
         if db.scalar(select(User.id).where(User.email == body.email, User.id != u.id)):
             raise ConflictError("Another account already uses this email.", "EMAIL_TAKEN")
+        old_email = u.email
         u.email = body.email
         u.email_verified_at = None  # the new address has not been verified
     if body.language and body.language != (u.profile.language if u.profile else None):
@@ -497,12 +503,27 @@ def update_user(user_id: int, body: AdminUserUpdate, actor: Manager, db: DB) -> 
     if not diff:
         raise ValidationError("Nothing to change.", "NO_CHANGES")
     _bump(u)
-    audit(db, actor.id, "admin.user_updated", "user", u.id, reason=body.reason, fields=sorted(diff), changes=diff)
+    extra: dict = {}
+    if old_email is not None:
+        # The sign-in identifier changed: end every session and cancel links that were sent to the old address.
+        extra["revoked_sessions"] = accounts.revoke_all_sessions(db, u.id, "email changed by staff")
+        extra["pending_links_invalidated"] = accounts.invalidate_pending_tokens(db, u.id)
+    audit(db, actor.id, "admin.user_updated", "user", u.id, reason=body.reason, fields=sorted(diff), changes=diff,
+          **extra)
     try:
         db.commit()
     except IntegrityError as e:  # a concurrent request took the email between the check and the commit
         db.rollback()
         raise ConflictError("Another account already uses this email.", "EMAIL_TAKEN") from e
+    if old_email is not None and email_service.is_available():
+        from app.services import email_templates
+
+        subject, text = email_templates.render("email_changed", email_templates.email_language(u),
+                                               name=u.full_name, new_email=u.email)
+        result = email_service.send(old_email, subject, text)
+        audit(db, actor.id, "admin.email_change_notified", "user", u.id, backend=result.backend,
+              delivered=result.delivered)
+        db.commit()
     return _detail(db, actor, u)
 
 

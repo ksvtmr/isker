@@ -36,10 +36,12 @@ export function RequireAuth({ allowIncompleteOnboarding = false }: { allowIncomp
 
 /** The admin area: any staff role (admin.access). Each admin page additionally checks its own permission. */
 export function RequireAdmin() {
-  const { data: user, isLoading } = useMe();
+  const { data: user, isLoading, error, refetch } = useMe();
   const location = useLocation();
   useLiveSync(!!user);
   if (isLoading) return <FullPageLoading />;
+  // A network or server failure is not "signed out": offer a retry instead of sending the admin to sign-in.
+  if (error) return <div style={{ maxWidth: 560, margin: "15vh auto 0", padding: 16 }}><ErrorState error={error} onRetry={() => refetch()} /></div>;
   if (!user) return <Navigate to={loginUrl(location.pathname)} replace />;
   if (!hasAdminAccess(user)) return <Navigate to="/dashboard" replace />;
   return <Outlet />;

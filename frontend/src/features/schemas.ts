@@ -36,14 +36,14 @@ export const resetSchema = z
 export const onboardingSchema = z.object({
   full_name: z.string().trim().min(2, "common:validation.nameRequired").max(120, "common:validation.nameMax"),
   education: z.string().min(1, "common:validation.chooseEducation"),
-  background: z.string().max(1000).optional(),
+  background: z.string().max(1000, "common:validation.backgroundMax").optional(),
   entrepreneurial_experience: z.enum(["none", "side_project", "startup_team", "running_business"], {
     errorMap: () => ({ message: "common:validation.chooseExperience" }),
   }),
-  business_experience: z.string().max(1000).optional(),
-  goal_codes: z.array(z.string()).min(1, "common:validation.chooseGoal").max(6),
+  business_experience: z.string().max(1000, "common:validation.businessExperienceMax").optional(),
+  goal_codes: z.array(z.string()).min(1, "common:validation.chooseGoal").max(6, "common:validation.goalsMax"),
   preferred_learning_format: z.enum(["article", "video", "course", "mixed"], { errorMap: () => ({ message: "common:validation.chooseFormat" }) }),
-  weekly_learning_minutes: z.coerce.number().int().min(15, "common:validation.minMinutes").max(600),
+  weekly_learning_minutes: z.coerce.number({ invalid_type_error: "common:validation.wholeNumber" }).int("common:validation.wholeNumber").min(15, "common:validation.minMinutes").max(600, "common:validation.maxMinutes"),
 });
 
 export const changePasswordSchema = z

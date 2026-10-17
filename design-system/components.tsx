@@ -17,6 +17,7 @@ import {
   type ElementType,
   type HTMLAttributes,
   type InputHTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent,
   type ReactNode,
   type SelectHTMLAttributes,
@@ -1192,14 +1193,46 @@ export function BottomNav({ items = ISKER_BOTTOM_NAV, active, onNavigate, hrefFo
 
 export interface TabDef { value: string; label: string }
 
-export function Tabs({ tabs, value, onChange, variant = "pill", ariaLabel }: { tabs: Array<string | TabDef>; value: string; onChange?: (v: string) => void; variant?: "pill" | "line"; ariaLabel?: string }) {
+/** Element ids shared by a Tabs list and its panels: `${base}-tab-${value}` and `${base}-panel-${value}`. */
+export const tabIds = (base: string, value: string) => ({ tab: `${base}-tab-${value}`, panel: `${base}-panel-${value}` });
+
+/** Props for the panel shown under a Tabs list with the same `id` (role, id and aria-labelledby). */
+export function tabPanelProps(base: string, value: string) {
+  const ids = tabIds(base, value);
+  return { role: "tabpanel" as const, id: ids.panel, "aria-labelledby": ids.tab, tabIndex: 0 };
+}
+
+/**
+ * WAI-ARIA tabs: roving tabindex (only the selected tab is in the Tab order), Left/Right/Home/End move between tabs
+ * and select them. Pass `id` and render the panel with `tabPanelProps(id, value)` so tab and panel reference each
+ * other (aria-controls / aria-labelledby).
+ */
+export function Tabs({ tabs, value, onChange, variant = "pill", ariaLabel, id }: { tabs: Array<string | TabDef>; value: string; onChange?: (v: string) => void; variant?: "pill" | "line"; ariaLabel?: string; id?: string }) {
+  const auto = useId();
+  const base = id ?? `tabs${auto.replace(/:/g, "")}`;
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const values = tabs.map((t) => (typeof t === "string" ? t : t.value));
+  const onKey = (i: number) => (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    let n = -1;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") n = (i + 1) % values.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") n = (i - 1 + values.length) % values.length;
+    else if (e.key === "Home") n = 0;
+    else if (e.key === "End") n = values.length - 1;
+    if (n < 0) return;
+    e.preventDefault();
+    refs.current[n]?.focus();
+    onChange?.(values[n]);
+  };
+  const selectedIndex = Math.max(0, values.indexOf(value));
   return (
     <div role="tablist" aria-label={ariaLabel} className={cx("isk-tabs", variant === "line" && "isk-tabs--line")}>
-      {tabs.map((t) => {
-        const id = typeof t === "string" ? t : t.value;
+      {tabs.map((t, i) => {
+        const v = values[i];
         const lab = typeof t === "string" ? t : t.label;
+        const ids = tabIds(base, v);
         return (
-          <button key={id} role="tab" type="button" aria-selected={value === id} className="isk-tab" onClick={() => onChange?.(id)}>
+          <button key={v} ref={(el) => { refs.current[i] = el; }} id={ids.tab} role="tab" type="button" aria-selected={value === v} aria-controls={ids.panel}
+            tabIndex={i === selectedIndex ? 0 : -1} className="isk-tab" onClick={() => onChange?.(v)} onKeyDown={onKey(i)}>
             {lab}
           </button>
         );

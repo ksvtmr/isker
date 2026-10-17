@@ -150,3 +150,29 @@ def test_notifications_and_plan_steps_follow_the_language(client):
     steps = client.get("/api/recommendations", headers=RU).json()[0]["activities"]
     reassess = next(s for s in steps if s["kind"] == "reassess")
     assert reassess["title"].startswith("Повторная оценка")
+
+
+def test_admin_stats_competency_names_are_localized(client, db):
+    # Regression: the query selected Competency.name as a column, which bypasses content translation.
+    make_user(db, "admin@example.com", roles=("user", "super_admin"))
+    login(client, "admin@example.com")
+    stats = client.get("/api/admin/stats", headers=RU).json()
+    names = {c["code"]: c["name"] for c in stats["competency_averages"]}
+    assert names["spotting"] == "Выявление возможностей"
+
+
+def test_learning_search_matches_the_language_the_learner_sees(client, db):
+    from app.models import LearningResource
+
+    register(client)
+    onboard(client)
+    res = db.scalars(select(LearningResource)).first()
+    ru_title = res.translations["ru"]["title"]
+    word = ru_title.split()[0]
+    found = client.get("/api/learning/resources", params={"q": word, "page_size": 100}, headers=RU).json()["items"]
+    assert any(r["id"] == res.id for r in found)
+    # The English base text still matches too.
+    en_word = res.title.split()[0]
+    params = {"q": en_word, "page_size": 100}
+    found_en = client.get("/api/learning/resources", params=params, headers=RU).json()["items"]
+    assert any(r["id"] == res.id for r in found_en)

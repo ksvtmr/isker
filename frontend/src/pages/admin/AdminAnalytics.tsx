@@ -1,4 +1,4 @@
-import { BarChart, Card, CardHeader, ChartCard, ProgressBar, StatCard, Tabs } from "@isker/design-system";
+import { BarChart, Card, CardHeader, ChartCard, ProgressBar, StatCard, Tabs, tabPanelProps } from "@isker/design-system";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAdminStats } from "../../api/admin";
@@ -15,7 +15,7 @@ export function AdminAnalytics() {
   const stats = useAdminStats();
   const windows = [7, 30, 90].map((d) => ({ value: String(d), label: t("analytics.days", { count: d }) }));
   const header = <AdminPageHeader crumbs={[{ label: t("crumbs.analytics") }]} title={t("analytics.title")} subtitle={t("analytics.subtitle")}
-    action={<Tabs ariaLabel={t("analytics.window")} tabs={windows} value={days} onChange={setDays} />} />;
+    action={<Tabs id="analytics-window" ariaLabel={t("analytics.window")} tabs={windows} value={days} onChange={setDays} />} />;
   if (o.isLoading || stats.isLoading) return <>{header}<PageSkeleton chart /></>;
   if (o.error || !o.data) return <>{header}<ErrorState error={o.error} onRetry={() => o.refetch()} /></>;
   const a = o.data;
@@ -31,6 +31,7 @@ export function AdminAnalytics() {
   return (
     <>
       {header}
+      <div {...tabPanelProps("analytics-window", days)}>
       <div className="ik-grid4" style={{ marginBottom: 20 }}>
         <StatCard label={t("analytics.stats.newUsers")} value={n(a.users.new_in_window)} description={t("analytics.stats.inLastDays", { count: a.window_days })} icon="users" />
         <StatCard label={t("analytics.stats.activeUsers")} value={n(a.users.active_in_window)} description={t("analytics.stats.seenInLastDays", { count: a.window_days })} icon="trending-up" tone="growth" />
@@ -65,7 +66,8 @@ export function AdminAnalytics() {
         <Card>
           <CardHeader title={t("analytics.byCompetency")} description={t("analytics.byCompetencyDesc")} />
           <div style={{ padding: "0 24px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
-            {!stats.data || stats.data.competency_averages.every((c) => c.average === null) ? <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{t("analytics.noMeasurements")}</p> :
+            {stats.error ? <ErrorState error={stats.error} onRetry={() => stats.refetch()} /> :
+              !stats.data || stats.data.competency_averages.every((c) => c.average === null) ? <p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{t("analytics.noMeasurements")}</p> :
               stats.data.competency_averages.map((c) => (
                 <div key={c.code} style={{ display: "grid", gridTemplateColumns: "minmax(0,180px) 1fr 64px", gap: 12, alignItems: "center", fontSize: 13 }}>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={c.name}>{c.name}</span>
@@ -76,6 +78,7 @@ export function AdminAnalytics() {
               ))}
           </div>
         </Card>
+      </div>
       </div>
     </>
   );

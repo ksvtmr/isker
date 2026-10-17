@@ -41,7 +41,7 @@ export function AdminSettings() {
         <Card><CardHeader title={t("settings.ai.title")} /><div style={{ padding: "0 24px 24px" }}>
           <KeyValueList items={[
             { label: t("settings.ai.provider"), value: s.ai.configured ? s.ai.provider : <Badge tone="warning">{t("settings.ai.builtIn")}</Badge> },
-            { label: t("settings.ai.model"), value: s.ai.model ?? "—" },
+            { label: t("settings.ai.model"), value: s.ai.model ?? t("common:state.none") },
           ]} />
         </div></Card>
         <Card><CardHeader title={t("settings.payments.title")} /><div style={{ padding: "0 24px 24px" }}>
@@ -51,7 +51,10 @@ export function AdminSettings() {
             { label: t("settings.payments.checkout"), value: on(s.payments.checkout_available, t("settings.payments.available"), t("settings.payments.notAvailable")) },
             { label: t("settings.payments.termsVersion"), value: s.terms_version },
           ]} />
-          <p style={{ marginTop: 12, fontSize: 13, color: "var(--color-neutral-600)" }}>{s.payments.note}</p>
+          <p style={{ marginTop: 12, fontSize: 13, color: "var(--color-neutral-600)" }}>
+            {/* The API's note is English; the status it describes is shown from the structured flags instead. */}
+            {s.payments.checkout_available ? t("settings.payments.noteCheckout") : s.payments.configured ? t("settings.payments.noteConfigured") : t("settings.payments.noteNotConfigured")}
+          </p>
         </div></Card>
       </div>
     </>

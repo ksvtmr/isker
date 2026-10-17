@@ -5,7 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { useAuditLogs, type AuditEntry } from "../../api/adminManage";
 import { ErrorState } from "../../components/States";
 import { formatDateTime } from "../../utils/format";
-import { AdminPageHeader, Muted, StatusPill } from "./common";
+import { AdminPageHeader, Muted, StatusPill, useAuditLabels } from "./common";
 
 /** Action-group filter values are prefixes sent to the API untranslated. */
 const ACTION_GROUPS = ["", "auth.", "admin.", "access.denied", "auth.login_failed", "subscription.", "learning.", "practice.", "profile."] as const;
@@ -29,6 +29,7 @@ export function AdminAuditLogs() {
   };
   /** Most specific matching group for an action code (e.g. "auth.login_failed" before "auth."). */
   const actionGroup = (action: string) => ACTION_GROUPS.filter((g) => g && action.startsWith(g)).sort((a, b) => b.length - a.length)[0];
+  const labels = useAuditLabels();
   const [open, setOpen] = useState<number | null>(null);
   const f = {
     action: params.get("action") ?? "", outcome: params.get("outcome") ?? "", target_type: params.get("target_type") ?? "",
@@ -44,9 +45,14 @@ export function AdminAuditLogs() {
   };
   const columns: DataColumn<AuditEntry>[] = [
     { key: "when", header: t("auditLogs.columns.when"), render: (e) => formatDateTime(e.created_at) },
-    { key: "action", header: t("auditLogs.columns.action"), render: (e) => { const g = actionGroup(e.action); return <span>{g && <span style={{ display: "block" }}>{groupLabel(g)}</span>}<Muted>{e.action}</Muted></span>; } },
+    { key: "action", header: t("auditLogs.columns.action"), render: (e) => (
+      <span>
+        <span style={{ display: "block", fontWeight: 500 }}>{labels.action(e.action)}</span>
+        <Muted>{(() => { const g = actionGroup(e.action); return g ? `${groupLabel(g)} · ` : ""; })()}<code>{e.action}</code></Muted>
+      </span>
+    ) },
     { key: "actor", header: t("auditLogs.columns.actor"), render: (e) => e.actor_email ?? (e.actor_id ? t("auditLogs.userFallback", { id: e.actor_id }) : <Muted>{t("auditLogs.systemActor")}</Muted>), hideOnMobile: true },
-    { key: "target", header: t("auditLogs.columns.target"), render: (e) => (e.target_type ? (e.target_id !== null ? `${e.target_type} #${e.target_id}` : e.target_type) : "—"), hideOnMobile: true },
+    { key: "target", header: t("auditLogs.columns.target"), render: (e) => (e.target_type ? <span>{labels.targetWithId(e.target_type, e.target_id)}<span style={{ display: "block" }}><Muted><code>{e.target_type}</code></Muted></span></span> : t("common:state.none")), hideOnMobile: true },
     { key: "outcome", header: t("auditLogs.columns.outcome"), render: (e) => <StatusPill status={e.outcome} /> },
     { key: "details", header: <span className="isk-sr-only">{t("common:actions.details")}</span>, render: (e) => (
       <Button size="sm" variant="ghost" aria-expanded={open === e.id} aria-controls={`audit-${e.id}`} onClick={() => setOpen(open === e.id ? null : e.id)}>{open === e.id ? t("common:actions.hide") : t("common:actions.details")}</Button>

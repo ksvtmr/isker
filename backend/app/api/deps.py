@@ -77,15 +77,21 @@ def get_auth(
             raise account_blocked_error(owner)
         raise AuthenticationError("Your session has ended. Please sign in again.", "SESSION_REVOKED")
     assert sess is not None
-    version = int(claims.get("ver", 0))
-    if via_cookie:
-        if not check_token_version(db, sess, version):
-            # A superseded token was replayed (e.g. a copied cookie): the whole session is revoked.
-            db.commit()
-            audit_now(sess.user_id, "auth.token_reuse_detected", "user", sess.user_id, outcome="denied")
-            raise AuthenticationError("Your session has ended. Please sign in again.", "SESSION_REVOKED")
-    elif version > sess.token_version:
+    try:
+        version = int(claims.get("ver", 0))
+    except (TypeError, ValueError) as e:
+        raise AuthenticationError("Invalid session.", "INVALID_TOKEN") from e
+    if version > sess.token_version:
         raise AuthenticationError("Invalid session.", "INVALID_TOKEN")
+    # Cookie and Bearer tokens get the same reuse check: once a session's token has been rotated, the previous one
+    # works only during a short grace period, and anything older revokes the session. (Otherwise a stolen, superseded
+    # cookie token would keep working as a Bearer token for the whole session.) API clients that only use the
+    # Bearer token are never rotated (rotation happens on cookie requests), so their token stays valid.
+    if not check_token_version(db, sess, version):
+        db.commit()
+        audit_now(sess.user_id, "auth.token_reuse_detected", "user", sess.user_id, outcome="denied",
+                  via="cookie" if via_cookie else "bearer")
+        raise AuthenticationError("Your session has ended. Please sign in again.", "SESSION_REVOKED")
     try:
         user = db.get(User, int(claims["sub"]))
     except (TypeError, ValueError) as e:

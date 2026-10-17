@@ -31,7 +31,7 @@ from app.services.audit import audit
 from app.services.content_admin import clean_translations, touch
 from app.services.entitlements import FEATURES
 from app.services.locking import changes, check_version, snapshot
-from app.services.permissions import assert_can_act_on
+from app.services.permissions import assert_can_act_on, assert_not_self
 
 router = APIRouter(prefix="/api/admin", tags=["admin-billing"], responses=ERROR_RESPONSES)
 
@@ -211,6 +211,8 @@ def _target(db, user_id: int, actor: User) -> User:
     u = db.get(User, user_id)
     if u is None:
         raise NotFoundError("User not found", "USER_NOT_FOUND")
+    # Staff can't grant, extend or change their own plan (403 SELF_ACTION_FORBIDDEN).
+    assert_not_self(actor, u, "change the subscription of")
     assert_can_act_on(actor, u)
     return u
 

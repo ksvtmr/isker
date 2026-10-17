@@ -15,7 +15,8 @@ function renderApp(route: string) {
 }
 
 const CM_PERMS = ["admin.access", "content.manage", "ai.view"];
-const me = { id: 9, email: "cm@isker.local", full_name: "Casey Content", status: "active", roles: ["user", "content_manager"], permissions: CM_PERMS, email_verified: true, onboarding_completed: true, created_at: "2026-01-01" };
+// language set: the saved-language sync now also runs in the admin area and would otherwise store the current one.
+const me = { id: 9, email: "cm@isker.local", full_name: "Casey Content", language: "en", status: "active", roles: ["user", "content_manager"], permissions: CM_PERMS, email_verified: true, onboarding_completed: true, created_at: "2026-01-01" };
 const area = { code: "ideas", name: "Ideas & Opportunities", color_token: "ideas" };
 const competency = { id: 1, code: "spotting", name: "Spotting Opportunities", short_name: "Spotting", description: "Spot opportunities to create value.", hint: null, importance: 0.8, default_target: 70,
   area, area_id: 1, reflection_prompt: null, learning_priority: 0.5, sort_order: 1, status: "published", lock_version: 2, translations: null };

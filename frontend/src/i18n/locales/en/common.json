@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "Isker",
-    "home": "Isker home"
+    "home": "Isker home",
+    "pageTitle": "{{page}} · Isker",
+    "metaDescription": "Isker — assess and develop your entrepreneurial competencies (EntreComp)."
   },
   "language": {
     "label": "Language",
@@ -51,7 +53,8 @@
     "never": "Never",
     "none": "—",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "requestFailedCode": "The request couldn't be completed (code: {{code}}). Please try again."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -224,7 +227,40 @@
     "chooseGoal": "Choose at least one goal",
     "chooseFormat": "Choose a format",
     "minMinutes": "At least 15 minutes",
-    "tooLong": "This text is too long"
+    "tooLong": "This text is too long",
+    "server": {
+      "required": "This field is required",
+      "email": "Enter a valid email address",
+      "min": "Must be at least {{value}}",
+      "greaterThan": "Must be greater than {{value}}",
+      "max": "Must be at most {{value}}",
+      "lessThan": "Must be less than {{value}}",
+      "number": "Enter a number",
+      "pattern": "The value has the wrong format",
+      "choice": "Choose one of the allowed values",
+      "invalid": "Invalid value",
+      "minLength_one": "Use at least {{count}} character",
+      "minLength_few": "Use at least {{count}} characters",
+      "minLength_many": "Use at least {{count}} characters",
+      "minLength_other": "Use at least {{count}} characters",
+      "maxLength_one": "Use at most {{count}} character",
+      "maxLength_few": "Use at most {{count}} characters",
+      "maxLength_many": "Use at most {{count}} characters",
+      "maxLength_other": "Use at most {{count}} characters",
+      "minItems_one": "Choose at least {{count}} item",
+      "minItems_few": "Choose at least {{count}} items",
+      "minItems_many": "Choose at least {{count}} items",
+      "minItems_other": "Choose at least {{count}} items",
+      "maxItems_one": "Choose at most {{count}} item",
+      "maxItems_few": "Choose at most {{count}} items",
+      "maxItems_many": "Choose at most {{count}} items",
+      "maxItems_other": "Choose at most {{count}} items"
+    },
+    "backgroundMax": "Use at most 1,000 characters",
+    "businessExperienceMax": "Use at most 1,000 characters",
+    "goalsMax": "Choose at most 6 goals",
+    "maxMinutes": "At most 600 minutes a week",
+    "wholeNumber": "Enter a whole number"
   },
   "greeting": {
     "morning": "Good morning",
@@ -247,5 +283,13 @@
   },
   "toast": {
     "saved": "Saved"
+  },
+  "format": {
+    "id": "#{{id}}",
+    "version": "version {{n}}",
+    "numberHeader": "#"
+  },
+  "a11y": {
+    "opensInNewTab": "(opens in a new tab)"
   }
 }

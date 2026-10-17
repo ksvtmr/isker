@@ -1,7 +1,5 @@
-import {
-  AIInsight, Card, CompetencyCard, EmptyState, GapBadge, LevelBadge, LineChart, PageHeader, ProgressBar,
-  RecommendationCard, ScoreValue, SectionTitle, StatCard, Icon, Stepper, type StepperStep,
-} from "@isker/design-system";
+import { AIInsight, Card, CompetencyCard, EmptyState, GapBadge, LevelBadge, LineChart, ProgressBar, RecommendationCard, ScoreValue, SectionTitle, StatCard, Icon, Stepper, type StepperStep } from "@isker/design-system";
+import { PageHeader } from "../components/PageTitle";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useProgress, useDashboard } from "../api/progress";
@@ -25,7 +23,7 @@ function ScoreHero({ d }: { d: Dashboard }) {
             {p.level && <LevelBadge level={p.level} showDot />}
             {p.change !== null && (
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 500, color: p.change >= 0 ? "var(--color-growth-700)" : "var(--color-error)" }}>
-                <Icon name="trending-up" size={16} />
+                <Icon name={p.change >= 0 ? "trending-up" : "trending-down"} size={16} />
                 {t("dashboard.score.change", { change: signed(p.change) })}
               </span>
             )}
@@ -99,6 +97,7 @@ export function DashboardPage() {
   const header = (
     <PageHeader
       title={t("dashboard.greeting", { greeting: greeting(), name: d.user_name })}
+      docTitle={t("common:nav.dashboard")}
       subtitle={t("dashboard.subtitle")}
       action={d.profile.has_profile ? <LinkButton to="/development-plan" iconRight="arrow-right">{t("dashboard.continueDevelopment")}</LinkButton> : undefined}
     />

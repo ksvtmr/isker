@@ -50,6 +50,11 @@ const LEARNER_ROUTES = ["/dashboard", "/assessment", "/results", "/competencies"
 const ADMIN_ROUTES = ["/admin", "/admin/users", "/admin/roles", "/admin/subscriptions", "/admin/plans", "/admin/assessments",
   "/admin/competencies", "/admin/learning-resources", "/admin/analytics", "/admin/ai", "/admin/audit-logs", "/admin/settings",
   "/admin/translations"];
+// Admin pages whose data is shown as stored: content editors and the translations page show the English base text
+// being edited, the audit log and AI pages show machine codes / model ids next to translated labels. On these pages
+// only the interface itself (headings, table headers, labels, buttons, tabs) is checked for the language.
+const DATA_ROUTES = ["/admin/competencies", "/admin/learning-resources", "/admin/assessments", "/admin/translations",
+  "/admin/audit-logs", "/admin/ai"];
 const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/terms", "/privacy", "/plans", "/no-such-page"];
 
 const browser = await chromium.launch({ executablePath: CHROMIUM });
@@ -94,10 +99,20 @@ async function inspect(page, lang, route, { phone = false } = {}) {
   await page.goto(B + route);
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(150);
-  const info = await page.evaluate(() => {
+  const chromeOnly = DATA_ROUTES.some((r) => route.startsWith(r));
+  const info = await page.evaluate((onlyChrome) => {
     const main = document.querySelector("main") ?? document.body;
-    return { lang: document.documentElement.lang, text: main.innerText, overflow: document.documentElement.scrollWidth - window.innerWidth, title: document.title };
-  });
+    // The language selector always lists "Русский / Қазақша / English": not part of the interface language.
+    const clone = main.cloneNode(true);
+    clone.querySelectorAll("select option").forEach((o) => o.remove());
+    document.body.appendChild(clone);
+    clone.style.position = "absolute"; clone.style.left = "-99999px";
+    const text = onlyChrome
+      ? [...clone.querySelectorAll("h1, h2, h3, th, label, button, legend, [role=tab], nav a")].map((e) => e.innerText).join("\n")
+      : clone.innerText;
+    clone.remove();
+    return { lang: document.documentElement.lang, text, overflow: document.documentElement.scrollWidth - window.innerWidth, title: document.title };
+  }, chromeOnly);
   if (info.lang !== lang) fail(lang, route, `<html lang="${info.lang}">`);
   const rawKeys = info.text.split(/\s+/).map((w) => w.replace(/^[^\w:]+|[^\w.]+$/g, "")).filter((w) => KEYS.has(w) || KEYS.has(w.split(":")[1] ?? ""));
   if (rawKeys.length) fail(lang, route, `raw translation keys visible: ${[...new Set(rawKeys)].slice(0, 5).join(", ")}`);

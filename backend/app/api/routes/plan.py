@@ -11,13 +11,21 @@ from app.models import LearningActivity, Recommendation
 from app.models.enums import ActivityKind, ActivityStatus, RecommendationStatus
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.results import ActivityOut, PlanOut, RecommendationOut, ReflectionIn
+from app.services import entitlements, views
 from app.services import gaps as gap_service
 from app.services import recommendations as rec_service
-from app.services import views
 from app.services.audit import audit
 from app.services.profile import completed_attempts
 
 router = APIRouter(tags=["recommendations"], responses=ERROR_RESPONSES)
+
+FEATURE = "plan.personalized"
+
+
+def _require_plan(db, user) -> None:
+    """The personalised plan and its recommendations are a plan feature (403 UPGRADE_REQUIRED without it).
+    The default Free plan includes it; a plan that disables it hides these endpoints."""
+    entitlements.require(db, user, FEATURE, consume=0)
 
 
 @router.get(
@@ -26,6 +34,7 @@ router = APIRouter(tags=["recommendations"], responses=ERROR_RESPONSES)
     summary="Active recommendations (each linked to competency, gap, goal and resource/task)",
 )
 def list_recommendations(user: CurrentUser, db: DB) -> list[RecommendationOut]:
+    _require_plan(db, user)
     return [views.recommendation_out(db, r) for r in rec_service.active_recommendations(db, user.id)]
 
 
@@ -35,6 +44,7 @@ def list_recommendations(user: CurrentUser, db: DB) -> list[RecommendationOut]:
     summary="Re-run the recommendation engine on the latest gap analysis",
 )
 def regenerate(user: CurrentUser, db: DB) -> list[RecommendationOut]:
+    _require_plan(db, user)
     attempts = completed_attempts(db, user.id)
     if not attempts:
         raise NotFoundError("Complete an assessment first.", "PROFILE_NOT_FOUND")
@@ -51,6 +61,7 @@ def regenerate(user: CurrentUser, db: DB) -> list[RecommendationOut]:
     summary="Development plan: Learn → Practice → Reflect → Reassess per priority",
 )
 def plan(user: CurrentUser, db: DB) -> PlanOut:
+    _require_plan(db, user)
     active = rec_service.active_recommendations(db, user.id)
     completed = list(
         db.scalars(
@@ -87,6 +98,7 @@ def _activity(db, user, activity_id: int) -> LearningActivity:
     summary="Save a reflection (Reflect step)",
 )
 def reflect(activity_id: int, body: ReflectionIn, user: CurrentUser, db: DB) -> ActivityOut:
+    _require_plan(db, user)
     a = _activity(db, user, activity_id)
     if a.kind != ActivityKind.REFLECT:
         raise ConflictError("Only reflection steps accept a reflection.", "NOT_A_REFLECTION")

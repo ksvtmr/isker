@@ -22,7 +22,8 @@
     "loadingGoals": "Мақсаттар жүктелуде…",
     "format": "Қалаулы оқу форматы",
     "weekly": "Аптасына оқуға арналған уақыт",
-    "submit": "Бағалауға өту"
+    "submit": "Бағалауға өту",
+    "pageTitle": "Танысу"
   },
   "profile": {
     "title": "Менің профилім",
@@ -48,7 +49,8 @@
     "historyScore": "Балл",
     "reassessmentOf": "Қайта бағалау · {{name}}",
     "assessmentNumber": "Бағалау {{n}}",
-    "historyEmpty": "Аяқталған бағалаулар әзірге жоқ."
+    "historyEmpty": "Аяқталған бағалаулар әзірге жоқ.",
+    "historyError": "Бағалау тарихын жүктеу мүмкін болмады"
   },
   "options": {
     "placeholder": "Таңдаңыз…",

@@ -12,8 +12,18 @@ export const CONTENT_STATUSES: ContentStatus[] = ["draft", "published", "archive
 export type TranslationLang = "ru" | "kk";
 export type Translations = Partial<Record<TranslationLang, Record<string, unknown>>>;
 
+/** How complete a record's ru/kk translation is: complete, partial, missing, or stale (base text changed since). */
+export type TranslationState = "complete" | "partial" | "missing" | "stale";
+export interface TranslationLangStatus { status: TranslationState; missing: string[]; stale: string[] }
+export type TranslationStatus = Partial<Record<TranslationLang, TranslationLangStatus>>;
+
 /** Optimistic locking: every editable record carries `lock_version`; edits send it back as `expected_version`. */
-export interface VersionedRecord { lock_version: number; translations: Translations | null }
+export interface VersionedRecord {
+  lock_version: number;
+  translations: Translations | null;
+  /** Per-language translation completeness (sent by newer API versions; absent on older ones). */
+  translation_status?: TranslationStatus | null;
+}
 
 export interface AdminCompetency extends Competency, VersionedRecord {
   area_id: number;
@@ -75,6 +85,7 @@ export interface AdminQuestion {
   answer_count: number;
   /** Set when the save created a new version: the id of the replaced (now archived) version. */
   replaced_id?: number | null;
+  translation_status?: TranslationStatus | null;
 }
 
 export interface QuestionInput {
@@ -106,6 +117,7 @@ export interface AdminAssessment {
   translations: Translations | null;
   question_count: number;
   attempt_count: number;
+  translation_status?: TranslationStatus | null;
 }
 
 export interface AssessmentUpdate { title?: string; description?: string; estimated_minutes?: number; is_active?: boolean; translations?: Translations | null; expected_version?: number }
@@ -213,6 +225,40 @@ export const adminApi = {
   activatePrompt: (id: number) => api.post<PromptVersion>(`/api/admin/ai/prompts/${id}/activate`),
 };
 
+// --- Translation completeness (GET /api/admin/translations/status, permission content.manage) -----------------
+
+export type TranslationEntity = "competency" | "question" | "assessment" | "resource" | "task" | "plan" | "area" | "goal" | "level" | "option";
+export const TRANSLATION_ENTITIES: TranslationEntity[] = ["competency", "question", "assessment", "resource", "task", "plan", "area", "goal", "level", "option"];
+export const TRANSLATION_STATES: TranslationState[] = ["complete", "partial", "missing", "stale"];
+
+export interface TranslationStatusItem {
+  entity: TranslationEntity;
+  id: number;
+  label: string;
+  status: Partial<Record<TranslationLang, TranslationState>>;
+  missing: Partial<Record<TranslationLang, string[]>>;
+  stale: Partial<Record<TranslationLang, string[]>>;
+}
+export type TranslationSummary = Partial<Record<TranslationEntity, Partial<Record<TranslationLang, Partial<Record<TranslationState, number>>>>>>;
+export interface TranslationStatusPage { summary: TranslationSummary; items: TranslationStatusItem[]; total: number; page: number; page_size: number }
+export interface TranslationStatusFilters { entity?: TranslationEntity | ""; language?: TranslationLang | ""; status?: TranslationState[]; page?: number; page_size?: number }
+
+/** `null` when the API doesn't offer the endpoint yet (404), so the page can say so instead of failing. */
+export async function fetchTranslationStatus(f: TranslationStatusFilters): Promise<TranslationStatusPage | null> {
+  try {
+    return await api.get<TranslationStatusPage>(`/api/admin/translations/status${qs({
+      entity: f.entity || undefined, language: f.language || undefined, status: f.status?.length ? f.status.join(",") : undefined,
+      page: f.page, page_size: f.page_size,
+    })}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export const useTranslationStatus = (f: TranslationStatusFilters) =>
+  useQuery({ queryKey: keys.admin("translations", f), queryFn: () => fetchTranslationStatus(f), placeholderData: (prev) => prev, refetchOnWindowFocus: true });
+
 export const useAdminStats = () => useQuery({ queryKey: keys.admin("stats"), queryFn: adminApi.stats });
 export const useAdminCompetencies = () => useQuery({ queryKey: keys.admin("competencies"), queryFn: adminApi.competencies });
 export const useAdminQuestions = () => useQuery({ queryKey: keys.admin("questions"), queryFn: adminApi.questions });
@@ -235,7 +281,9 @@ export function useAdminMutation<V, R>(fn: (v: V) => Promise<R>) {
   return useMutation({
     mutationFn: fn,
     onSuccess: async () => {
-      await Promise.all([qc.invalidateQueries({ queryKey: ["admin"] }), ...learnerContentKeys.map((queryKey) => qc.invalidateQueries({ queryKey }))]);
+      // `me` too: an admin may have changed their own roles, permissions, plan or language.
+      await Promise.all([qc.invalidateQueries({ queryKey: ["admin"] }), qc.invalidateQueries({ queryKey: keys.me }),
+        ...learnerContentKeys.map((queryKey) => qc.invalidateQueries({ queryKey }))]);
     },
   });
 }

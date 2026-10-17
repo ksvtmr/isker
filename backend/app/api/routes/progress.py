@@ -287,10 +287,10 @@ def _notification_out(db, n: Notification) -> NotificationOut:
 def mark_read(notification_id: int, user: CurrentUser, db: DB) -> Message:
     n = db.scalar(select(Notification).where(Notification.id == notification_id, Notification.user_id == user.id))
     if n is None:
-        raise NotFoundError("Notification not found")
+        raise NotFoundError("Notification not found", "NOTIFICATION_NOT_FOUND")
     n.is_read = True
     db.commit()
-    return Message(message="ok")
+    return Message(message="Notification marked as read.", code="NOTIFICATION_READ")
 
 
 @router.get("/api/ai/status", tags=["ai"], summary="Which AI provider is active (never exposes keys)")

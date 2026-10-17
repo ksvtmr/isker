@@ -25,7 +25,7 @@ import httpx
 from authlib.integrations.httpx_client import OAuth2Client
 from authlib.jose import JsonWebKey, jwt
 from authlib.jose.errors import JoseError
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -96,11 +96,21 @@ def consume_state(db: Session, state: str | None, cookie_state: str | None) -> O
     """Validate state against the browser-bound cookie and the stored single-use record."""
     if not state or not cookie_state or not secrets.compare_digest(state, cookie_state):
         raise OAuthError("State mismatch.", "OAUTH_STATE_INVALID")
+    now = utcnow()
+    # Single use, atomically: only the request whose conditional UPDATE marks the row wins; a concurrent replay of
+    # the same callback updates nothing (on PostgreSQL it waits for the winner and then sees used_at set).
+    claimed = db.execute(
+        update(OAuthState)
+        .where(OAuthState.state_hash == _hash(state), OAuthState.used_at.is_(None), OAuthState.expires_at > now)
+        .values(used_at=now)
+        .execution_options(synchronize_session=False)
+    )
     row = db.scalar(select(OAuthState).where(OAuthState.state_hash == _hash(state)))
-    if row is None or row.used_at is not None or as_utc(row.expires_at) <= utcnow():
+    if claimed.rowcount != 1 or row is None:
         raise OAuthError("Unknown, used or expired state.", "OAUTH_STATE_INVALID")
-    row.used_at = utcnow()
-    db.flush()
+    db.refresh(row)
+    if row.used_at is None or as_utc(row.expires_at) <= now:  # pragma: no cover - defensive
+        raise OAuthError("Unknown, used or expired state.", "OAUTH_STATE_INVALID")
     return row
 
 

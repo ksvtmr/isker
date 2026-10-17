@@ -12,7 +12,8 @@
       "analytics": "Аналитика",
       "ai": "Управление ИИ",
       "auditLogs": "Журнал аудита",
-      "settings": "Настройки"
+      "settings": "Настройки",
+      "translations": "Переводы"
     },
     "backToApp": "Вернуться в Isker",
     "signOut": "Выйти",
@@ -47,7 +48,7 @@
       "completedDesc": "{{rate}} от начатых оценок",
       "completedNone": "Оценки ещё не начинались",
       "paid": "Платные и выданные тарифы",
-      "paidDesc": "{{free}} на Free · {{expired}} истекли · {{canceled}} отменены"
+      "paidDesc": "{{free}} на бесплатном тарифе · {{expired}} истекли · {{canceled}} отменены"
     },
     "registrations": "Регистрации",
     "registrationsDesc_one": "Новые аккаунты по дням за последний {{count}} день (всего {{total}})",
@@ -126,7 +127,7 @@
     "funnelTitle": "Воронка пути",
     "allTime": "За всё время",
     "subscriptions": "Подписки",
-    "freePlan": "На тарифе Free",
+    "freePlan": "На бесплатном тарифе",
     "paidPlans": "Платные тарифы",
     "granted": "Выданы без оплаты",
     "expiring7": "Истекают в ближайшие 7 дней",
@@ -209,7 +210,7 @@
     }
   },
   "userDetail": {
-    "userId": "Пользователь #{{id}}",
+    "userId": "Пользователь №{{id}}",
     "fallbackTitle": "Пользователь",
     "registered": "регистрация {{date}}",
     "thisIsYou": "это вы",
@@ -319,9 +320,9 @@
     "noSubscription": "Подписки нет: пользователь на тарифе по умолчанию.",
     "canceledAtPeriodEnd": "(отменяется в конце периода)",
     "noEndDate": "Без даты окончания",
-    "freeByDefault": "Пользователи без подписки автоматически получают тариф Free.",
+    "freeByDefault": "Пользователи без подписки автоматически получают тариф по умолчанию.",
     "noSubscriptionEvents": "Событий подписки нет.",
-    "byUser": "пользователь #{{id}}",
+    "byUser": "пользователь №{{id}}",
     "byTheUser": "сам пользователь",
     "bySystem": "система",
     "rolesDesc": "Роли определяют, что может делать этот человек. Вы можете выдавать только роли ниже вашей по рангу.",
@@ -414,7 +415,7 @@
       "cancel": {
         "title": "Отменить подписку?",
         "confirm": "Отменить подписку",
-        "description": "После окончания подписки пользователь вернётся на тариф Free.",
+        "description": "После окончания подписки пользователь вернётся на тариф по умолчанию.",
         "atPeriodEnd": "Отменить в конце текущего периода",
         "accessUntil": "Доступ сохранится до {{date}}."
       },
@@ -453,7 +454,6 @@
       "none": "Пока нет (пароль не задан)"
     },
     "languageNotChosen": "Не выбран",
-    "permissionsList": "Права: {{list}}",
     "noPermissions": "Нет административных прав.",
     "form": {
       "title": "Редактирование профиля",
@@ -490,7 +490,7 @@
       "entrepreneurial_experience": "Опыт",
       "preferred_learning_format": "Предпочтительный формат",
       "weekly_learning_minutes": "Минут в неделю",
-      "notify_reassessment": "Напоминания о переоценке",
+      "notify_reassessment": "Напоминания о повторной оценке",
       "notify_weekly_summary": "Еженедельная сводка"
     },
     "entitlementsDesc": "Рассчитываются по текущему тарифу; платформа проверяет их при каждом запросе.",
@@ -503,7 +503,19 @@
     "entitlementLimit_one": "{{count}} за {{days}} дн.",
     "entitlementLimit_few": "{{count}} за {{days}} дн.",
     "entitlementLimit_many": "{{count}} за {{days}} дн.",
-    "entitlementLimit_other": "{{count}} за {{days}} дн."
+    "entitlementLimit_other": "{{count}} за {{days}} дн.",
+    "unknownPermission": "Другое право ({{key}})",
+    "results": {
+      "notDelivered": "Почта не настроена: письмо не было доставлено, ссылка записана в журнал сервера.",
+      "sessionsRevoked_one": "Завершён {{count}} сеанс",
+      "sessionsRevoked_few": "Завершено {{count}} сеанса",
+      "sessionsRevoked_many": "Завершено {{count}} сеансов",
+      "sessionsRevoked_other": "Завершено {{count}} сеанса"
+    },
+    "permissionsSummary_one": "{{count}} право",
+    "permissionsSummary_few": "{{count}} права",
+    "permissionsSummary_many": "{{count}} прав",
+    "permissionsSummary_other": "{{count}} права"
   },
   "roles": {
     "title": "Роли и права",
@@ -565,9 +577,9 @@
     }
   },
   "audit": {
-    "userId": "Пользователь #{{id}}",
+    "userId": "Пользователь №{{id}}",
     "systemOrAnonymous": "Система / аноним",
-    "target": "{{type}} #{{id}}",
+    "target": "{{type}} №{{id}}",
     "targets": {
       "user": "Пользователь",
       "role": "Роль",
@@ -580,7 +592,11 @@
       "learning_resource": "Учебный материал",
       "learning_activity": "Учебная активность",
       "practical_task": "Практическое задание",
-      "ai_prompt_version": "Версия промпта ИИ"
+      "ai_prompt_version": "Версия промпта ИИ",
+      "plan": "Тариф",
+      "competency_area": "Область компетенций",
+      "goal": "Цель",
+      "translation": "Перевод"
     },
     "actions": {
       "access": {
@@ -619,7 +635,37 @@
         "prompt_created": "Создана версия промпта ИИ",
         "prompt_activated": "Активирована версия промпта ИИ",
         "user_created": "Аккаунт создан",
-        "verification_sent": "Письмо подтверждения отправлено"
+        "verification_sent": "Письмо подтверждения отправлено",
+        "competency_published": "Компетенция опубликована",
+        "competency_archived": "Компетенция перенесена в архив",
+        "competency_draft": "Компетенция возвращена в черновики",
+        "question_published": "Вопрос опубликован",
+        "question_archived": "Вопрос перенесён в архив",
+        "question_draft": "Вопрос возвращён в черновики",
+        "learning_resource_published": "Учебный материал опубликован",
+        "learning_resource_archived": "Учебный материал перенесён в архив",
+        "learning_resource_draft": "Учебный материал возвращён в черновики",
+        "learning_resource_updated": "Учебный материал изменён",
+        "practical_task_published": "Практическое задание опубликовано",
+        "practical_task_archived": "Практическое задание перенесено в архив",
+        "practical_task_draft": "Практическое задание возвращено в черновики",
+        "practical_task_updated": "Практическое задание изменено",
+        "assessment_published": "Оценка опубликована",
+        "assessment_archived": "Оценка перенесена в архив",
+        "assessment_draft": "Оценка возвращена в черновики",
+        "resource_published": "Учебный материал опубликован",
+        "resource_archived": "Учебный материал перенесён в архив",
+        "resource_draft": "Учебный материал возвращён в черновики",
+        "task_published": "Практическое задание опубликовано",
+        "task_archived": "Практическое задание перенесено в архив",
+        "task_draft": "Практическое задание возвращено в черновики",
+        "plan_published": "Тариф опубликован",
+        "plan_archived": "Тариф перенесён в архив",
+        "plan_draft": "Тариф возвращён в черновики",
+        "competency_created": "Компетенция создана",
+        "question_versioned": "Создана новая версия вопроса",
+        "verification_resent": "Письмо подтверждения отправлено повторно",
+        "translation_updated": "Перевод изменён"
       },
       "auth": {
         "register": "Регистрация",
@@ -634,7 +680,13 @@
         "password_reset_requested": "Запрошен сброс пароля",
         "password_reset": "Пароль сброшен",
         "session_revoked": "Сеанс завершён",
-        "sessions_revoked": "Остальные сеансы завершены"
+        "sessions_revoked": "Остальные сеансы завершены",
+        "oauth_failed": "Неудачный вход через Google",
+        "oauth_linked": "Аккаунт Google привязан",
+        "oauth_unlinked": "Аккаунт Google отвязан",
+        "oauth_link_conflict": "Конфликт привязки Google: аккаунт уже связан с другим пользователем",
+        "password_set": "Пароль установлен",
+        "token_reuse_detected": "Обнаружено повторное использование токена"
       },
       "assessment": {
         "started": "Оценка начата",
@@ -668,7 +720,12 @@
         "renewed_by_payment": "Продлена после оплаты",
         "past_due_by_payment": "Платёж не прошёл",
         "canceled_by_payment": "Отменена у платёжного провайдера",
-        "expired_by_payment": "Истекла у платёжного провайдера"
+        "expired_by_payment": "Истекла у платёжного провайдера",
+        "activated": "Подписка активирована",
+        "renewed": "Подписка продлена",
+        "past_due": "Платёж просрочен",
+        "canceled": "Подписка отменена",
+        "expired": "Срок подписки истёк"
       },
       "created": "Подписка создана",
       "extended": "Подписка продлена",
@@ -686,6 +743,8 @@
         "expired": "Статус: истекла",
         "incomplete": "Статус: не завершена"
       }
-    }
+    },
+    "unknownAction": "Другое событие ({{code}})",
+    "unknownTarget": "Другой объект ({{code}})"
   }
 }

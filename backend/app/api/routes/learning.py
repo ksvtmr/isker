@@ -3,10 +3,12 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Query
-from sqlalchemy import or_, select
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
 from app.api.deps import DB, CurrentUser
+from app.core.content_i18n import base_text
 from app.core.database import utcnow
 from app.core.errors import NotFoundError
 from app.models import Competency, LearningResource, Recommendation, UserLearningProgress
@@ -79,15 +81,20 @@ def list_resources(
         stmt = stmt.where(LearningResource.difficulty == difficulty)
     if max_minutes:
         stmt = stmt.where(LearningResource.duration_minutes <= max_minutes)
-    if q:
-        like = f"%{q.strip()}%"
-        stmt = stmt.where(or_(LearningResource.title.ilike(like), LearningResource.description.ilike(like)))
     progress = {
         p.resource_id: p
         for p in db.scalars(select(UserLearningProgress).where(UserLearningProgress.user_id == user.id))
     }
     recs = _recs(db, user.id)
     rows = list(db.scalars(stmt.options(joinedload(LearningResource.competency))))
+    if q:
+        # Search the text the learner sees (already localized on load) and the English base text.
+        needle = q.strip().casefold()
+        rows = [
+            r for r in rows
+            if any(needle in (v or "").casefold() for v in (
+                r.title, r.description, base_text(r, "title"), base_text(r, "description")))
+        ]
     if status:
         rows = [
             r for r in rows if (progress[r.id].status if r.id in progress else ProgressStatus.NOT_STARTED) == status
@@ -138,6 +145,26 @@ def _progress(db, user_id: int, rid: int) -> UserLearningProgress | None:
     )
 
 
+def _ensure_progress(db, user_id: int, rid: int, **values) -> tuple[UserLearningProgress, bool]:
+    """The user's progress row, created when missing. Two concurrent first requests may both try to insert it: the
+    loser's insert hits the (user_id, resource_id) unique constraint inside a savepoint and re-reads the winner's row,
+    instead of failing with a 500. Returns (row, created)."""
+    p = _progress(db, user_id, rid)
+    if p is not None:
+        return p, False
+    try:
+        with db.begin_nested():
+            p = UserLearningProgress(user_id=user_id, resource_id=rid, **values)
+            db.add(p)
+            db.flush()
+        return p, True
+    except IntegrityError:
+        p = _progress(db, user_id, rid)
+        if p is None:  # pragma: no cover - the conflicting row vanished again
+            raise
+        return p, False
+
+
 def _detail(db, user_id: int, r: LearningResource) -> ResourceDetail:
     recs = _recs(db, user_id)
     rec = recs.get(r.id)
@@ -145,7 +172,7 @@ def _detail(db, user_id: int, r: LearningResource) -> ResourceDetail:
         **_out(r, _progress(db, user_id, r.id), rec is not None),
         content=r.content,
         url=r.url,
-        reason=rec.reason if rec else None,
+        reason=rec_service.localized_reason(rec) if rec else None,
     )
 
 
@@ -162,13 +189,11 @@ def get_resource(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
 @router.post("/resources/{resource_id}/start", response_model=ResourceDetail, summary="Start (or continue)")
 def start(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
     r = _get_for(db, user, resource_id)
-    p = _progress(db, user.id, r.id)
     now = utcnow()
-    if p is None:
-        p = UserLearningProgress(
-            user_id=user.id, resource_id=r.id, status=ProgressStatus.IN_PROGRESS, progress_pct=0, started_at=now
-        )
-        db.add(p)
+    p, created = _ensure_progress(
+        db, user.id, r.id, status=ProgressStatus.IN_PROGRESS, progress_pct=0, started_at=now
+    )
+    if created:
         audit(db, user.id, "learning.started", "learning_resource", r.id)
     p.last_accessed_at = now
     rec_service.on_resource_started(db, user.id, r.id)
@@ -179,13 +204,8 @@ def start(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
 @router.put("/resources/{resource_id}/progress", response_model=ResourceDetail, summary="Update reading progress")
 def update_progress(resource_id: int, body: ProgressIn, user: CurrentUser, db: DB) -> ResourceDetail:
     r = _get_for(db, user, resource_id)
-    p = _progress(db, user.id, r.id)
     now = utcnow()
-    if p is None:
-        p = UserLearningProgress(
-            user_id=user.id, resource_id=r.id, status=ProgressStatus.IN_PROGRESS, progress_pct=0, started_at=now
-        )
-        db.add(p)
+    p, _ = _ensure_progress(db, user.id, r.id, status=ProgressStatus.IN_PROGRESS, progress_pct=0, started_at=now)
     if p.status != ProgressStatus.COMPLETED:
         p.progress_pct = max(p.progress_pct, body.progress_pct)
     p.last_accessed_at = now
@@ -196,11 +216,8 @@ def update_progress(resource_id: int, body: ProgressIn, user: CurrentUser, db: D
 @router.post("/resources/{resource_id}/complete", response_model=ResourceDetail, summary="Mark as completed")
 def complete(resource_id: int, user: CurrentUser, db: DB) -> ResourceDetail:
     r = _get_for(db, user, resource_id)
-    p = _progress(db, user.id, r.id)
     now = utcnow()
-    if p is None:
-        p = UserLearningProgress(user_id=user.id, resource_id=r.id, started_at=now, status=ProgressStatus.COMPLETED)
-        db.add(p)
+    p, _ = _ensure_progress(db, user.id, r.id, started_at=now, status=ProgressStatus.IN_PROGRESS, progress_pct=0)
     if p.status != ProgressStatus.COMPLETED or p.completed_at is None:
         p.status, p.progress_pct, p.completed_at = ProgressStatus.COMPLETED, 100, now
         audit(db, user.id, "learning.completed", "learning_resource", r.id)

@@ -31,6 +31,20 @@ TEMPLATES: dict[str, dict[str, tuple[str, str]]] = {
                "The link expires in {minutes} minutes and works once. If you didn't ask for this, you can ignore this "
                "message — your password stays the same."),
     },
+    "email_changed": {
+        "ru": ("Адрес почты в Isker изменён",
+               "Здравствуйте, {name}!\n\nАдминистратор Isker изменил адрес электронной почты вашего аккаунта на "
+               "{new_email}. Все сеансы завершены, ссылки для сброса пароля отменены.\n\nЕсли вы об этом не "
+               "просили, свяжитесь со службой поддержки."),
+        "kk": ("Isker-дегі пошта мекенжайы өзгертілді",
+               "Сәлеметсіз бе, {name}!\n\nIsker әкімшісі аккаунтыңыздың электрондық пошта мекенжайын {new_email} "
+               "етіп өзгертті. Барлық сеанстар аяқталды, құпиясөзді қалпына келтіру сілтемелері жойылды.\n\n"
+               "Егер сіз мұны сұрамаған болсаңыз, қолдау қызметіне хабарласыңыз."),
+        "en": ("Your Isker email address was changed",
+               "Hi {name},\n\nAn Isker administrator changed the email address of your account to {new_email}. "
+               "All sessions were signed out and pending password reset links were cancelled.\n\n"
+               "If you didn't ask for this, contact support."),
+    },
 }
 
 

@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { usePageTitle } from "./PageTitle";
 
 /** Centered card layout shared by sign-in, registration and account-recovery pages. */
 export function AuthFrame({ title, subtitle, children, footer }: { title: string; subtitle?: ReactNode; children: ReactNode; footer?: ReactNode }) {
   const { t } = useTranslation("auth");
+  usePageTitle(title);
   return (
     <div className="ik-auth">
       <main className="ik-auth__box">
