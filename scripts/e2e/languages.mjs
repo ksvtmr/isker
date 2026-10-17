@@ -15,7 +15,7 @@
  * account language is applied after signing in again.
  * Selectors do not depend on the interface language. Exit code is non-zero on any failure.
  */
-import { mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -28,7 +28,8 @@ const DEMO_EMAIL = process.env.DEMO_EMAIL ?? "demo@isker.local";
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? "IskerDemo2026";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@isker.local";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "IskerAdmin2026";
-const CHROMIUM = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
+// CHROMIUM_PATH, else the pre-installed browser of the Claude Code environment, else Playwright's own (CI).
+const CHROMIUM = process.env.CHROMIUM_PATH ?? (existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 mkdirSync(OUT, { recursive: true });
 
 // Every translation key ("namespace:dotted.key" and "dotted.key") — none of them may appear as visible text.

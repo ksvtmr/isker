@@ -164,8 +164,9 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
                     out = heuristic_evaluation(c.name, ans.text_response or "", q.rubric, ratings)
                     language = lang()
                 for i, r in enumerate(rubric):
-                    if r.get("competency") in (None, c.code) and i < len(ratings) and ratings[i] is not None:
-                        criteria_acc[r["criterion"]].append(int(ratings[i]) * 25)
+                    rating = ratings[i] if i < len(ratings) else None
+                    if r.get("competency") in (None, c.code) and rating is not None:
+                        criteria_acc[r["criterion"]].append(int(rating) * 25)
                 excerpt = (ans.text_response or "")[:280]
                 positive = (ev.score or 0) >= 60
                 tag = (
@@ -194,7 +195,8 @@ def detail(key: str, user: CurrentUser, db: DB) -> CompetencyDetail:
             elif ans.option is not None:
                 s = ans.option.score if not q.reverse_scored else 100 - ans.option.score
                 if q.type == QuestionType.LIKERT:
-                    word = likert_word(ans.option.value) if ans.option.value in range(1, 6) else ans.option.label
+                    value = ans.option.value
+                    word = likert_word(value) if value is not None and 1 <= value <= 5 else ans.option.label
                     text = tr("evidence.you_answered", question=q.text, answer=word)
                     tag = tr("evidence.self_rating")
                 else:

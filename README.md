@@ -1,5 +1,7 @@
 # Isker
 
+[![CI](https://github.com/ksvtmr/isker/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ksvtmr/isker/actions/workflows/ci.yml)
+
 AI-powered platform for **assessing and developing entrepreneurial competencies**, built on the EntreComp framework
 (15 competencies in 3 areas). Diploma MVP, Astana IT University.
 
@@ -13,17 +15,32 @@ AI-powered platform for **assessing and developing entrepreneurial competencies*
 | Database | PostgreSQL 16 |
 | AI | Provider abstraction: deterministic mock (default) or OpenAI; rubric-constrained, validated, logged |
 
-## Public link (deploy in one click)
+## Start developing (one command)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ksvtmr/isker)
+```bash
+npm run dev:all                  # API :8000 + app http://localhost:5173 with hot reload
+npm run dev:all -- --docker-db   # same, and starts PostgreSQL in Docker if none is running
+```
 
-The button creates a web service and a PostgreSQL database on Render's free plan from `render.yaml`. During
-deployment you choose an admin password (`ADMIN_PASSWORD`), and optionally an `OPENAI_API_KEY`. After about 5–10
-minutes the platform is available at a public address such as `https://isker.onrender.com`, which you can share.
-The demo login is `demo@isker.local` / `IskerDemo2026`.
+It checks Node/Python/ports, installs missing dependencies, applies migrations, seeds data, then runs the API with
+auto-reload and Vite with hot module replacement (code and translation edits appear without a page reload). Needs a
+PostgreSQL at `DATABASE_URL` (default `postgresql+psycopg://isker:isker@localhost:5432/isker`) or `--docker-db`.
 
-The single image (`Dockerfile` at the repository root) builds the frontend and serves it from the API on one origin.
-Free Render services sleep after 15 minutes without traffic, so the first request after that takes about a minute.
+## Releases: CI, previews, production
+
+- **CI** (GitHub Actions, `.github/workflows/ci.yml`) runs on every pull request and push to `main`: lint, types,
+  tests, migration checks, ru/kk/en completeness, production build, browser end-to-end tests, Docker image build.
+- **Production** is the `main` branch on Render (`render.yaml`): Render deploys a commit only after its checks pass,
+  then runs migrations, and switches traffic only when `/api/health` answers. Roll back from Render → Events.
+- **Previews**: a pull request with `[render preview]` in its title gets its own temporary site and database (needs a
+  Render plan with Preview Environments).
+
+Details, one-time account setup and rollback: [DEPLOYMENT.md](DEPLOYMENT.md). Step-by-step guide in Russian:
+[docs/claude-code-workflow.ru.md](docs/claude-code-workflow.ru.md).
+
+The demo login is `demo@isker.local` / `IskerDemo2026`. The single image (`Dockerfile` at the repository root) builds
+the frontend and serves it from the API on one origin. Free Render services sleep after 15 minutes without traffic,
+so the first request after that takes about a minute.
 
 ## Develop in Docker (hot reload, nothing else to install)
 
@@ -58,7 +75,7 @@ On start the backend applies migrations and seeds the EntreComp catalogue, a 30-
 In `ENVIRONMENT=production` there are no default passwords. Accounts are created only when `DEMO_PASSWORD` or
 `ADMIN_PASSWORD` is set, and the API refuses to start without a `JWT_SECRET` of at least 32 characters.
 
-## Run locally (without Docker)
+## Run locally step by step (what `npm run dev:all` does)
 
 ```bash
 # Database
@@ -112,17 +129,22 @@ ratings, never from a model-chosen number.
 ## Quality checks
 
 ```bash
-cd backend && .venv/bin/pytest && .venv/bin/ruff check app tests && .venv/bin/mypy app
+cd backend && .venv/bin/pytest && .venv/bin/ruff check app tests scripts && .venv/bin/mypy app \
+  && .venv/bin/python scripts/check_migrations.py
 npm test && npm run typecheck && npm run lint && npm run build
 # Browser journey + axe-core accessibility run against a running instance (API + built SPA on one origin):
 cd scripts/e2e && npm install && BASE=http://localhost:8000 node journey.mjs
 # Localization check in ru/kk/en (raw keys, wrong-language text, content language, switching, phone layout):
 cd scripts/e2e && BASE=http://localhost:8000 node languages.mjs
+# Read-only check of a running site (local, preview or production):
+bash scripts/smoke.sh http://localhost:8000
 # Regenerate docs/api.md, docs/database.md and docs/openapi.json from the code:
 cd backend && .venv/bin/python scripts/gen_docs.py
 ```
 
 ## Documentation
+- [DEPLOYMENT.md](DEPLOYMENT.md) — environments, CI/CD, previews, environment variables, database safety, rollback
+- [docs/claude-code-workflow.ru.md](docs/claude-code-workflow.ru.md) — пошаговая инструкция (русский): запуск, правки, Git, публикация, откат
 - [docs/requirements.md](docs/requirements.md) — business requirements, product requirements, user stories
 - [docs/architecture.md](docs/architecture.md) — components, scoring, gap and recommendation formulas, AI subsystem, security
 - [docs/api.md](docs/api.md) — every endpoint (generated from OpenAPI; also `docs/openapi.json`)

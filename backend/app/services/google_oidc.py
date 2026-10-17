@@ -19,13 +19,14 @@ import secrets
 import time
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any
+from typing import Any, cast
 
 import httpx
 from authlib.integrations.httpx_client import OAuth2Client
 from authlib.jose import JsonWebKey, jwt
 from authlib.jose.errors import JoseError
 from sqlalchemy import select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -106,7 +107,7 @@ def consume_state(db: Session, state: str | None, cookie_state: str | None) -> O
         .execution_options(synchronize_session=False)
     )
     row = db.scalar(select(OAuthState).where(OAuthState.state_hash == _hash(state)))
-    if claimed.rowcount != 1 or row is None:
+    if cast(CursorResult, claimed).rowcount != 1 or row is None:
         raise OAuthError("Unknown, used or expired state.", "OAUTH_STATE_INVALID")
     db.refresh(row)
     if row.used_at is None or as_utc(row.expires_at) <= now:  # pragma: no cover - defensive

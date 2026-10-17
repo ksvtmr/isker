@@ -309,7 +309,8 @@ def reconcile_translations(
         if confirm_from_client and isinstance(sent, dict):
             cur &= set(sent.get(lang) or [])
         stale[lang] = cur
-    fields = [*cls.__translatable__, *(["rubric"] if getattr(cls, "__translatable_rubric__", False) else [])]
+    rubric = ["rubric"] if getattr(cls, "__translatable_rubric__", False) else []
+    fields = [*getattr(cls, "__translatable__", ()), *rubric]
     for lang in LANGS:
         old_vals = old_tr.get(lang) or {}
         new_vals = new.get(lang)

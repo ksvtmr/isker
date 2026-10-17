@@ -31,7 +31,9 @@ def _profile(db, user: User) -> UserProfile:
     except IntegrityError:
         pass  # created by a concurrent request
     db.expire(user, ["profile"])
-    return user.profile
+    profile = user.profile
+    assert profile is not None  # created above or by the concurrent request
+    return profile
 
 
 def _out(db, user: User) -> ProfileOut:

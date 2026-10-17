@@ -8,7 +8,10 @@ COPY frontend/package.json frontend/
 RUN npm ci --no-audit --no-fund
 COPY design-system design-system
 COPY frontend frontend
-RUN npm -w frontend run build
+# Public build-time settings (Render passes service environment variables as build arguments).
+ARG VITE_SUPPORT_EMAIL=""
+ARG VITE_SHOW_DEMO="false"
+RUN VITE_SUPPORT_EMAIL="$VITE_SUPPORT_EMAIL" VITE_SHOW_DEMO="$VITE_SHOW_DEMO" npm -w frontend run build
 
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 STATIC_DIR=/app/static

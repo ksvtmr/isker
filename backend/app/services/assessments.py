@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from sqlalchemy import func, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -268,7 +271,7 @@ def claim_for_submit(db: Session, attempt: AssessmentAttempt, now) -> None:
         .values(status=AttemptStatus.COMPLETED, completed_at=now)
         .execution_options(synchronize_session=False)
     )
-    if result.rowcount != 1:
+    if cast(CursorResult, result).rowcount != 1:
         raise ConflictError("This assessment is already finished.", "ATTEMPT_NOT_IN_PROGRESS")
 
 

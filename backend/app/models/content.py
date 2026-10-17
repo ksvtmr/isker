@@ -60,7 +60,9 @@ def _before_update(_mapper: Any, _conn: Any, target: Publishable) -> None:
     flag = target.__status_flag__
     if not flag:
         return
-    attrs = inspect(target).attrs
+    state = inspect(target)
+    assert state is not None
+    attrs = state.attrs
     if attrs.status.history.has_changes():
         setattr(target, flag, target.status == ContentStatus.PUBLISHED)
     elif attrs[flag].history.has_changes():

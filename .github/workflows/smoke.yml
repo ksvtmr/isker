@@ -1,0 +1,33 @@
+# Post-deploy smoke check of the public site (read-only: never signs in or changes data).
+#
+# Run it from GitHub → Actions → "Smoke check (deployed site)" → Run workflow, optionally with a preview URL.
+# With the repository variable PRODUCTION_URL set (Settings → Secrets and variables → Actions → Variables),
+# it also runs once a day and on demand without typing the URL.
+name: Smoke check (deployed site)
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Site to check (empty = repository variable PRODUCTION_URL)"
+        required: false
+  schedule:
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET: ${{ inputs.url || vars.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip when no URL is configured
+        if: env.TARGET == ''
+        run: echo "No URL given and PRODUCTION_URL is not set — nothing to check."
+      - name: Smoke check
+        if: env.TARGET != ''
+        run: bash scripts/smoke.sh "$TARGET"
