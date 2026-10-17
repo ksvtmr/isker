@@ -66,7 +66,7 @@ def clean_translations(model: type, data: Any, rubric_len: int = 0) -> dict | No
     unknown_langs = sorted(set(data) - set(LANGS))
     if unknown_langs:
         raise _bad("Translations are accepted for ru and kk only.", languages=unknown_langs)
-    allowed = set(model.__translatable__)
+    allowed = set(getattr(model, "__translatable__", ()))
     rubric = bool(getattr(model, "__translatable_rubric__", False))
     out: dict[str, dict] = {}
     for lang in LANGS:
@@ -107,7 +107,7 @@ def _clean_stale(value: Any, model: type) -> dict[str, list[str]]:
         return {}
     if not isinstance(value, dict) or set(value) - set(LANGS):
         raise _bad("_stale must be an object keyed by ru/kk.")
-    allowed = {*model.__translatable__, "rubric"}
+    allowed = {*getattr(model, "__translatable__", ()), "rubric"}
     out = {}
     for lang, fields in value.items():
         if not isinstance(fields, list) or not all(isinstance(f, str) for f in fields):

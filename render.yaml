@@ -1,11 +1,24 @@
-# One-click deployment to Render (free plan): web service + PostgreSQL.
-# Deploy: https://render.com/deploy?repo=https://github.com/ksvtmr/isker
+# Render Blueprint: web service (API + built frontend in one Docker image) + PostgreSQL. See DEPLOYMENT.md.
+# First setup: https://render.com/deploy?repo=https://github.com/ksvtmr/isker
+#
+# Releases: Render deploys the `main` branch only after the GitHub checks of that commit pass (CI in
+# .github/workflows/ci.yml). Pull requests get a preview environment when their title contains
+# "[render preview]" (needs a Render workspace plan with Preview Environments); each preview gets its own new,
+# empty database seeded with demo data, never the production database.
+previews:
+  generation: manual
+  expireAfterDays: 3
+
 services:
   - type: web
     name: isker
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
+    branch: main
+    autoDeployTrigger: checksPass
+    # Render switches traffic only after this returns 200 (API up and database reachable); otherwise the previous
+    # release keeps serving and the deploy is marked failed.
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
@@ -18,6 +31,9 @@ services:
         generateValue: true
       - key: COOKIE_SECURE
         value: "true"
+      # Render's load balancer is the one proxy in front of the app (client IP for rate limits).
+      - key: TRUSTED_PROXY_HOPS
+        value: "1"
       # Email links use RENDER_EXTERNAL_URL automatically. Without SMTP_* variables no email is sent
       # (EMAIL_BACKEND=auto → disabled in production) and the app says so honestly.
       - key: MOCK_AI

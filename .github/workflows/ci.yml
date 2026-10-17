@@ -1,0 +1,189 @@
+# Continuous integration: every pull request and every push to main.
+#
+# Render deploys main only after these checks pass (render.yaml: autoDeployTrigger: checksPass), so a red run here
+# keeps the change out of production. Uses the project's own commands (see README "Quality checks").
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"   # same as the production image (Dockerfile)
+  NODE_VERSION: "22"       # same as the production image (Dockerfile)
+
+jobs:
+  backend:
+    name: Backend — lint, types, tests, migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: isker
+          POSTGRES_PASSWORD: isker
+          POSTGRES_DB: isker
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U isker -d isker" --health-interval 3s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: ruff check app tests scripts
+      - name: Type check (mypy)
+        run: mypy app
+      - name: Migrations — no undocumented destructive steps
+        run: python scripts/check_migrations.py
+      - name: Unit and integration tests (pytest; includes ru/kk content translation completeness)
+        run: pytest -q -p no:warnings
+      - name: Migrations on PostgreSQL — upgrade, drift check, full downgrade and upgrade, idempotent seed
+        env:
+          DATABASE_URL: postgresql+psycopg://isker:isker@localhost:5432/isker
+        run: |
+          alembic upgrade head
+          alembic check
+          python -m app.seed.run
+          alembic downgrade base
+          alembic upgrade head
+          python -m app.seed.run
+          python -m app.seed.run
+
+  frontend:
+    name: Frontend — lint, types, tests, translations, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install dependencies (lockfile)
+        run: npm ci --no-audit --no-fund
+      - name: Lint (eslint)
+        run: npm run lint
+      - name: Type check (tsc)
+        run: npm run typecheck
+      - name: Translation completeness (ru / kk / en keys, variables, plurals)
+        run: npm -w frontend exec -- vitest run src/test/i18n.test.ts
+      - name: Unit tests (vitest)
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 3
+
+  e2e:
+    name: End-to-end — browser journey and ru/kk/en check
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: isker
+          POSTGRES_PASSWORD: isker
+          POSTGRES_DB: isker
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U isker -d isker" --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://isker:isker@localhost:5432/isker
+      # Test-only values (the e2e scripts sign in dozens of times; rate limits are covered by backend tests).
+      JWT_SECRET: ci-only-secret-not-used-anywhere-else-0123456789
+      RATE_LIMIT_ENABLED: "false"
+      STATIC_DIR: ${{ github.workspace }}/frontend/dist
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            scripts/e2e/package-lock.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+      - name: Install backend
+        run: pip install -r backend/requirements.txt
+      - name: Database — migrate and seed
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          python -m app.seed.run
+      - name: Start the app (API serving the built SPA on one origin)
+        working-directory: backend
+        run: |
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8000/api/health && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/api.log"; exit 1
+      - name: Install browser test tools
+        working-directory: scripts/e2e
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Browser journey (learner + admin, axe-core WCAG 2.2 AA, keyboard, mobile)
+        working-directory: scripts/e2e
+        run: BASE=http://127.0.0.1:8000 node journey.mjs "$RUNNER_TEMP/journey-shots"
+      - name: Three-language check (ru / kk / en)
+        working-directory: scripts/e2e
+        run: BASE=http://127.0.0.1:8000 node languages.mjs "$RUNNER_TEMP/lang-shots"
+      - name: Upload screenshots and API log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure
+          path: |
+            ${{ runner.temp }}/journey-shots
+            ${{ runner.temp }}/lang-shots
+            ${{ runner.temp }}/api.log
+          retention-days: 7
+
+  docker:
+    name: Production image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the image Render deploys (Dockerfile at the repository root)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: isker:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

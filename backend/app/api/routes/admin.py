@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select, update
@@ -746,7 +746,7 @@ def activate_prompt(prompt_id: int, admin: AIManager, db: DB) -> AIPromptVersion
 # their language (fallback kk → ru → en). This report makes those gaps, and translations left outdated by an edit of
 # the English text ("stale"), visible. Archived content is left out.
 
-TRANSLATION_ENTITIES: dict[str, tuple[type, str]] = {
+TRANSLATION_ENTITIES: dict[str, tuple[Any, str]] = {
     "area": (CompetencyArea, "name"),
     "competency": (Competency, "name"),
     "level": (CompetencyLevel, "name"),
@@ -771,7 +771,7 @@ def _split(value: str | None, allowed: tuple[str, ...], what: str) -> list[str]:
 
 def _translation_rows(db, entity: str) -> list[tuple[int, str, dict]]:
     model, label_field = TRANSLATION_ENTITIES[entity]
-    stmt = select(model)
+    stmt: Any = select(model)
     if entity == "question":
         stmt = stmt.options(selectinload(Question.options))
     if entity == "option":

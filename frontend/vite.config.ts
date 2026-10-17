@@ -7,6 +7,8 @@ const apiTarget = process.env.VITE_API_PROXY ?? "http://localhost:8000";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // One .env for the whole project: VITE_* values are read from the repository root (see .env.example).
+  envDir: "..",
   resolve: { dedupe: ["react", "react-dom"] },
   server: {
     port: 5173,

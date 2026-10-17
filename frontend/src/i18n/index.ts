@@ -56,3 +56,14 @@ export function currentLocaleTag(): string {
 }
 
 export default i18n;
+
+// Development only: an edited translation file is swapped in place (no full page reload, form state is kept).
+if (import.meta.hot) {
+  import.meta.hot.accept("./resources", (mod) => {
+    if (!mod) return;
+    for (const [lng, namespaces] of Object.entries((mod as unknown as typeof import("./resources")).resources)) {
+      for (const [ns, data] of Object.entries(namespaces)) i18n.addResourceBundle(lng, ns, data, true, true);
+    }
+    void i18n.changeLanguage(i18n.language); // re-renders every component that uses t()
+  });
+}

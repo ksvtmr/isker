@@ -9,7 +9,7 @@
  * Exit code is non-zero if any step fails or axe reports violations.
  */
 import { createRequire } from "node:module";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { chromium } from "playwright";
 
 const require = createRequire(import.meta.url);
@@ -18,7 +18,8 @@ const B = process.env.BASE ?? "http://localhost:8000";
 const OUT = process.argv[2] ?? "e2e-shots";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@isker.local";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "IskerAdmin2026";
-const CHROMIUM = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
+// CHROMIUM_PATH, else the pre-installed browser of the Claude Code environment, else Playwright's own (CI).
+const CHROMIUM = process.env.CHROMIUM_PATH ?? (existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: CHROMIUM });
