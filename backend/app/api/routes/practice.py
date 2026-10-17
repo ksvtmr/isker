@@ -71,13 +71,26 @@ def list_tasks(user: CurrentUser, db: DB, competency: str | None = None) -> list
     return [TaskOut(**_base(t, subs.get(t.id), t.id in recs)) for t in rows]
 
 
-def _get(db, task_id: int, history_user_id: int | None = None) -> PracticalTask:
+def _in_active_plan(db, user_id: int, task_id: int) -> bool:
+    return db.scalar(
+        select(Recommendation.id).where(
+            Recommendation.user_id == user_id,
+            Recommendation.status == RecommendationStatus.ACTIVE,
+            Recommendation.task_id == task_id,
+        ).limit(1)
+    ) is not None
+
+
+def _get(db, task_id: int, history_user_id: int | None = None, plan_user_id: int | None = None) -> PracticalTask:
     """A published task. With `history_user_id`, an unpublished task the user already submitted to stays readable
-    (their submission and feedback history), but nothing new can be started on it."""
+    (their submission and feedback history), but nothing new can be started on it. With `plan_user_id`, an archived
+    task that is still a step of that user's active plan stays fully usable so the plan can be completed."""
     t = db.scalar(
         select(PracticalTask).where(PracticalTask.id == task_id).options(joinedload(PracticalTask.competency))
     )
-    if t is None or (t.status != ContentStatus.PUBLISHED and (
+    in_plan = (t is not None and plan_user_id is not None and t.status == ContentStatus.ARCHIVED
+               and _in_active_plan(db, plan_user_id, t.id))
+    if t is None or (t.status != ContentStatus.PUBLISHED and not in_plan and (
         history_user_id is None or _sub(db, history_user_id, t.id) is None
     )):
         raise NotFoundError("Practical task not found", "TASK_NOT_FOUND")
@@ -170,12 +183,12 @@ def _detail(db, user_id: int, t: PracticalTask) -> TaskDetail:
 
 @router.get("/tasks/{task_id}", response_model=TaskDetail, summary="Task, your response and AI feedback")
 def get_task(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
-    return _detail(db, user.id, _get(db, task_id, user.id))
+    return _detail(db, user.id, _get(db, task_id, user.id, plan_user_id=user.id))
 
 
 @router.post("/tasks/{task_id}/start", response_model=TaskDetail, summary="Start a task")
 def start(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
-    t = _get(db, task_id)
+    t = _get(db, task_id, plan_user_id=user.id)
     if _sub(db, user.id, t.id) is None:
         entitlements.require(db, user, "practice.tasks")
         _, created = _ensure_sub(db, user.id, t.id)
@@ -192,7 +205,7 @@ def start(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
     summary="Submit a response and receive rubric-based AI feedback",
 )
 def submit(task_id: int, body: SubmitIn, user: CurrentUser, db: DB) -> TaskDetail:
-    t = _get(db, task_id)
+    t = _get(db, task_id, plan_user_id=user.id)
     text = body.response_text.strip()
     if len(text) < t.min_length:
         raise ValidationError(
@@ -228,7 +241,7 @@ def submit(task_id: int, body: SubmitIn, user: CurrentUser, db: DB) -> TaskDetai
 
 @router.post("/tasks/{task_id}/complete", response_model=TaskDetail, summary="Mark a submitted task complete")
 def complete(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
-    t = _get(db, task_id)
+    t = _get(db, task_id, plan_user_id=user.id)
     s = _sub(db, user.id, t.id)
     if s is None or s.status == PracticeStatus.STARTED:
         raise ConflictError("Submit your response before completing the task.", "TASK_NOT_SUBMITTED")

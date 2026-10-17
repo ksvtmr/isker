@@ -50,6 +50,7 @@ export interface SessionInfo {
   last_seen_at: string | null;
   expires_at: string;
   user_agent: string | null;
+  ip_address?: string | null;
   current: boolean;
   remember?: boolean;
   auth_method?: "password" | "google";
@@ -136,7 +137,7 @@ export interface Profile {
   business_experience: string | null;
   preferred_learning_format: LearningFormat;
   weekly_learning_minutes: number;
-  language: string;
+  language: "ru" | "kk" | "en" | null;
   notify_reassessment: boolean;
   notify_weekly_summary: boolean;
   goals: Goal[];
@@ -447,7 +448,8 @@ export interface Task {
 export interface Feedback {
   evaluation_id: number;
   score: number;
-  level: Level;
+  /** Empty when the evaluation produced no level (the API sends ""). */
+  level: Level | "";
   confidence: number | null;
   criteria: { criterion: string; rating: number; evidence: string }[];
   evidence: string[];

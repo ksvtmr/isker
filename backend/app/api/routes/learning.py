@@ -116,13 +116,27 @@ def list_resources(
     )
 
 
-def _get(db, rid: int, history_user_id: int | None = None) -> LearningResource:
+def _in_active_plan(db, user_id: int, rid: int) -> bool:
+    return db.scalar(
+        select(Recommendation.id).where(
+            Recommendation.user_id == user_id,
+            Recommendation.status == RecommendationStatus.ACTIVE,
+            Recommendation.resource_id == rid,
+        ).limit(1)
+    ) is not None
+
+
+def _get(db, rid: int, history_user_id: int | None = None, plan_user_id: int | None = None) -> LearningResource:
     """A published resource. With `history_user_id`, an unpublished one the user already worked on is readable too
-    (their progress history stays reachable), but nothing new can be started on it."""
+    (their progress history stays reachable), but nothing new can be started on it. With `plan_user_id`, an
+    archived resource that is still a step of that user's active plan stays fully usable, so the plan (and the
+    reassessment it unlocks) can be completed; it is replaced when the plan is next regenerated."""
     r = db.scalar(
         select(LearningResource).where(LearningResource.id == rid).options(joinedload(LearningResource.competency))
     )
-    if r is None or (r.status != ContentStatus.PUBLISHED and (
+    in_plan = (r is not None and plan_user_id is not None and r.status == ContentStatus.ARCHIVED
+               and _in_active_plan(db, plan_user_id, r.id))
+    if r is None or (r.status != ContentStatus.PUBLISHED and not in_plan and (
         history_user_id is None or _progress(db, history_user_id, r.id) is None
     )):
         raise NotFoundError("Learning resource not found", "RESOURCE_NOT_FOUND")
@@ -131,7 +145,7 @@ def _get(db, rid: int, history_user_id: int | None = None) -> LearningResource:
 
 def _get_for(db, user, rid: int, read_only: bool = False) -> LearningResource:
     """Load a resource the user's plan allows (advanced resources need learning.advanced_resources)."""
-    r = _get(db, rid, user.id if read_only else None)
+    r = _get(db, rid, user.id if read_only else None, plan_user_id=user.id)
     if r.difficulty == Difficulty.ADVANCED:
         entitlements.require(db, user, "learning.advanced_resources", consume=0)
     return r

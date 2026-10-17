@@ -441,3 +441,27 @@ def test_content_manager_cannot_manage_users_or_plans(client, db):
     assert client.post(f"/api/admin/users/{target.id}/suspend", json={"reason": "nope"}).status_code == 403
     plan = db.scalar(select(Competency))  # any id; the permission check comes first
     assert client.patch(f"/api/admin/plans/{plan.id}", json={"name": "X", "reason": "nope"}).status_code == 403
+
+
+def test_archived_step_of_an_active_plan_can_still_be_completed(client, db):
+    # Regression (audit D5): archiving a resource/task that is already a step of a learner's active plan used to
+    # make that step impossible to finish, which kept the plan's reassessment locked until a new full assessment.
+    _learner(client)
+    _complete_assessment(client)
+    rec = client.get("/api/recommendations").json()[0]
+    rid, tid = rec["resource"]["id"], rec["task"]["id"]
+
+    _cm(client, db)
+    assert client.delete(f"/api/admin/resources/{rid}").status_code == 200
+    assert client.delete(f"/api/admin/tasks/{tid}").status_code == 200
+
+    login(client, "learner@example.com")
+    listed = client.get("/api/learning/resources", params={"page_size": 100}).json()["items"]
+    assert rid not in {r["id"] for r in listed}
+    assert client.post(f"/api/learning/resources/{rid}/start").status_code == 200
+    assert client.post(f"/api/learning/resources/{rid}/complete").status_code == 200
+    assert client.post(f"/api/practice/tasks/{tid}/start").status_code == 200
+
+    # Someone without it in their plan still can't start it.
+    _learner(client, "other@example.com")
+    assert client.post(f"/api/learning/resources/{rid}/start").status_code == 404

@@ -68,7 +68,7 @@ export function PracticeDetailPage() {
           {fb && (
             <AIInsight title={t("practiceDetail.aiFeedback")} context={t("practiceDetail.aiContext", { competency: task.competency_name })} confidence={confidenceLabel(fb.confidence)}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <ScoreValue value={fb.score} size={32} label={t("practiceDetail.taskScore")} /><LevelBadge level={fb.level} />
+                <ScoreValue value={fb.score} size={32} label={t("practiceDetail.taskScore")} />{fb.level && <LevelBadge level={fb.level} />}
               </div>
               {fb.explanation && <p style={{ marginTop: 10 }}>{fb.explanation}</p>}
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10, background: "#fff", padding: 14, borderRadius: 10, border: "1px solid var(--color-brand-100)" }}>
