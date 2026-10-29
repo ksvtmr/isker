@@ -197,3 +197,29 @@ the API in ~2 s) and Vite (frontend and translation changes appear in the browse
 reload). Ctrl+C stops both.
 
 In Claude Code cloud sessions, `.claude/hooks/session-start.sh` installs all dependencies when a session starts.
+
+## 10. Vercel (interface, API and database in one Vercel project)
+
+`vercel.json` defines two services on one domain: **web** (the Vite interface, built from the workspace root into
+`frontend/dist`) and **api** (FastAPI, `backend/app/main.py`). `/api/*` goes to `api`, everything else to `web`;
+cookies and CSRF work as on Render because both share the origin. The database is Vercel Postgres (Neon) from
+Vercel → Storage, which sets `DATABASE_URL` (pooled; `postgres://` is converted for SQLAlchemy). On Vercel the API
+opens a connection per request (`NullPool`), leaving pooling to Neon.
+
+Each production build of `api` runs `backend/scripts/release.py`: `alembic upgrade head` + idempotent seed under a
+PostgreSQL advisory lock. Preview builds skip it unless `RELEASE_ON_PREVIEW=true` (only with a database branch per
+preview). Without `DATABASE_URL` the production build fails with a clear message.
+
+Setup (account owner):
+1. vercel.com → Add New → Project → import `ksvtmr/isker` (branch with `vercel.json`). Keep the root directory as
+   the repository root.
+2. Storage → Create → Postgres (Neon) → connect it to the project (Production + Preview).
+3. Settings → Environment Variables (Production): `ENVIRONMENT=production`, `JWT_SECRET` (≥ 32 random characters),
+   `ADMIN_PASSWORD`, `COOKIE_SECURE=true`, `TRUSTED_PROXY_HOPS=1`, `DEMO_PASSWORD` (optional demo account),
+   `MOCK_AI=true` — or `MOCK_AI=false`, `AI_PROVIDER=gemini`, `GEMINI_API_KEY` (secret).
+4. Deploy. Then open `https://<project>.vercel.app/api/health` → `{"status": "ok", "database": true}` and run
+   `bash scripts/smoke.sh https://<project>.vercel.app`.
+
+Not verified on Vercel from this repository's tooling (no access to vercel.com from the build environment): the
+per-service keys, the SPA fallback for deep links (`/dashboard` on refresh) and function time limits (an assessment
+submit with a live AI model can take ~60 s; the analysis allows 90 s). Check these on the first deploy.

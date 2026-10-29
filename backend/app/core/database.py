@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Integer, MetaData, create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, declared_attr, mapped_column, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
@@ -60,6 +62,11 @@ def make_engine(url: str) -> Engine:
     kwargs: dict = {"pool_pre_ping": True}
     if url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
+    elif os.environ.get("VERCEL"):
+        # Serverless functions: many short-lived instances. No pool per instance (the database's own pooler, e.g.
+        # Neon's pooled DATABASE_URL, shares connections); prepared statements off for PgBouncer-style poolers.
+        kwargs["poolclass"] = NullPool
+        kwargs["connect_args"] = {"prepare_threshold": None}
     engine = create_engine(url, **kwargs)
     if url.startswith("sqlite"):
 
