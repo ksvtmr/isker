@@ -456,6 +456,9 @@ Unique: (user_id, role_id)
 | `completed_at` | DATETIME | yes |  |
 | `overall_score` | INTEGER | yes |  |
 | `sequence` | INTEGER | no |  |
+| `assessment_version` | INTEGER | yes |  |
+| `scoring_version` | VARCHAR(16) | yes |  |
+| `language` | VARCHAR(8) | yes |  |
 | `created_at` | DATETIME | no |  |
 | `updated_at` | DATETIME | no |  |
 
@@ -556,6 +559,26 @@ Checks: `score >= 0 AND score <= 100`
 | `details` | JSON | yes |  |
 | `created_at` | DATETIME | no | indexed |
 
+### `ai_analyses`
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | INTEGER | no | PK |
+| `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
+| `attempt_id` | INTEGER | no | FK → `assessment_attempts.id` (CASCADE) |
+| `status` | VARCHAR(16) | no | indexed |
+| `language` | VARCHAR(8) | no |  |
+| `provider` | VARCHAR(32) | yes |  |
+| `model` | VARCHAR(64) | yes |  |
+| `prompt_version_id` | INTEGER | yes | FK → `ai_prompt_versions.id` (SET NULL) |
+| `output` | JSON | yes |  |
+| `error_code` | VARCHAR(32) | yes |  |
+| `runs` | INTEGER | no |  |
+| `latency_ms` | INTEGER | yes |  |
+| `created_at` | DATETIME | no |  |
+| `updated_at` | DATETIME | no |  |
+| `completed_at` | DATETIME | yes |  |
+
 ### `answers`
 
 | Column | Type | Null | Notes |
@@ -610,6 +633,8 @@ Unique: (attempt_id, competency_id)
 | `open_score` | FLOAT | yes |  |
 | `confidence` | FLOAT | no |  |
 | `explanation` | TEXT | no |  |
+| `evidence` | JSON | yes |  |
+| `evidence_level` | VARCHAR(16) | yes |  |
 | `created_at` | DATETIME | no | indexed |
 
 Unique: (attempt_id, competency_id)
@@ -711,6 +736,33 @@ Checks: `progress_pct >= 0 AND progress_pct <= 100`
 | `latency_ms` | INTEGER | yes |  |
 | `language` | VARCHAR(8) | yes |  |
 | `created_at` | DATETIME | no | indexed |
+
+### `character_stage_events`
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | INTEGER | no | PK |
+| `user_id` | INTEGER | no | FK → `users.id` (CASCADE), indexed |
+| `sequence` | INTEGER | no |  |
+| `stage` | INTEGER | no |  |
+| `previous_stage` | INTEGER | yes |  |
+| `direction` | VARCHAR(8) | no |  |
+| `score` | INTEGER | no |  |
+| `assessment_score` | INTEGER | no |  |
+| `practice_score` | INTEGER | yes |  |
+| `practice_tasks` | INTEGER | no |  |
+| `basis` | JSON | yes |  |
+| `rules_version` | VARCHAR(16) | no |  |
+| `trigger` | VARCHAR(16) | no |  |
+| `attempt_id` | INTEGER | yes | FK → `assessment_attempts.id` (SET NULL) |
+| `practice_submission_id` | INTEGER | yes | FK → `practice_submissions.id` (SET NULL) |
+| `confirmed_at` | DATETIME | no | indexed |
+| `seen_at` | DATETIME | yes |  |
+| `created_at` | DATETIME | no |  |
+
+Unique: (user_id, sequence)
+
+Checks: `stage >= 1 AND stage <= 4`
 
 ### `recommendations`
 

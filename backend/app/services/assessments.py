@@ -35,6 +35,7 @@ from app.models.enums import (
     ProgressStatus,
     QuestionType,
 )
+from app.services import character as character_service
 from app.services import gaps as gap_service
 from app.services import recommendations as rec_service
 from app.services.audit import audit, notify
@@ -316,6 +317,8 @@ def submit(db: Session, user: User, attempt: AssessmentAttempt) -> AssessmentAtt
     gaps = gap_service.compute_and_store(db, attempt)
     recs = rec_service.refresh(db, attempt, gaps)
     write_snapshot(db, user.id, attempt, recs)
+    # The character stage follows confirmed results only: recorded here, in the transaction that stores the scores.
+    character_service.record_confirmed_result(db, user.id, "assessment", attempt_id=attempt.id)
     insight_for_attempt(db, user.id, attempt, profile, gaps, recs)
     notify(
         db,

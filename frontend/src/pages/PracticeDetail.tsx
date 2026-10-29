@@ -10,6 +10,8 @@ import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { useToast } from "../components/Toaster";
 import { confidenceLabel, difficultyLabel } from "../utils/format";
 import { appHref } from "../utils/appHref";
+import { CharacterAside, StageChangeNotice } from "../character/CharacterViews";
+import { useCharacterReaction } from "../character/hooks";
 
 export function PracticeDetailPage() {
   const { t } = useTranslation("learning");
@@ -21,6 +23,7 @@ export function PracticeDetailPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [text, setText] = useState("");
+  const [charState, react] = useCharacterReaction(task?.status === "completed" ? "confident" : "working");
   useEffect(() => { if (task?.response_text) setText(task.response_text); }, [task?.response_text]);
 
   if (isLoading) return <PageSkeleton cards={0} />;
@@ -37,6 +40,7 @@ export function PracticeDetailPage() {
     <>
       <PageHeader back={{ label: t("common:nav.practice"), href: appHref("/practice"), onClick: () => navigate("/practice") }}
         eyebrow={`${t("practiceDetail.practicalTask")} · ${t("common:time.minutes", { count: task.duration_minutes })} · ${difficultyLabel(task.difficulty)}`} title={task.title} subtitle={task.description} />
+      <StageChangeNotice />
       {mutationError && <div style={{ marginBottom: 16 }}><ApiErrorAlert error={mutationError} /></div>}
       <div className="ik-grid3" style={{ alignItems: "start" }}>
         <div className="ik-span2" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -57,7 +61,7 @@ export function PracticeDetailPage() {
                     </Button>
                     {task.status === "submitted" && (
                       <Button variant="success" iconLeft="check" loading={complete.isPending}
-                        onClick={() => complete.mutate(task.id, { onSuccess: () => toast({ title: t("practiceDetail.completedTitle"), description: t("practiceDetail.completedText") }) })}>
+                        onClick={() => complete.mutate(task.id, { onSuccess: () => { react("happy"); toast({ title: t("practiceDetail.completedTitle"), description: t("practiceDetail.completedText") }); } })}>
                         {t("practiceDetail.markComplete")}
                       </Button>
                     )}
@@ -82,6 +86,7 @@ export function PracticeDetailPage() {
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Card padding={16}><CharacterAside state={charState} goal={task.competency_name} /></Card>
           <Card padding={20}>
             <p style={{ fontSize: 13, color: "var(--color-neutral-500)" }}>{t("practiceDetail.develops")}</p>
             <LinkButton to={`/competencies/${task.competency_code}`} variant="ghost" size="sm" style={{ paddingLeft: 0 }}>{task.competency_name}</LinkButton>

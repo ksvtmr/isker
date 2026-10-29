@@ -598,3 +598,50 @@ export interface AnalysisState {
   completed_at?: string | null;
   analysis?: DevelopmentAnalysis | null;
 }
+
+/** Character progression (GET /api/character). The stage is decided by the API from confirmed results only. */
+export type CharacterStage = 1 | 2 | 3 | 4;
+export type CharacterStatus = "no_assessment" | "insufficient_data" | "ready";
+
+export interface StageEvent {
+  id: number;
+  sequence: number;
+  stage: CharacterStage;
+  previous_stage: CharacterStage | null;
+  direction: "initial" | "up" | "down";
+  score: number;
+  assessment_score: number;
+  practice_score: number | null;
+  practice_tasks: number;
+  trigger: "assessment" | "practice" | "baseline";
+  attempt_id: number | null;
+  rules_version: string;
+  confirmed_at: string;
+  seen: boolean;
+}
+
+export interface Character {
+  status: CharacterStatus;
+  stage: CharacterStage | null;
+  stage_key: "novice" | "starter" | "entrepreneur" | "leader" | null;
+  score: number | null;
+  assessment_score: number | null;
+  practice_score: number | null;
+  practice_tasks: number;
+  practice_counted: boolean;
+  progress_pct: number | null;
+  next_stage: CharacterStage | null;
+  points_to_next: number | null;
+  rules_version: string;
+  bands: { stage: CharacterStage; key: string; min: number; max: number }[];
+  basis: {
+    competencies_assessed: number;
+    competencies_total: number;
+    competencies_with_evidence: number;
+    practice_weight: number;
+    practice_min_tasks: number;
+    attempt_id: number | null;
+  };
+  pending_event: StageEvent | null;
+  history: StageEvent[];
+}

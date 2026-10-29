@@ -18,6 +18,7 @@ export const keys = {
   tasks: ["tasks"] as const,
   task: (id: number) => ["task", id] as const,
   progress: ["progress"] as const,
+  character: ["character"] as const,
   notifications: ["notifications"] as const,
   subscription: ["subscription"] as const,
   entitlements: ["entitlements"] as const,
@@ -27,7 +28,7 @@ export const keys = {
 
 /** Everything derived from the competency profile / plan. Invalidated after assessments and learning. */
 export const derivedKeys = [
-  keys.dashboard, keys.scoreProfile, keys.gaps, keys.recommendations, keys.plan, keys.progress, keys.assessments,
+  keys.dashboard, keys.scoreProfile, keys.gaps, keys.recommendations, keys.plan, keys.progress, keys.character, keys.assessments,
   ["competency"], ["resources"], ["resource"], keys.tasks, ["task"], keys.notifications,
   // Usage counters and limits (attempts, plan items, AI feedback) are part of the subscription view.
   keys.subscription, keys.entitlements,

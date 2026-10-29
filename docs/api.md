@@ -84,6 +84,8 @@ Assessment engine: attempts, autosave, submission, results
 | `PUT` | `/api/assessments/attempts/{attempt_id}/position` | Save current question |
 | `POST` | `/api/assessments/attempts/{attempt_id}/submit` | Finish: score, AI-evaluate open answers, gap analysis, recommendations, snapshot |
 | `POST` | `/api/assessments/attempts/{attempt_id}/abandon` | Discard an attempt |
+| `GET` | `/api/assessments/attempts/{attempt_id}/analysis` | AI development analysis of your completed attempt |
+| `POST` | `/api/assessments/attempts/{attempt_id}/analysis` | Generate, retry or regenerate (in the current language) the AI development analysis |
 | `GET` | `/api/assessments/attempts/{attempt_id}/results` | Results of an attempt |
 
 ### competencies
@@ -140,6 +142,8 @@ Dashboard and longitudinal progress
 |---|---|---|
 | `GET` | `/api/progress` | Longitudinal development: snapshots, competency trends, activity counts |
 | `GET` | `/api/dashboard` | Everything the dashboard needs in one call |
+| `GET` | `/api/character` | Character stage, the data it rests on, and its history |
+| `POST` | `/api/character/events/{event_id}/seen` | Record that a stage change was shown |
 | `GET` | `/api/health` | Liveness and database check |
 
 ### ai
@@ -193,6 +197,8 @@ Content management and AI governance (permission-based)
 | `DELETE` | `/api/admin/tasks/{task_id}` | Archive a task (submissions are kept) |
 | `POST` | `/api/admin/tasks/{task_id}/status` | Publish, unpublish or archive |
 | `GET` | `/api/admin/ai/evaluations` | AI evaluation log |
+| `GET` | `/api/admin/ai/analyses` | AI development analyses: processing status (no answer content) |
+| `POST` | `/api/admin/ai/analyses/{analysis_id}/retry` | Run a failed AI development analysis again |
 | `GET` | `/api/admin/ai/prompts` | Prompt versions |
 | `POST` | `/api/admin/ai/prompts` | Create a new prompt version |
 | `POST` | `/api/admin/ai/prompts/{prompt_id}/activate` | Activate a prompt version |

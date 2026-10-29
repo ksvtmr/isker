@@ -8,6 +8,7 @@ import { LinkButton } from "../components/RouterLink";
 import { ErrorState } from "../components/States";
 import { usePageTitle } from "../components/PageTitle";
 import type { Question } from "../types/api";
+import { CharacterAside } from "../character/CharacterViews";
 
 type Draft = { option_id?: number | null; text?: string };
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -212,6 +213,9 @@ export function AssessmentRunner() {
         </span>
       </div>
       <div className="ik-assess__body">
+        <div style={{ marginBottom: 16 }}>
+          <CharacterAside state="thinking" title={t("character:aside.assessmentTitle")} note={t("character:aside.assessmentText")} />
+        </div>
         <AssessmentProgress current={index + 1} total={questions.length} section={q.section} />
         {saveError && (
           <div style={{ marginTop: 16 }}>

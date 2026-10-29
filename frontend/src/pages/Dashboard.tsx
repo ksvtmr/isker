@@ -10,6 +10,8 @@ import { ErrorState, PageSkeleton } from "../components/States";
 import type { CompetencyScore, Dashboard } from "../types/api";
 import { AREA_COLOR, confidenceLabel, difficultyLabel, formatPercent, gapLabel, greeting, shortMonth, signed } from "../utils/format";
 import { appHref } from "../utils/appHref";
+import { useCharacter } from "../api/character";
+import { CharacterPanel, StageChangeNotice } from "../character/CharacterViews";
 
 function ScoreHero({ d }: { d: Dashboard }) {
   const { t } = useTranslation("dashboard");
@@ -94,6 +96,7 @@ export function DashboardPage() {
   const { t } = useTranslation("dashboard");
   const { data: d, isLoading, error, refetch } = useDashboard();
   const overview = useAssessmentOverview();
+  const character = useCharacter();
   const navigate = useNavigate();
   if (isLoading) return <PageSkeleton />;
   if (error || !d) return <><PageHeader title={t("common:nav.dashboard")} /><ErrorState error={error} onRetry={() => refetch()} title={t("dashboard.loadError")} /></>;
@@ -103,7 +106,8 @@ export function DashboardPage() {
       title={t("dashboard.greeting", { greeting: greeting(), name: d.user_name })}
       docTitle={t("common:nav.dashboard")}
       subtitle={t("dashboard.subtitle")}
-      action={d.profile.has_profile ? <LinkButton to="/development-plan" iconRight="arrow-right">{t("dashboard.continueDevelopment")}</LinkButton> : undefined}
+      // With a stage, "Continue development" sits in the character panel; the header keeps it only as a fallback.
+      action={d.profile.has_profile && !character.data ? <LinkButton to="/development-plan" iconRight="arrow-right">{t("dashboard.continueDevelopment")}</LinkButton> : undefined}
     />
   );
 
@@ -112,12 +116,17 @@ export function DashboardPage() {
       <>
         {header}
         <JourneyStepper d={d} />
-        <EmptyState
-          icon="clipboard-check"
-          title={d.in_progress_attempt_id ? t("dashboard.empty.finishTitle") : t("dashboard.empty.startTitle")}
-          description={t("dashboard.empty.description")}
-          action={<LinkButton to={d.in_progress_attempt_id ? `/assessment/${d.in_progress_attempt_id}` : "/assessment"}>{d.in_progress_attempt_id ? t("dashboard.empty.continueButton") : t("dashboard.empty.startButton")}</LinkButton>}
-        />
+        {character.data ? (
+          <CharacterPanel c={character.data}
+            action={<LinkButton to={d.in_progress_attempt_id ? `/assessment/${d.in_progress_attempt_id}` : "/assessment"} iconRight="arrow-right">{d.in_progress_attempt_id ? t("dashboard.empty.continueButton") : t("dashboard.empty.startButton")}</LinkButton>} />
+        ) : (
+          <EmptyState
+            icon="clipboard-check"
+            title={d.in_progress_attempt_id ? t("dashboard.empty.finishTitle") : t("dashboard.empty.startTitle")}
+            description={t("dashboard.empty.description")}
+            action={<LinkButton to={d.in_progress_attempt_id ? `/assessment/${d.in_progress_attempt_id}` : "/assessment"}>{d.in_progress_attempt_id ? t("dashboard.empty.continueButton") : t("dashboard.empty.startButton")}</LinkButton>}
+          />
+        )}
       </>
     );
   }
@@ -136,7 +145,14 @@ export function DashboardPage() {
   return (
     <>
       {header}
+      <StageChangeNotice />
       <JourneyStepper d={d} />
+      {character.data && (
+        <div style={{ marginBottom: 24 }}>
+          <CharacterPanel c={character.data} state="idle" focus={p.priority_gaps[0] ?? null}
+            action={<LinkButton to="/development-plan" iconRight="arrow-right">{t("dashboard.continueDevelopment")}</LinkButton>} />
+        </div>
+      )}
       <div className="ik-grid3" style={{ marginBottom: 24 }}>
         <ScoreHero d={d} />
         {d.insight ? (
