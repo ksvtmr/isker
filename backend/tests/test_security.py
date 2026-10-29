@@ -254,3 +254,16 @@ def test_production_rejects_wildcard_cors(monkeypatch):
     monkeypatch.setenv("CORS_ORIGINS", "*")
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_email_links_use_the_vercel_domain(monkeypatch):
+    from app.core.config import Settings
+
+    monkeypatch.delenv("RENDER_EXTERNAL_URL", raising=False)
+    monkeypatch.setenv("VERCEL_ENV", "production")
+    monkeypatch.setenv("VERCEL_PROJECT_PRODUCTION_URL", "isker.example.com")
+    monkeypatch.setenv("VERCEL_URL", "isker-abc123.vercel.app")
+    assert Settings(environment="test").app_base_url == "https://isker.example.com"
+    monkeypatch.setenv("VERCEL_ENV", "preview")
+    assert Settings(environment="test").app_base_url == "https://isker-abc123.vercel.app"
+    assert Settings(environment="test", app_base_url="https://custom.example").app_base_url == "https://custom.example"

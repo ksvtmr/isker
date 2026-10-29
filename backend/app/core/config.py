@@ -145,9 +145,18 @@ class Settings(BaseSettings):
         if self.is_production:
             # Development origins are never trusted in production.
             self.cors_origins = [o for o in self.cors_origins if "localhost" not in o and "127.0.0.1" not in o]
-        # Render (and similar hosts) expose the public URL; use it for email links unless APP_BASE_URL is set.
-        if "app_base_url" not in self.model_fields_set and os.environ.get("RENDER_EXTERNAL_URL"):
-            self.app_base_url = os.environ["RENDER_EXTERNAL_URL"].rstrip("/")
+        # Hosts expose the public URL; use it for email links unless APP_BASE_URL is set. Render: RENDER_EXTERNAL_URL.
+        # Vercel (vercel.json, interface and API on one domain): the production domain in production, otherwise this
+        # deployment's URL (previews), both given without the scheme.
+        if "app_base_url" not in self.model_fields_set:
+            production = os.environ.get("VERCEL_ENV") == "production"
+            vercel_host = (os.environ.get("VERCEL_PROJECT_PRODUCTION_URL") if production else None) or os.environ.get(
+                "VERCEL_URL"
+            )
+            if os.environ.get("RENDER_EXTERNAL_URL"):
+                self.app_base_url = os.environ["RENDER_EXTERNAL_URL"].rstrip("/")
+            elif vercel_host:
+                self.app_base_url = f"https://{vercel_host.rstrip('/')}"
         return self
 
     @property
