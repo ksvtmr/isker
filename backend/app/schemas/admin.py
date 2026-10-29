@@ -281,7 +281,7 @@ class AIEvaluationAdminOut(ORM):
 
 
 class PromptIn(BaseModel):
-    key: str = Field(pattern=r"^(answer_evaluation|profile_insight)$")
+    key: str = Field(pattern=r"^(answer_evaluation|profile_insight|development_analysis)$")
     system_prompt: str = Field(min_length=20)
     user_template: str = Field(min_length=10)
     notes: str | None = None

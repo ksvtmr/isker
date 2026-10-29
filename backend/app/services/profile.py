@@ -56,6 +56,20 @@ def current_scores(db: Session, user_id: int, up_to_attempt_id: int | None = Non
     return latest
 
 
+def comparison(previous: AssessmentAttempt | None, current: AssessmentAttempt) -> str | None:
+    """Whether two results can be compared like for like. None: nothing to compare with. "same": same scoring method
+    and assessment version. "content_changed": same method, but the assessment's questions were revised in between
+    (the change is shown with a note). "method_changed": the scoring method differs, so no change is computed.
+    Attempts written before versions were recorded count as scoring "v1"."""
+    if previous is None:
+        return None
+    if (previous.scoring_version or "v1") != (current.scoring_version or "v1"):
+        return "method_changed"
+    if (previous.assessment_version or 1) != (current.assessment_version or 1):
+        return "content_changed"
+    return "same"
+
+
 def history(db: Session, user_id: int) -> dict[int, list[tuple[CompetencyScore, AssessmentAttempt]]]:
     h: dict[int, list] = defaultdict(list)
     for score, attempt in all_scores(db, user_id):

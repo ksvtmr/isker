@@ -34,6 +34,22 @@ export function RequireAuth({ allowIncompleteOnboarding = false }: { allowIncomp
   return <Outlet />;
 }
 
+/** Where a learner without results should be: their open attempt, or the assessment introduction. */
+export function assessmentHome(user: { in_progress_attempt_id: number | null }): string {
+  return user.in_progress_attempt_id ? `/assessment/${user.in_progress_attempt_id}` : "/assessment";
+}
+
+/**
+ * Pages built on assessment results (dashboard, competency profile, plan, learning, practice, progress): a learner
+ * who has not completed the initial assessment is sent to it (or back to the attempt they left) instead of seeing
+ * empty results. Staff accounts are not held back.
+ */
+export function RequireInitialAssessment() {
+  const { data: user } = useMe();
+  if (user && !user.initial_assessment_completed && !hasAdminAccess(user)) return <Navigate to={assessmentHome(user)} replace />;
+  return <Outlet />;
+}
+
 /** The admin area: any staff role (admin.access). Each admin page additionally checks its own permission. */
 export function RequireAdmin() {
   const { data: user, isLoading, error, refetch } = useMe();
@@ -74,7 +90,14 @@ export function RedirectIfAuthed() {
 }
 
 /** Where a signed-in user lands by default. */
-export function homeFor(user: { onboarding_completed: boolean; permissions: string[] }): string {
+export function homeFor(user: {
+  onboarding_completed: boolean;
+  permissions: string[];
+  initial_assessment_completed?: boolean;
+  in_progress_attempt_id?: number | null;
+}): string {
   if (user.permissions.includes("admin.access")) return "/admin";
-  return user.onboarding_completed ? "/dashboard" : "/onboarding";
+  if (!user.onboarding_completed) return "/onboarding";
+  if (user.initial_assessment_completed === false) return assessmentHome({ in_progress_attempt_id: user.in_progress_attempt_id ?? null });
+  return "/dashboard";
 }

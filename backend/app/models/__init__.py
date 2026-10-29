@@ -1,6 +1,6 @@
 """All ORM models. Importing this package registers every table on Base.metadata."""
 
-from app.models.ai import AIEvaluation, AIPromptVersion
+from app.models.ai import AIAnalysis, AIEvaluation, AIPromptVersion
 from app.models.assessment import (
     Answer,
     Assessment,
@@ -47,6 +47,7 @@ __all__ = [
     "OAuthIdentity",
     "OAuthState",
     "UserSubscription",
+    "AIAnalysis",
     "AIEvaluation",
     "AIPromptVersion",
     "Answer",

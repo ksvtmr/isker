@@ -1,0 +1,7 @@
+# Optional local hook: `pip install pre-commit && pre-commit install`. Blocks commits that contain credentials
+# (API keys, tokens, private keys). CI runs the same scanner on every push and pull request (.github/workflows/ci.yml).
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks

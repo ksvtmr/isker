@@ -35,6 +35,8 @@ class ProfileOverview(BaseModel):
     level: str | None
     previous_overall: int | None
     change: int | None
+    # How the current result compares with the previous one (services/profile.comparison).
+    comparison: str | None = None
     assessed_at: datetime | None
     attempt_id: int | None
     areas: list[AreaScore]

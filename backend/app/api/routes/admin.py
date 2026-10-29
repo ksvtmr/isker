@@ -6,10 +6,13 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import joinedload, selectinload
 
+from app.ai import analysis as analysis_service
 from app.api.deps import DB, require_permission
 from app.core.content_i18n import LANGS, pair_by_key, reconcile_translations, translation_status
+from app.core.context import language_var
 from app.core.errors import ConflictError, NotFoundError, ValidationError
 from app.models import (
+    AIAnalysis,
     AIEvaluation,
     AIPromptVersion,
     Assessment,
@@ -686,6 +689,52 @@ def ai_evaluations(
     )
 
 
+@router.get("/ai/analyses", summary="AI development analyses: processing status (no answer content)")
+def ai_analyses(
+    _: AIViewer,
+    db: DB,
+    status_filter: Annotated[str | None, Query(alias="status", pattern="^(pending|succeeded|failed)$")] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 25,
+) -> dict:
+    stmt = select(AIAnalysis, User.email).join(User, User.id == AIAnalysis.user_id)
+    if status_filter:
+        stmt = stmt.where(AIAnalysis.status == status_filter)
+    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+    rows = db.execute(stmt.order_by(AIAnalysis.id.desc()).offset((page - 1) * page_size).limit(page_size)).all()
+    counts = dict(db.execute(select(AIAnalysis.status, func.count()).group_by(AIAnalysis.status)).all())
+    items = [{
+        "id": a.id, "attempt_id": a.attempt_id, "user_id": a.user_id, "user_email": email, "status": a.status,
+        "language": a.language, "provider": a.provider, "model": a.model, "error_code": a.error_code, "runs": a.runs,
+        "latency_ms": a.latency_ms, "created_at": a.created_at, "updated_at": a.updated_at,
+        "completed_at": a.completed_at,
+    } for a, email in rows]
+    return {"items": items, "total": total, "page": page, "page_size": page_size,
+            "counts": {k: counts.get(k, 0) for k in ("pending", "succeeded", "failed")}}
+
+
+@router.post("/ai/analyses/{analysis_id}/retry", summary="Run a failed AI development analysis again")
+def retry_ai_analysis(analysis_id: int, admin: AIManager, db: DB) -> dict:
+    row = db.get(AIAnalysis, analysis_id)
+    if row is None:
+        raise NotFoundError("Analysis not found", "ANALYSIS_NOT_FOUND")
+    att = db.get(AssessmentAttempt, row.attempt_id)
+    owner = db.get(User, row.user_id)
+    if att is None or owner is None:  # pragma: no cover - cascades delete analyses with their attempt/user
+        raise NotFoundError("Analysis not found", "ANALYSIS_NOT_FOUND")
+    if row.status != "failed":
+        raise ConflictError("Only a failed analysis can be retried.", "ANALYSIS_NOT_FAILED")
+    audit(db, admin.id, "admin.ai_analysis_retried", "ai_analysis", row.id, attempt_id=row.attempt_id)
+    db.commit()
+    # Written in the learner's language, not the administrator's.
+    token = language_var.set(row.language)
+    try:
+        row = analysis_service.run_analysis(db, owner, att)
+    finally:
+        language_var.reset(token)
+    return {"id": row.id, "status": row.status, "error_code": row.error_code, "runs": row.runs}
+
+
 @router.get("/ai/prompts", response_model=list[PromptOut], summary="Prompt versions")
 def prompts(_: AIViewer, db: DB) -> list[AIPromptVersion]:
     return list(db.scalars(select(AIPromptVersion).order_by(AIPromptVersion.key, AIPromptVersion.version.desc())))
@@ -694,6 +743,7 @@ def prompts(_: AIViewer, db: DB) -> list[AIPromptVersion]:
 _PLACEHOLDERS = {
     "answer_evaluation": dict(competency="c", question="q", rubric="r", answer="a"),
     "profile_insight": dict(facts="{}"),
+    "development_analysis": dict(facts="{}"),
 }
 
 

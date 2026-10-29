@@ -196,6 +196,87 @@ CATALOG: dict[str, dict[str, str]] = {
         "kk": "Құзыреттер профиліңіз дайын",
         "en": "Your competency profile is ready",
     },
+    # Development analysis: language instruction for real models, and the rule-based (mock) analysis texts
+    "analysis.language_instruction": {
+        "ru": "Write every free-text field (summary, explanation, insight, reason, objective, measure, "
+        "confidence_notes) in Russian. Set \"language\" to \"ru\". Keep JSON keys and competency codes as given.",
+        "kk": "Write every free-text field (summary, explanation, insight, reason, objective, measure, "
+        "confidence_notes) in Kazakh (Cyrillic). Set \"language\" to \"kk\". Keep JSON keys and competency codes "
+        "as given.",
+        "en": "Write every free-text field in English. Set \"language\" to \"en\". Keep JSON keys and competency codes "
+        "as given.",
+    },
+    "analysis.summary": {
+        "ru": "По результатам оценки ваш общий балл — {overall} из 100. Сильнее всего проявилась компетенция «{best}», "
+        "больше всего пользы даст развитие компетенции «{gap}». Это оценка по вашим ответам, а не точное измерение.",
+        "kk": "Бағалау нәтижесі бойынша жалпы балыңыз — 100-ден {overall}. Ең күшті көрінген құзырет — «{best}», ал "
+        "«{gap}» құзыретін дамыту ең көп пайда береді. Бұл жауаптарыңыз бойынша бағалау, нақты өлшем емес.",
+        "en": "Your overall score is {overall} out of 100. {best} came out strongest, and developing {gap} will help "
+        "you most. This is an estimate based on your answers, not an exact measurement.",
+    },
+    "analysis.summary_no_gap": {
+        "ru": "По результатам оценки ваш общий балл — {overall} из 100. Сильнее всего проявилась компетенция «{best}», "
+        "и все измеренные компетенции достигли цели. Это оценка по вашим ответам, а не точное измерение.",
+        "kk": "Бағалау нәтижесі бойынша жалпы балыңыз — 100-ден {overall}. Ең күшті көрінген құзырет — «{best}», "
+        "барлық өлшенген құзыреттер мақсатқа жетті. Бұл жауаптарыңыз бойынша бағалау, нақты өлшем емес.",
+        "en": "Your overall score is {overall} out of 100. {best} came out strongest, and every measured competency "
+        "meets your target. This is an estimate based on your answers, not an exact measurement.",
+    },
+    "analysis.strength": {
+        "ru": "{score} из 100 — один из ваших самых высоких результатов; опирайтесь на эту сильную сторону.",
+        "kk": "100-ден {score} — ең жоғары нәтижелеріңіздің бірі; осы күшті жағыңызға сүйеніңіз.",
+        "en": "{score} out of 100 is one of your highest results; build on this strength.",
+    },
+    "analysis.area": {
+        "ru": "{score} из 100 при цели {target}: здесь самый заметный разрыв с учётом ваших целей.",
+        "kk": "Мақсат {target} болғанда 100-ден {score}: мақсаттарыңызды ескергенде ең айқын алшақтық осында.",
+        "en": "{score} out of 100 against a target of {target}: the most important gap given your goals.",
+    },
+    "analysis.reason_learn": {
+        "ru": "Материал по компетенции «{name}» подходит к вашему уровню ({score} из 100).",
+        "kk": "«{name}» құзыреті бойынша материал деңгейіңізге сай ({score} / 100).",
+        "en": "A resource on {name} that matches your level ({score} out of 100).",
+    },
+    "analysis.reason_practice": {
+        "ru": "Практическое задание, чтобы применить компетенцию «{name}» на деле.",
+        "kk": "«{name}» құзыретін іс жүзінде қолдануға арналған практикалық тапсырма.",
+        "en": "A practical task to apply {name} in a real situation.",
+    },
+    "analysis.reason_reflect": {
+        "ru": "Подходящих материалов пока нет: запишите, где вы уже применяли компетенцию «{name}» и что получилось.",
+        "kk": "Әзірге сәйкес материал жоқ: «{name}» құзыретін қай жерде қолданғаныңызды және нәтижесін жазыңыз.",
+        "en": "No matching resources yet: write down where you have used {name} and what happened.",
+    },
+    "analysis.reason_reflect_done": {
+        "ru": "Вы уже прошли доступные материалы по компетенции «{name}»: опишите, как применяли их на практике, и "
+        "пройдите повторную оценку.",
+        "kk": "«{name}» құзыреті бойынша қолжетімді материалдарды өтіп қойдыңыз: оларды іс жүзінде қалай "
+        "қолданғаныңызды жазып, қайта бағалаудан өтіңіз.",
+        "en": "You have completed the available materials on {name}: describe how you applied them, then reassess.",
+    },
+    "analysis.objective": {
+        "ru": "Повысить результат по компетенции «{name}» с {score} до {target}",
+        "kk": "«{name}» құзыреті бойынша нәтижені {score}-ден {target}-ге көтеру",
+        "en": "Raise {name} from {score} to {target}",
+    },
+    "analysis.measure": {
+        "ru": "Пройти материал и задание из плана, затем повторную оценку этой компетенции",
+        "kk": "Жоспардағы материал мен тапсырманы орындап, осы құзыретті қайта бағалаудан өту",
+        "en": "Complete the plan's resource and task, then reassess this competency",
+    },
+    "analysis.limited_evidence": {
+        "ru": "По компетенции «{name}» данных пока мало: результат предварительный. Практическое задание и повторная "
+        "оценка сделают его надёжнее.",
+        "kk": "«{name}» құзыреті бойынша дерек әзірге аз: нәтиже алдын ала. Практикалық тапсырма мен қайта бағалау "
+        "оны сенімдірек етеді.",
+        "en": "There is little evidence for {name} yet, so this result is provisional. A practical task and a "
+        "reassessment will make it more reliable.",
+    },
+    "analysis.estimate_note": {
+        "ru": "Баллы — оценка по ответам в этом тесте, а не научно подтверждённое измерение или диагноз.",
+        "kk": "Баллдар — осы тесттегі жауаптар бойынша бағалау, ғылыми расталған өлшем немесе диагноз емес.",
+        "en": "Scores are estimates from your answers to this assessment, not a validated measurement or diagnosis.",
+    },
     "notify.overall": {
         "ru": "Общий балл {score} / 100.",
         "kk": "Жалпы балл {score} / 100.",

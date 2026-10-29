@@ -5,11 +5,14 @@ from collections import Counter
 from fastapi import APIRouter, status
 from sqlalchemy import select
 
+from app.ai import analysis as analysis_service
 from app.api.deps import DB, CurrentUser
-from app.core.errors import NotFoundError
+from app.core.errors import ConflictError, NotFoundError
+from app.core.ratelimit import enforce
 from app.models import AssessmentAttempt, Question
 from app.models.enums import AttemptScope, AttemptStatus
 from app.schemas.assessment import (
+    AnalysisRunIn,
     AnswerIn,
     AnswerOut,
     AssessmentOut,
@@ -155,6 +158,27 @@ def abandon(attempt_id: int, user: CurrentUser, db: DB) -> AttemptSummary:
         att.status = AttemptStatus.ABANDONED
         db.commit()
     return views.attempt_summary(db, att)
+
+
+@router.get("/attempts/{attempt_id}/analysis", summary="AI development analysis of your completed attempt")
+def get_analysis(attempt_id: int, user: CurrentUser, db: DB) -> dict:
+    att = svc.get_attempt(db, user, attempt_id)
+    if att.status != AttemptStatus.COMPLETED:
+        raise ConflictError("Finish the assessment first.", "ATTEMPT_NOT_COMPLETED")
+    return views.analysis_view(db, att, analysis_service.get_analysis(db, att.id))
+
+
+@router.post("/attempts/{attempt_id}/analysis",
+             summary="Generate, retry or regenerate (in the current language) the AI development analysis")
+def run_analysis(attempt_id: int, body: AnalysisRunIn, user: CurrentUser, db: DB) -> dict:
+    att = svc.get_attempt(db, user, attempt_id)
+    if att.status != AttemptStatus.COMPLETED:
+        raise ConflictError("Finish the assessment first.", "ATTEMPT_NOT_COMPLETED")
+    existing = analysis_service.get_analysis(db, att.id)
+    if existing is None or existing.status == "failed" or body.regenerate:
+        enforce("ai_analysis_user", str(user.id))
+    row = analysis_service.run_analysis(db, user, att, regenerate=body.regenerate)
+    return views.analysis_view(db, att, row)
 
 
 @router.get("/attempts/{attempt_id}/results", response_model=AttemptResults, summary="Results of an attempt")

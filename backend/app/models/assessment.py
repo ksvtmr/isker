@@ -138,6 +138,12 @@ class AssessmentAttempt(TimestampMixin, Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     overall_score: Mapped[int | None] = mapped_column(Integer)
     sequence: Mapped[int] = mapped_column(Integer, default=1)
+    # What the result was measured with, so later comparisons can tell like from unlike: the assessment's content
+    # version when the attempt started, the scoring method (services/scoring.SCORING_VERSION) and the language the
+    # learner answered in. NULL language = recorded before it was stored.
+    assessment_version: Mapped[int | None] = mapped_column(Integer)
+    scoring_version: Mapped[str | None] = mapped_column(String(16))
+    language: Mapped[str | None] = mapped_column(String(8))
 
     assessment: Mapped[Assessment] = relationship()
     scope_competency = relationship("Competency")

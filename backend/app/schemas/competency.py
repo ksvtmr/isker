@@ -60,6 +60,9 @@ class CompetencyScoreOut(BaseModel):
     priority_rank: int | None = None
     confidence: float | None = None
     explanation: str | None = None
+    # sufficient | limited | insufficient; None for results recorded before evidence was stored.
+    evidence_level: str | None = None
+    evidence_count: int | None = None
     assessed_at: datetime | None = None
     change: int | None = None
 

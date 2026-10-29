@@ -102,3 +102,9 @@ class AnswerIn(BaseModel):
 
 class PositionIn(BaseModel):
     position: int = Field(ge=0)
+
+
+class AnalysisRunIn(BaseModel):
+    """`regenerate`: write the existing analysis again (e.g. in the current interface language)."""
+
+    regenerate: bool = False

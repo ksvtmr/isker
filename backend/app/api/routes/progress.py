@@ -43,7 +43,7 @@ from app.schemas.progress import (
 from app.services import assessments as assessment_service
 from app.services import entitlements, views
 from app.services import recommendations as rec_service
-from app.services.profile import history
+from app.services.profile import comparison, history
 
 router = APIRouter(responses=ERROR_RESPONSES)
 REASSESS_AFTER_DAYS = 30
@@ -128,6 +128,8 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
     trends = []
     for cid, pts in history(db, user.id).items():
         scores = [s.score for s, _ in pts]
+        last_cmp = comparison(pts[-2][1], pts[-1][1]) if len(pts) > 1 else None
+        first_cmp = comparison(pts[0][1], pts[-1][1]) if len(pts) > 1 else None
         trends.append(
             CompetencyTrend(
                 competency_id=cid,
@@ -137,8 +139,10 @@ def progress(user: CurrentUser, db: DB) -> ProgressOverview:
                 first=scores[0],
                 previous=scores[-2] if len(scores) > 1 else None,
                 current=scores[-1],
-                change_since_previous=(scores[-1] - scores[-2]) if len(scores) > 1 else None,
-                change_since_first=scores[-1] - scores[0],
+                change_since_previous=(scores[-1] - scores[-2]) if last_cmp not in (None, "method_changed") else None,
+                change_since_first=(scores[-1] - scores[0]) if first_cmp != "method_changed" else None,
+                comparison=last_cmp,
+                comparison_since_first=first_cmp,
                 points=scores,
             )
         )

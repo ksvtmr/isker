@@ -64,7 +64,7 @@ def test_admin_creates_resource_and_question(client, db):
 def test_prompt_versioning(client, db):
     _admin(client, db)
     prompts = client.get("/api/admin/ai/prompts").json()
-    assert {p["key"] for p in prompts} == {"answer_evaluation", "profile_insight"}
+    assert {p["key"] for p in prompts} == {"answer_evaluation", "profile_insight", "development_analysis"}
     r = client.post(
         "/api/admin/ai/prompts",
         json={"key": "profile_insight", "system_prompt": "x" * 30, "user_template": "Facts: {facts}", "activate": True},

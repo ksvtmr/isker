@@ -13,10 +13,22 @@ dist/
 coverage/
 *.tsbuildinfo
 
-# Env / secrets
+# Env / secrets (never commit real credentials; .env.example holds placeholders only)
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa*
+id_ed25519*
+credentials*.json
+service-account*.json
+secrets/
+*.sqlite
+*.sqlite3
 
 # OS / editors
 .DS_Store

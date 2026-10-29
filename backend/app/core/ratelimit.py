@@ -91,6 +91,8 @@ RULES = {
     "oauth_ip": (30, 600),
     # AI evaluations (cost control): practice feedback / submissions per user.
     "ai_user": (30, 3600),
+    # AI development analysis: generate / retry / regenerate per user (each run calls the provider).
+    "ai_analysis_user": (10, 3600),
 }
 MAX_WINDOW = max(w for _, w in RULES.values())
 

@@ -39,7 +39,9 @@ export function ProgressPage() {
     : [{ values: snaps.map(pick), color: AREA_COLOR[area] }];
   const first = pick(snaps[0]), last = pick(snaps[snaps.length - 1]), prev = snaps.length > 1 ? pick(snaps[snaps.length - 2]) : null;
   const trends = p.trends.filter((t) => area === "all" || t.area_code === area);
-  const growth = trends.filter((t) => t.points.length > 1).sort((a, b) => b.change_since_first - a.change_since_first).slice(0, 6);
+  // Only like-for-like measurements: a change across different scoring methods is not computed (null).
+  const growth = trends.filter((t) => t.points.length > 1 && t.change_since_first !== null)
+    .sort((a, b) => (b.change_since_first ?? 0) - (a.change_since_first ?? 0)).slice(0, 6);
   const values = snaps.flatMap((s) => [s.overall, s.ideas, s.resources, s.action]);
   const min = Math.max(0, Math.floor((Math.min(...values) - 10) / 10) * 10);
 

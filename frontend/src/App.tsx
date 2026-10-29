@@ -8,7 +8,7 @@ import { useLanguageSync } from "./i18n/useLanguage";
 import { AppShell } from "./layouts/AppShell";
 import { FocusLayout } from "./layouts/FocusLayout";
 import { AdminShell } from "./layouts/AdminShell";
-import { RedirectIfAuthed, RequireAdmin, RequireAuth, RequirePermission } from "./layouts/guards";
+import { RedirectIfAuthed, RequireAdmin, RequireAuth, RequireInitialAssessment, RequirePermission } from "./layouts/guards";
 import { AdminAnalytics } from "./pages/admin/AdminAnalytics";
 import { AdminAuditLogs } from "./pages/admin/AdminAuditLogs";
 import { AdminAIPage, AdminAssessmentsPage, AdminCompetenciesPage, AdminLearningPage } from "./pages/admin/AdminContent";
@@ -95,17 +95,20 @@ export function App() {
           <Route path="/assessment/:id" element={<AssessmentRunner />} />
         </Route>
         <Route element={<AppShell />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/assessment" element={<AssessmentIntro />} />
-          <Route path="/results" element={<ResultsPage />} />
-          <Route path="/competencies" element={<CompetenciesPage />} />
-          <Route path="/competencies/:id" element={<CompetencyDetailPage />} />
-          <Route path="/development-plan" element={<DevelopmentPlanPage />} />
-          <Route path="/learning" element={<LearningPage />} />
-          <Route path="/learning/:id" element={<LearningDetailPage />} />
-          <Route path="/practice" element={<PracticePage />} />
-          <Route path="/practice/:id" element={<PracticeDetailPage />} />
-          <Route path="/progress" element={<ProgressPage />} />
+          {/* Built on results: learners go through the initial assessment first. */}
+          <Route element={<RequireInitialAssessment />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/results" element={<ResultsPage />} />
+            <Route path="/competencies" element={<CompetenciesPage />} />
+            <Route path="/competencies/:id" element={<CompetencyDetailPage />} />
+            <Route path="/development-plan" element={<DevelopmentPlanPage />} />
+            <Route path="/learning" element={<LearningPage />} />
+            <Route path="/learning/:id" element={<LearningDetailPage />} />
+            <Route path="/practice" element={<PracticePage />} />
+            <Route path="/practice/:id" element={<PracticeDetailPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
+          </Route>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

@@ -31,7 +31,14 @@ export interface User {
   language: "ru" | "kk" | "en" | null;
   has_password: boolean;
   google_linked: boolean;
+  /** A full assessment has been completed at least once (onboarding is finished only then). */
+  initial_assessment_completed: boolean;
+  /** The open assessment to resume, if any. */
+  in_progress_attempt_id: number | null;
 }
+
+export type Comparison = "same" | "content_changed" | "method_changed";
+export type EvidenceLevel = "sufficient" | "limited" | "insufficient";
 
 /** What the API says happened with the confirmation email. "logged" = dev mode: written to the server log, not sent. */
 export type VerificationState = "verified" | "sent" | "logged" | "unavailable" | "not_required" | "not_verified";
@@ -195,6 +202,9 @@ export interface CompetencyScore {
   priority_rank: number | null;
   confidence: number | null;
   explanation: string | null;
+  /** How much evidence the score rests on; null for results recorded before evidence was stored. */
+  evidence_level: EvidenceLevel | null;
+  evidence_count: number | null;
   assessed_at: string | null;
   change: number | null;
 }
@@ -222,6 +232,8 @@ export interface ProfileOverview {
   level: Level | null;
   previous_overall: number | null;
   change: number | null;
+  /** How this result compares with the previous one; "method_changed" means no change is computed. */
+  comparison: Comparison | null;
   assessed_at: string | null;
   attempt_id: number | null;
   areas: AreaScore[];
@@ -496,7 +508,11 @@ export interface CompetencyTrend {
   previous: number | null;
   current: number;
   change_since_previous: number | null;
-  change_since_first: number;
+  /** null when the scoring method changed between the two measurements (not comparable). */
+  change_since_first: number | null;
+  /** "same" | "content_changed" | "method_changed" (null: only one measurement). */
+  comparison: Comparison | null;
+  comparison_since_first: Comparison | null;
   points: number[];
 }
 
@@ -537,4 +553,48 @@ export interface NotificationItem {
   link: string | null;
   is_read: boolean;
   created_at: string;
+}
+
+// --- AI development analysis (GET/POST /api/assessments/attempts/{id}/analysis) -------------------------------------
+
+export type AnalysisStatus = "none" | "pending" | "succeeded" | "failed";
+
+export interface AnalysisCompetency {
+  code: string;
+  name: string;
+  score: number | null;
+  evidence_level: EvidenceLevel | null;
+}
+
+export interface AnalysisAction {
+  competency: AnalysisCompetency;
+  kind: "learn" | "practice" | "reflect";
+  reason: string;
+  resource: { id: number; title: string; type: string; minutes: number; available: boolean } | null;
+  task: { id: number; title: string; minutes: number; available: boolean } | null;
+}
+
+export interface DevelopmentAnalysis {
+  summary: string;
+  strengths: (AnalysisCompetency & { explanation: string })[];
+  development_areas: (AnalysisCompetency & { explanation: string; priority: number })[];
+  competency_insights: (AnalysisCompetency & { insight: string })[];
+  recommended_actions: AnalysisAction[];
+  milestones: (AnalysisCompetency & { objective: string; measure: string; target_weeks: number })[];
+  confidence_notes: string[];
+  reassessment_weeks: number | null;
+}
+
+export interface AnalysisState {
+  status: AnalysisStatus;
+  attempt_id: number;
+  language?: "ru" | "kk" | "en";
+  error_code?: string | null;
+  provider?: string | null;
+  model?: string | null;
+  /** Written by the built-in rule-based provider (no external AI model). */
+  rule_based?: boolean;
+  runs?: number;
+  completed_at?: string | null;
+  analysis?: DevelopmentAnalysis | null;
 }

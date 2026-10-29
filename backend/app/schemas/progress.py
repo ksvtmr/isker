@@ -31,7 +31,10 @@ class CompetencyTrend(BaseModel):
     previous: int | None
     current: int
     change_since_previous: int | None
-    change_since_first: int
+    change_since_first: int | None
+    # services/profile.comparison between the last two measurements, and between the first and the last.
+    comparison: str | None = None
+    comparison_since_first: str | None = None
     points: list[int]
 
 

@@ -1,8 +1,9 @@
 """AI provider abstraction.
 
     AIProvider
-        ├── OpenAIProvider   (OPENAI_API_KEY set and MOCK_AI=false)
-        └── MockAIProvider   (default; deterministic, no network)
+        ├── OpenAIProvider   (AI_PROVIDER=openai or auto with OPENAI_API_KEY, MOCK_AI=false)
+        ├── GeminiProvider   (AI_PROVIDER=gemini or auto with GEMINI_API_KEY, MOCK_AI=false)
+        └── MockAIProvider   (MOCK_AI=true, the default; deterministic, no network)
 
 Providers return raw text. Parsing and validation happen in `app.ai.service` so every provider
 goes through the same governance path.
@@ -53,6 +54,10 @@ class AIProvider(ABC):
 
     @abstractmethod
     def insight(self, req: InsightRequest) -> str: ...
+
+    def analyze(self, req: InsightRequest) -> str:
+        """Development analysis of a completed assessment (app/ai/analysis.py): raw JSON text."""
+        raise AIProviderError(f"{self.name} does not support the development analysis")
 
 
 # ---------------------------------------------------------------------------
@@ -182,6 +187,11 @@ class MockAIProvider(AIProvider):
     def insight(self, req: InsightRequest) -> str:
         return json.dumps(heuristic_insight(req.facts))
 
+    def analyze(self, req: InsightRequest) -> str:
+        from app.ai.analysis import heuristic_analysis
+
+        return json.dumps(heuristic_analysis(req.facts))
+
 
 # ---------------------------------------------------------------------------
 # OpenAI provider (Chat Completions, JSON mode). Key is only ever read server-side.
@@ -191,13 +201,14 @@ class MockAIProvider(AIProvider):
 class OpenAIProvider(AIProvider):
     name = "openai"
 
-    def __init__(self, api_key: str, model: str, base_url: str, timeout: float):
+    def __init__(self, api_key: str, model: str, base_url: str, timeout: float, analysis_timeout: float | None = None):
         self._key = api_key
         self.model = model
         self._base = base_url.rstrip("/")
         self._timeout = timeout
+        self._analysis_timeout = analysis_timeout or timeout
 
-    def _chat(self, system: str, user: str) -> str:
+    def _chat(self, system: str, user: str, timeout: float | None = None) -> str:
         try:
             r = httpx.post(
                 f"{self._base}/chat/completions",
@@ -208,10 +219,12 @@ class OpenAIProvider(AIProvider):
                     "response_format": {"type": "json_object"},
                     "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
                 },
-                timeout=self._timeout,
+                timeout=timeout or self._timeout,
             )
         except httpx.HTTPError as e:
             raise AIProviderError(f"network error: {type(e).__name__}") from e
+        if r.status_code == 429:
+            raise AIProviderError("provider rate limit (HTTP 429)")
         if r.status_code >= 400:
             raise AIProviderError(f"provider returned HTTP {r.status_code}")
         try:
@@ -225,9 +238,73 @@ class OpenAIProvider(AIProvider):
     def insight(self, req: InsightRequest) -> str:
         return self._chat(req.system_prompt, req.user_prompt)
 
+    def analyze(self, req: InsightRequest) -> str:
+        return self._chat(req.system_prompt, req.user_prompt, self._analysis_timeout)
+
+
+# ---------------------------------------------------------------------------
+# Google Gemini provider (Generative Language API, JSON output). The key goes in the x-goog-api-key header, never in
+# the URL, and never appears in errors or logs.
+# ---------------------------------------------------------------------------
+
+
+class GeminiProvider(AIProvider):
+    name = "gemini"
+
+    def __init__(self, api_key: str, model: str, base_url: str, timeout: float, analysis_timeout: float | None = None):
+        self._key = api_key
+        self.model = model
+        self._base = base_url.rstrip("/")
+        self._timeout = timeout
+        self._analysis_timeout = analysis_timeout or timeout
+
+    def _generate(self, system: str, user: str, timeout: float | None = None) -> str:
+        try:
+            r = httpx.post(
+                f"{self._base}/models/{self.model}:generateContent",
+                headers={"x-goog-api-key": self._key},
+                json={
+                    "systemInstruction": {"parts": [{"text": system}]},
+                    "contents": [{"role": "user", "parts": [{"text": user}]}],
+                    "generationConfig": {"temperature": 0, "responseMimeType": "application/json"},
+                },
+                timeout=timeout or self._timeout,
+            )
+        except httpx.HTTPError as e:
+            raise AIProviderError(f"network error: {type(e).__name__}") from e
+        if r.status_code == 429:
+            raise AIProviderError("provider rate limit (HTTP 429)")
+        if r.status_code >= 400:
+            raise AIProviderError(f"provider returned HTTP {r.status_code}")
+        try:
+            data = r.json()
+            candidate = data["candidates"][0]
+            text = "".join(part.get("text", "") for part in candidate["content"]["parts"])
+        except (KeyError, IndexError, ValueError, TypeError) as e:
+            blocked = isinstance(locals().get("data"), dict) and data.get("promptFeedback", {}).get("blockReason")
+            reason = "response blocked by the provider" if blocked else "unexpected provider response shape"
+            raise AIProviderError(reason) from e
+        if not text.strip():
+            raise AIProviderError("empty provider response")
+        return text
+
+    def evaluate(self, req: EvaluationRequest) -> str:
+        return self._generate(req.system_prompt, req.user_prompt)
+
+    def insight(self, req: InsightRequest) -> str:
+        return self._generate(req.system_prompt, req.user_prompt)
+
+    def analyze(self, req: InsightRequest) -> str:
+        return self._generate(req.system_prompt, req.user_prompt, self._analysis_timeout)
+
 
 def get_provider() -> AIProvider:
     s = get_settings()
-    if s.use_mock_ai:
-        return MockAIProvider()
-    return OpenAIProvider(s.openai_api_key, s.openai_model, s.openai_base_url, s.ai_timeout_seconds)
+    provider = s.resolved_ai_provider
+    if provider == "gemini":
+        return GeminiProvider(s.ai_key("gemini"), s.gemini_model, s.gemini_base_url, s.ai_timeout_seconds,
+                              s.ai_analysis_timeout_seconds)
+    if provider == "openai":
+        return OpenAIProvider(s.ai_key("openai"), s.openai_model, s.openai_base_url, s.ai_timeout_seconds,
+                              s.ai_analysis_timeout_seconds)
+    return MockAIProvider()

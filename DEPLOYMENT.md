@@ -142,7 +142,7 @@ Full list with comments: [.env.example](.env.example). Where to set them:
 | `TRUSTED_PROXY_HOPS` | 1 (harmless locally) | `1` (Render's load balancer) |
 | `ADMIN_PASSWORD` | dev default `IskerAdmin2026` | **you choose it** when creating the Blueprint |
 | `DEMO_PASSWORD` | dev default `IskerDemo2026` | set in render.yaml (public demo account, read-only by default) |
-| `MOCK_AI`, `OPENAI_API_KEY` | `true` / empty | `true`, or `false` + key (secret, Render only) |
+| `MOCK_AI`, `AI_PROVIDER`, `GEMINI_API_KEY` / `OPENAI_API_KEY` | `true` / `auto` / empty | `true`, or `MOCK_AI=false` + `AI_PROVIDER=gemini` + key (secret, Render Environment only) — see docs/security/api-key-management.md |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | optional | optional — see docs/google-oauth-setup.md |
 | `SMTP_*` | empty (emails go to the log) | needed for real emails |
 | `API_DOCS_ENABLED` | on by default | off by default in production |

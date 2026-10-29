@@ -1,4 +1,4 @@
-import { Button, Card, Icon, InlineAlert, Modal, Select, type IconName } from "@isker/design-system";
+import { Button, Card, Icon, InlineAlert, LanguageSelect, Modal, Select, type IconName } from "@isker/design-system";
 import { PageHeader } from "../components/PageTitle";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,8 @@ import { useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { formatDate } from "../utils/format";
 import { appHref } from "../utils/appHref";
+import type { Language } from "../i18n/config";
+import { useLanguage } from "../i18n/useLanguage";
 
 export function AssessmentIntro() {
   const { t } = useTranslation("assessment");
@@ -21,6 +23,7 @@ export function AssessmentIntro() {
   const [competency, setCompetency] = useState("");
   const [confirmRestart, setConfirmRestart] = useState(false);
   const abandon = useAbandonAttempt();
+  const { language, setLanguage, options } = useLanguage();
 
   if (overview.isLoading) return <PageSkeleton cards={0} />;
   if (overview.error || !overview.data) return <><PageHeader title={t("assessmentIntro.title")} /><ErrorState error={overview.error} onRetry={() => overview.refetch()} /></>;
@@ -56,6 +59,18 @@ export function AssessmentIntro() {
     <>
       <PageHeader title={assessment.title} subtitle={profile.data?.competencies.length ? t("assessmentIntro.subtitle", { count: profile.data.competencies.length }) : t("assessmentIntro.subtitleGeneric")} />
       {start.error && <div style={{ marginBottom: 16 }}><ApiErrorAlert error={start.error} /></div>}
+      {!hasProfile && (
+        // First visit: why the assessment comes first, how results are used, and its language.
+        <Card padding={28} style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: "var(--text-lg)", fontWeight: 600, margin: 0 }}>{t("firstTime.title")}</h2>
+          <p style={{ marginTop: 8, lineHeight: 1.6 }}>{t("firstTime.why")}</p>
+          <p style={{ marginTop: 8, lineHeight: 1.6, color: "var(--color-neutral-600)" }}>{t("firstTime.use")}</p>
+          <div style={{ marginTop: 16, maxWidth: 320 }}>
+            <LanguageSelect compact={false} label={t("firstTime.language")} value={language} options={options} onChange={(v) => setLanguage(v as Language)} />
+            <p className="isk-hint" style={{ marginTop: 6 }}>{t("firstTime.languageHint")}</p>
+          </div>
+        </Card>
+      )}
       <div className="ik-grid3" style={{ alignItems: "start", marginBottom: 24 }}>
         <Card padding={28} className="ik-span2">
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

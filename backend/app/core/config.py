@@ -72,12 +72,23 @@ class Settings(BaseSettings):
     # Comma-separated in the environment (NoDecode: not parsed as JSON).
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173", "http://localhost:8080"]
 
-    # AI
+    # AI. Provider keys are backend-only secrets: read from the environment (or the host's secret store), never sent
+    # to the browser, put in URLs or logged. See docs/security/api-key-management.md.
+    # MOCK_AI=true: the built-in deterministic provider (no network). Otherwise AI_PROVIDER picks the provider:
+    # "openai", "gemini", or "auto" (the one whose key is set). A missing key is a startup error, never a silent mock.
     mock_ai: bool = True
+    ai_provider: str = "auto"
+    # Generic key for the selected provider, used when its own variable below is empty (needs AI_PROVIDER).
+    ai_api_key: str = ""
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     openai_base_url: str = "https://api.openai.com/v1"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash"
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
     ai_timeout_seconds: float = 30.0
+    # The development analysis is one larger request (whole profile + catalog); it gets more time.
+    ai_analysis_timeout_seconds: float = 90.0
     ai_max_retries: int = 1
 
     # Seed / demo
@@ -119,6 +130,16 @@ class Settings(BaseSettings):
             raise ValueError("CORS_ORIGINS must list explicit origins; '*' is not allowed with credentials")
         if self.is_production and self.email_backend == "console":
             raise ValueError("EMAIL_BACKEND=console is for development only")
+        provider = self.ai_provider.strip().lower()
+        if provider not in ("auto", "mock", "openai", "gemini"):
+            raise ValueError("AI_PROVIDER must be auto, mock, openai or gemini")
+        if not self.mock_ai and provider != "mock":
+            if provider == "auto" and self.ai_api_key and not (self.openai_api_key or self.gemini_api_key):
+                raise ValueError("AI_API_KEY is set: also set AI_PROVIDER=openai or AI_PROVIDER=gemini")
+            if provider in ("openai", "gemini") and not self.ai_key(provider):
+                raise ValueError(f"AI_PROVIDER={provider} needs {provider.upper()}_API_KEY (or AI_API_KEY)")
+            if provider == "auto" and not (self.openai_api_key or self.gemini_api_key) and self.is_production:
+                raise ValueError("MOCK_AI=false but no AI key is configured (GEMINI_API_KEY or OPENAI_API_KEY)")
         if self.is_production and self.cookie_secure is False:
             raise ValueError("COOKIE_SECURE=false is not allowed in production (session cookies need HTTPS)")
         if self.is_production:
@@ -157,9 +178,29 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.environment.lower() == "production"
 
+    def ai_key(self, provider: str) -> str:
+        own = {"openai": self.openai_api_key, "gemini": self.gemini_api_key}.get(provider, "")
+        return own or self.ai_api_key
+
+    @property
+    def resolved_ai_provider(self) -> str:
+        """mock, openai or gemini. Outside production, MOCK_AI=false without any key still means mock (dev)."""
+        provider = self.ai_provider.strip().lower()
+        if self.mock_ai or provider == "mock":
+            return "mock"
+        if provider in ("openai", "gemini"):
+            return provider
+        if self.gemini_api_key:
+            return "gemini"
+        return "openai" if self.openai_api_key else "mock"
+
     @property
     def use_mock_ai(self) -> bool:
-        return self.mock_ai or not self.openai_api_key
+        return self.resolved_ai_provider == "mock"
+
+    @property
+    def ai_model(self) -> str | None:
+        return {"openai": self.openai_model, "gemini": self.gemini_model}.get(self.resolved_ai_provider)
 
 
 @lru_cache

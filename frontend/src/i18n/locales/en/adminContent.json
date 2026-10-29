@@ -399,7 +399,8 @@
       "open_answer": "Open answer",
       "practical_answer": "Practical answer",
       "practice_submission": "Practice submission",
-      "profile_insight": "Profile insight"
+      "profile_insight": "Profile insight",
+      "development_analysis": "Development analysis"
     },
     "columns": {
       "input": "Input",
@@ -446,7 +447,37 @@
     "emptyPromptsText": "The built-in prompt is used for now.",
     "versionLabel": "version {{n}}",
     "activateTitle": "Activate “{{key}}” version {{version}}?",
-    "activateText": "All new AI evaluations will use this version. The currently active version is switched off; past results are unchanged."
+    "activateText": "All new AI evaluations will use this version. The currently active version is switched off; past results are unchanged.",
+    "tabAnalyses": "Development analyses",
+    "analyses": {
+      "intro": "One AI development analysis per completed assessment. Only processing information is shown here, not the learner's answers or the analysis text.",
+      "statuses": {
+        "pending": "Running",
+        "succeeded": "Ready",
+        "failed": "Failed"
+      },
+      "columns": {
+        "user": "Learner",
+        "attempt": "Assessment",
+        "language": "Language",
+        "error": "Problem",
+        "runs": "Runs"
+      },
+      "errors": {
+        "provider_unavailable": "AI service unreachable",
+        "rate_limited": "Rate limited by the provider",
+        "invalid_output": "Answer failed validation",
+        "wrong_language": "Answer in the wrong language"
+      },
+      "retry": "Run again",
+      "retried": {
+        "ok": "The analysis is ready.",
+        "failed": "The analysis failed again. See the problem column."
+      },
+      "emptyTitle": "No analyses yet",
+      "emptyText": "Analyses appear here after learners complete a full assessment.",
+      "next": "Next"
+    }
   },
   "sync": {
     "status": {

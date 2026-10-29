@@ -83,6 +83,10 @@ class UserOut(BaseModel):
     language: str | None = None
     has_password: bool = True
     google_linked: bool = False
+    # Onboarding state: has a full assessment ever been completed, and is one open to resume. The interface sends
+    # learners without results to the initial assessment instead of an empty dashboard.
+    initial_assessment_completed: bool = False
+    in_progress_attempt_id: int | None = None
 
 
 class AuthOut(BaseModel):

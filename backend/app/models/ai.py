@@ -2,7 +2,18 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, utcnow
@@ -23,6 +34,37 @@ class AIPromptVersion(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AIAnalysis(Base):
+    """AI development analysis of one completed attempt (app/ai/analysis.py): one row per attempt, so retries update
+    it instead of adding results. `output` is the validated DevelopmentAnalysis; it never changes scores."""
+
+    __tablename__ = "ai_analyses"
+    __table_args__ = (
+        UniqueConstraint("attempt_id"),
+        CheckConstraint("status IN ('pending', 'succeeded', 'failed')", name="status_valid"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    attempt_id: Mapped[int] = mapped_column(ForeignKey("assessment_attempts.id", ondelete="CASCADE"))
+    status: Mapped[str] = mapped_column(String(16), index=True)
+    language: Mapped[str] = mapped_column(String(8))
+    provider: Mapped[str | None] = mapped_column(String(32))
+    model: Mapped[str | None] = mapped_column(String(64))
+    prompt_version_id: Mapped[int | None] = mapped_column(ForeignKey("ai_prompt_versions.id", ondelete="SET NULL"))
+    output: Mapped[dict | None] = mapped_column(JSON)
+    # Stable code for the last failure (provider_unavailable, rate_limited, invalid_output, wrong_language); the
+    # detail stays in the server log without request data.
+    error_code: Mapped[str | None] = mapped_column(String(32))
+    runs: Mapped[int] = mapped_column(Integer, default=0)
+    latency_ms: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    prompt_version: Mapped[AIPromptVersion | None] = relationship()
 
 
 class AIEvaluation(Base):

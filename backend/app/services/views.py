@@ -10,6 +10,7 @@ from app.ai.service import RULE_BASED as AI_RULE_BASED
 from app.core.i18n import lang as tr_lang
 from app.core.i18n import tr
 from app.models import (
+    AIAnalysis,
     AIEvaluation,
     AssessmentAttempt,
     Competency,
@@ -19,16 +20,17 @@ from app.models import (
     LearningResource,
     PracticalTask,
     Recommendation,
+    User,
 )
-from app.models.enums import ActivityKind, AIInputType, AttemptStatus, ContentStatus
+from app.models.enums import ActivityKind, AIInputType, AttemptStatus, ContentStatus, Difficulty
 from app.schemas.assessment import AttemptSummary, CompetencyRef
 from app.schemas.competency import CompetencyScoreOut
 from app.schemas.results import ActivityOut, AreaScore, InsightOut, ProfileOverview, RecommendationOut
+from app.services import entitlements, scoring
 from app.services import gaps as gap_service
 from app.services import recommendations as rec_service
-from app.services import scoring
 from app.services.levels import DEFAULT_TARGET, gap_band, level_name_for
-from app.services.profile import area_scores, completed_attempts, current_scores, history, overall_score
+from app.services.profile import area_scores, comparison, completed_attempts, current_scores, history, overall_score
 
 
 def type_label(value: str) -> str:
@@ -137,6 +139,8 @@ def score_out(
         priority_rank=g.priority_rank if g else None,
         confidence=s.confidence if s else None,
         explanation=scoring.explain_stored(s) if s else None,
+        evidence_level=s.evidence_level if s else None,
+        evidence_count=len(s.evidence) if s and s.evidence is not None else None,
         assessed_at=s.created_at if s else None,
         change=change,
     )
@@ -175,11 +179,13 @@ def profile_overview(db: Session, user_id: int, as_of_attempt: AssessmentAttempt
     comps = [c for c in competencies(db) if c.status == ContentStatus.PUBLISHED or c.id in scores]
     a_scores = area_scores(db, scores)
     overall = current_att.overall_score if current_att.overall_score is not None else overall_score(scores)
-    prev_overall = prev_att.overall_score if prev_att else None
+    cmp = comparison(prev_att, current_att)
+    # A different scoring method makes the difference meaningless: no change numbers then.
+    prev_overall = prev_att.overall_score if prev_att and cmp != "method_changed" else None
     items = []
     for c in comps:
         s = scores.get(c.id)
-        p = prev_scores.get(c.id)
+        p = prev_scores.get(c.id) if cmp != "method_changed" else None
         items.append(score_out(c, s, gaps.get(c.id), (s.score - p.score) if s and p else None))
     measured = [i for i in items if i.score is not None]
     strengths = sorted(measured, key=lambda i: (-(i.score or 0), i.competency_id))[:3]
@@ -192,6 +198,7 @@ def profile_overview(db: Session, user_id: int, as_of_attempt: AssessmentAttempt
         level=level_name_for(overall) if overall is not None else None,
         previous_overall=prev_overall,
         change=(overall - prev_overall) if prev_overall is not None and overall is not None else None,
+        comparison=cmp,
         assessed_at=current_att.completed_at,
         attempt_id=current_att.id,
         areas=[
@@ -318,3 +325,71 @@ __all__ = [
     "recommendation_out",
     "score_out",
 ]
+
+
+def analysis_view(db: Session, att: AssessmentAttempt, row: AIAnalysis | None) -> dict:
+    """The AI analysis of `att` for the screen. The model's texts are shown as written (in `language`); competency
+    names, scores, resource and task titles come from the database in the reader's language, and an item that is no
+    longer published or available is marked instead of linked. Scores are this attempt's stored scores."""
+    if row is None:
+        return {"status": "none", "attempt_id": att.id}
+    base = {
+        "status": row.status, "attempt_id": att.id, "language": row.language, "error_code": row.error_code,
+        "provider": row.provider, "model": row.model, "rule_based": row.provider in AI_RULE_BASED,
+        "runs": row.runs, "completed_at": row.completed_at, "analysis": None,
+    }
+    if row.status != "succeeded" or not row.output:
+        return base
+    out = row.output
+    if row.provider in AI_RULE_BASED and row.language != tr_lang():
+        # Rule-based texts come from the catalog: written again in the reader's language (no AI call, same rules).
+        from app.ai.analysis import build_facts, heuristic_analysis
+
+        owner = db.get(User, att.user_id)
+        if owner is not None:
+            out = heuristic_analysis(build_facts(db, owner, att))
+            base["language"] = tr_lang()
+    comps = {c.code: c for c in db.scalars(select(Competency))}
+    rows = db.scalars(select(CompetencyScore).where(CompetencyScore.attempt_id == att.id))
+    scores = {s.competency_id: s for s in rows}
+    user = db.get(User, att.user_id)
+    advanced_ok = user is not None and entitlements.allows(db, user, "learning.advanced_resources")
+
+    def comp(code: str) -> dict:
+        c = comps.get(code)
+        s = scores.get(c.id) if c else None
+        return {"code": code, "name": c.name if c else code, "score": s.score if s else None,
+                "evidence_level": s.evidence_level if s else None}
+
+    def resource(rid: int | None) -> dict | None:
+        r = db.get(LearningResource, rid) if rid else None
+        if r is None:
+            return None
+        allowed = advanced_ok or r.difficulty != Difficulty.ADVANCED
+        return {"id": r.id, "title": r.title, "type": r.type.value, "minutes": r.duration_minutes,
+                "available": r.status == ContentStatus.PUBLISHED and allowed}
+
+    def task(tid: int | None) -> dict | None:
+        t = db.get(PracticalTask, tid) if tid else None
+        if t is None:
+            return None
+        return {"id": t.id, "title": t.title, "minutes": t.duration_minutes,
+                "available": t.status == ContentStatus.PUBLISHED}
+
+    analysis = {
+        "summary": out["summary"],
+        "strengths": [{**comp(s["competency_code"]), "explanation": s["explanation"]}
+                      for s in out.get("strengths", [])],
+        "development_areas": [{**comp(d["competency_code"]), "explanation": d["explanation"], "priority": d["priority"]}
+                              for d in sorted(out.get("development_areas", []), key=lambda d: d["priority"])],
+        "competency_insights": [{**comp(i["competency_code"]), "insight": i["insight"]}
+                                for i in out.get("competency_insights", [])],
+        "recommended_actions": [{"competency": comp(a["competency_code"]), "kind": a["kind"], "reason": a["reason"],
+                                 "resource": resource(a.get("resource_id")), "task": task(a.get("task_id"))}
+                                for a in out.get("recommended_actions", [])],
+        "milestones": [{**comp(m["competency_code"]), "objective": m["objective"], "measure": m["measure"],
+                        "target_weeks": m["target_weeks"]} for m in out.get("milestones", [])],
+        "confidence_notes": out.get("confidence_notes", []),
+        "reassessment_weeks": out.get("reassessment_weeks"),
+    }
+    return {**base, "analysis": analysis}

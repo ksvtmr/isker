@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import object_session
 
 from app.api.cookies import clear_auth_cookies, set_auth_cookies
 from app.api.deps import DB, Auth, CurrentUser
@@ -13,8 +14,8 @@ from app.core.errors import AuthenticationError, ConflictError, NotFoundError
 from app.core.ratelimit import check, enforce, record_failure
 from app.core.security import create_access_token, hash_password, verify_password
 from app.core.security import decode_token as _decode
-from app.models import User, UserProfile, UserSession
-from app.models.enums import AccountStatus
+from app.models import AssessmentAttempt, User, UserProfile, UserSession
+from app.models.enums import AccountStatus, AttemptScope, AttemptStatus
 from app.schemas.auth import (
     AuthOut,
     ChangePasswordIn,
@@ -41,12 +42,26 @@ GENERIC_RESET = Message(message="If an account exists for this email, we've sent
                         code="RESET_LINK_SENT")
 
 
+def _assessment_state(user: User) -> tuple[bool, int | None]:
+    db = object_session(user)
+    if db is None or user.id is None:
+        return False, None
+    done = db.scalar(select(AssessmentAttempt.id).where(
+        AssessmentAttempt.user_id == user.id, AssessmentAttempt.status == AttemptStatus.COMPLETED,
+        AssessmentAttempt.scope == AttemptScope.FULL).limit(1)) is not None
+    open_id = db.scalar(select(AssessmentAttempt.id).where(
+        AssessmentAttempt.user_id == user.id, AssessmentAttempt.status == AttemptStatus.IN_PROGRESS).limit(1))
+    return done, open_id
+
+
 def user_out(user: User) -> UserOut:
+    done, open_id = _assessment_state(user)
     return UserOut(id=user.id, email=user.email, full_name=user.full_name, status=user.status, roles=user.role_keys,
                    permissions=sorted(user_permissions(user)), onboarding_completed=user.onboarding_completed,
                    email_verified=user.email_verified_at is not None, created_at=user.created_at,
                    language=user.profile.language if user.profile else None, has_password=bool(user.password_hash),
-                   google_linked=any(i.provider == "google" for i in user.oauth_identities))
+                   google_linked=any(i.provider == "google" for i in user.oauth_identities),
+                   initial_assessment_completed=done, in_progress_attempt_id=open_id)
 
 
 def _issue(db, response: Response, user: User, verification: str, *, remember: bool = False,

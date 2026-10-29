@@ -219,6 +219,8 @@ export const adminApi = {
   updateTask: (id: number, body: TaskInput) => api.put<AdminTask>(`/api/admin/tasks/${id}`, body),
   unpublishTask: (id: number) => api.del<{ message: string }>(`/api/admin/tasks/${id}`),
   evaluations: (status: string, page: number) => api.get<Page<AIEvaluationRow>>(`/api/admin/ai/evaluations${qs({ status, page })}`),
+  analyses: (status: string, page: number) => api.get<AIAnalysisPage>(`/api/admin/ai/analyses${qs({ status, page })}`),
+  retryAnalysis: (id: number) => api.post<{ id: number; status: string; error_code: string | null; runs: number }>(`/api/admin/ai/analyses/${id}/retry`),
   prompts: () => api.get<PromptVersion[]>("/api/admin/ai/prompts"),
   createPrompt: (body: { key: string; system_prompt: string; user_template: string; notes?: string; activate: boolean }) =>
     api.post<PromptVersion>("/api/admin/ai/prompts", body),
@@ -267,6 +269,8 @@ export const useAdminResources = () => useQuery({ queryKey: keys.admin("resource
 export const useAdminTasks = () => useQuery({ queryKey: keys.admin("tasks"), queryFn: adminApi.tasks });
 export const useAdminEvaluations = (status: string, page: number) =>
   useQuery({ queryKey: keys.admin("evaluations", status, page), queryFn: () => adminApi.evaluations(status, page) });
+export const useAdminAnalyses = (status: string, page: number) =>
+  useQuery({ queryKey: keys.admin("analyses", status, page), queryFn: () => adminApi.analyses(status, page) });
 export const useAdminPrompts = () => useQuery({ queryKey: keys.admin("prompts"), queryFn: adminApi.prompts });
 
 /** Learner-side queries that show admin-edited content (catalogue, learning, practice, assessments, plans). */
@@ -287,3 +291,22 @@ export function useAdminMutation<V, R>(fn: (v: V) => Promise<R>) {
     },
   });
 }
+
+/** AI development analysis processing status (GET /api/admin/ai/analyses): no learner answers or analysis texts. */
+export interface AIAnalysisRow {
+  id: number;
+  attempt_id: number;
+  user_id: number;
+  user_email: string;
+  status: "pending" | "succeeded" | "failed";
+  language: string;
+  provider: string | null;
+  model: string | null;
+  error_code: string | null;
+  runs: number;
+  latency_ms: number | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+export interface AIAnalysisPage { items: AIAnalysisRow[]; total: number; page: number; page_size: number; counts: Record<"pending" | "succeeded" | "failed", number> }

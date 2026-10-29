@@ -22,6 +22,25 @@ env:
   NODE_VERSION: "22"       # same as the production image (Dockerfile)
 
 jobs:
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the whole history: a key removed later is still exposed
+      - name: Scan history and files for credentials (values redacted)
+        env:
+          GITLEAKS_VERSION: "8.28.0"
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -sSfL -o gitleaks.tgz "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o sums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep "linux_x64.tar.gz" sums.txt | awk '{print $1"  gitleaks.tgz"}' | sha256sum -c -
+          tar -xzf gitleaks.tgz gitleaks
+          ./gitleaks git --redact --no-banner --exit-code 1 .
+
   backend:
     name: Backend — lint, types, tests, migrations
     runs-on: ubuntu-latest

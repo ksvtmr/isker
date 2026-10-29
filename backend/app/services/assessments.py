@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.ai.service import generate_insight
+from app.core.context import language_var
 from app.core.database import utcnow
 from app.core.errors import ConflictError, NotFoundError, ValidationError
 from app.models import (
@@ -39,7 +40,7 @@ from app.services import recommendations as rec_service
 from app.services.audit import audit, notify
 from app.services.levels import level_name_for
 from app.services.profile import area_scores, current_scores, overall_score
-from app.services.scoring import score_attempt
+from app.services.scoring import SCORING_VERSION, score_attempt
 
 MAX_TEXT = 4000
 CHOICE_TYPES = (QuestionType.LIKERT, QuestionType.SITUATIONAL)
@@ -175,7 +176,8 @@ def start_attempt(
         db.flush()  # leave the "one open attempt per user" index before the new attempt enters it
     assessment = active_assessment(db)
     att = AssessmentAttempt(
-        user_id=user.id, assessment_id=assessment.id, scope=scope, scope_competency_id=competency_id
+        user_id=user.id, assessment_id=assessment.id, scope=scope, scope_competency_id=competency_id,
+        assessment_version=assessment.version, language=language_var.get(),
     )
     # Two concurrent starts: the partial unique index (one in_progress attempt per user) lets only one insert win;
     # the other resumes the attempt that won instead of failing.
@@ -294,6 +296,8 @@ def submit(db: Session, user: User, attempt: AssessmentAttempt) -> AssessmentAtt
 
     attempt.status = AttemptStatus.COMPLETED
     attempt.completed_at = now
+    attempt.scoring_version = SCORING_VERSION
+    attempt.language = language_var.get()  # the language the learner finished in (may differ from the start)
     attempt.sequence = 1 + (
         db.scalar(
             select(func.count(AssessmentAttempt.id)).where(

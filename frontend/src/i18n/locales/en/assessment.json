@@ -254,5 +254,51 @@
     "reassessCount_other": "Reassessing only this competency takes {{count}} questions.",
     "ruleBasedFeedback": "Open answers were checked automatically against the rubric criteria (rule-based, no AI). Scores are computed from the criterion ratings.",
     "aiFeedback": "Open answers were evaluated with AI against the rubric criteria. Scores are computed from the criterion ratings, not set by the model."
+  },
+  "analysis": {
+    "title": "Your development analysis",
+    "disclaimer": "Based on your answers and scores. Scores are estimates, not a validated measurement or diagnosis.",
+    "ruleBased": "Built-in rule-based analysis",
+    "model": "AI model: {{model}}",
+    "pending": "Analysing your results… This usually takes under a minute. Your results are already saved.",
+    "failedTitle": "The analysis is not available right now",
+    "resultsKept": "Your assessment results are saved and not affected.",
+    "retry": "Try again",
+    "open": "Open the full analysis",
+    "error": {
+      "provider_unavailable": "The AI service could not be reached.",
+      "rate_limited": "The AI service is busy. Try again in a few minutes.",
+      "invalid_output": "The AI answer did not pass our checks, so it was not shown.",
+      "wrong_language": "The AI answer came back in another language, so it was not shown."
+    },
+    "otherLanguage": "This analysis was written in {{language}}.",
+    "rewrite": "Write it in the current language",
+    "strengths": "Strengths",
+    "priorities": "Development priorities",
+    "actions": "Recommended next steps",
+    "milestones": "Milestones",
+    "confidence": "How reliable this is",
+    "kind": {
+      "learn": "Learn",
+      "practice": "Practise",
+      "reflect": "Reflect"
+    },
+    "notAvailable": "not available on your plan or no longer published",
+    "inWeeks_one": "in {{count}} week",
+    "inWeeks_other": "in {{count}} weeks",
+    "reassessIn_one": "A reassessment is useful in about {{count}} week.",
+    "reassessIn_other": "A reassessment is useful in about {{count}} weeks.",
+    "inWeeks_few": "in {{count}} weeks",
+    "inWeeks_many": "in {{count}} weeks",
+    "reassessIn_few": "A reassessment is useful in about {{count}} weeks.",
+    "reassessIn_many": "A reassessment is useful in about {{count}} weeks.",
+    "rewriteFailed": "The analysis could not be written again just now; the previous one is shown."
+  },
+  "firstTime": {
+    "title": "Start with your initial assessment",
+    "why": "Isker first needs a picture of your entrepreneurial competencies. Your answers show your strengths and gaps across the 15 EntreComp competencies.",
+    "use": "Your results build your competency profile and a personal development plan with learning materials, practical tasks and milestones. You can stop at any time: answers are saved and you can continue later.",
+    "language": "Assessment language",
+    "languageHint": "Questions, answer options and your analysis use this language. You can switch at any time without losing answers."
   }
 }

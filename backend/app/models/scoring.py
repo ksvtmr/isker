@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, utcnow
@@ -31,6 +31,10 @@ class CompetencyScore(Base):
     open_score: Mapped[float | None] = mapped_column(Float)
     confidence: Mapped[float] = mapped_column(Float)
     explanation: Mapped[str] = mapped_column(Text)
+    # Answers behind the score: [{"question_id", "answer_id", "type", "weight", "item_score"}] (no answer text).
+    evidence: Mapped[list | None] = mapped_column(JSON)
+    # How much evidence there is: "sufficient" | "limited" | "insufficient" (services/scoring.evidence_level).
+    evidence_level: Mapped[str | None] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 
     competency = relationship("Competency")

@@ -41,6 +41,20 @@ METHOD_OF = {
 }
 METHOD_WEIGHTS = {"self": 0.2, "situational": 0.4, "open": 0.4}
 CHOICE_CONFIDENCE = 0.9
+# Version of the scoring method above, stored on every attempt. Change it whenever weights, item scoring or
+# combination rules change: results with different versions are not compared as like for like.
+SCORING_VERSION = "v1"
+
+
+def evidence_level(items: list[Item]) -> str:
+    """How much the score rests on: "sufficient" = at least 3 answers from at least 2 methods, of which at least one
+    demonstrates the competency (situational or open, not only a self-rating); "limited" = at least 2 answers;
+    otherwise "insufficient"."""
+    methods = {it.method for it in items}
+    demonstrated = methods & {"situational", "open"}
+    if len(items) >= 3 and len(methods) >= 2 and demonstrated:
+        return "sufficient"
+    return "limited" if len(items) >= 2 and demonstrated else "insufficient"
 
 
 @dataclass
@@ -49,6 +63,8 @@ class Item:
     weight: float
     score: float
     confidence: float = CHOICE_CONFIDENCE
+    question_id: int | None = None
+    answer_id: int | None = None
 
 
 @dataclass
@@ -167,7 +183,7 @@ def score_attempt(
             s = item_score_for_choice(a, q)
             a.item_score = s
             for link in q.competency_links:
-                items[link.competency_id].append(Item(method, link.weight, s))
+                items[link.competency_id].append(Item(method, link.weight, s, question_id=q.id, answer_id=a.id))
         else:
             ev = evaluate_open_answer(db, attempt.user_id, a, q, competencies)
             criteria = (ev.output or {}).get("criteria", [])
@@ -177,7 +193,7 @@ def score_attempt(
             for link in q.competency_links:
                 own = [r for r in rubric if code_to_id.get(r.get("competency") or "") == link.competency_id]
                 s = rubric_score(criteria, own) if own else float(ev.score or 0)
-                items[link.competency_id].append(Item(method, link.weight, s, conf))
+                items[link.competency_id].append(Item(method, link.weight, s, conf, question_id=q.id, answer_id=a.id))
 
     results: list[CompetencyScore] = []
     for cid in competency_ids:
@@ -197,6 +213,12 @@ def score_attempt(
             open_score=r.method_scores.get("open"),
             confidence=r.confidence,
             explanation=explain(r),
+            evidence=[
+                {"question_id": it.question_id, "answer_id": it.answer_id, "method": it.method,
+                 "weight": it.weight, "item_score": round(it.score, 1)}
+                for it in items.get(cid, [])
+            ],
+            evidence_level=evidence_level(items.get(cid, [])),
         )
         db.add(row)
         results.append(row)

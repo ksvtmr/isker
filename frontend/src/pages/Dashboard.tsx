@@ -1,6 +1,8 @@
 import { AIInsight, Card, CompetencyCard, EmptyState, GapBadge, LevelBadge, LineChart, ProgressBar, RecommendationCard, ScoreValue, SectionTitle, StatCard, Icon, Stepper, type StepperStep } from "@isker/design-system";
 import { PageHeader } from "../components/PageTitle";
 import { useTranslation } from "react-i18next";
+import { useAssessmentOverview } from "../api/assessments";
+import { AnalysisPanel } from "../components/AnalysisPanel";
 import { useNavigate } from "react-router-dom";
 import { useProgress, useDashboard } from "../api/progress";
 import { LinkButton, useSpaClick } from "../components/RouterLink";
@@ -91,6 +93,7 @@ function AreaSummary({ code, name, items, score }: { code: string; name: string;
 export function DashboardPage() {
   const { t } = useTranslation("dashboard");
   const { data: d, isLoading, error, refetch } = useDashboard();
+  const overview = useAssessmentOverview();
   const navigate = useNavigate();
   if (isLoading) return <PageSkeleton />;
   if (error || !d) return <><PageHeader title={t("common:nav.dashboard")} /><ErrorState error={error} onRetry={() => refetch()} title={t("dashboard.loadError")} /></>;
@@ -126,6 +129,9 @@ export function DashboardPage() {
   const rec = d.top_recommendation;
   const learn = rec?.activities.find((a) => a.kind === "learn");
   const nr = d.next_reassessment;
+  // The AI analysis belongs to the latest full assessment (a single-competency reassessment has none).
+  const lastFull = [...(overview.data?.completed ?? [])].filter((x) => x.scope === "full")
+    .sort((x, y) => (y.completed_at ?? "").localeCompare(x.completed_at ?? ""))[0];
 
   return (
     <>
@@ -145,6 +151,8 @@ export function DashboardPage() {
           <Card padding={20}><p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{t("dashboard.insightEmpty")}</p></Card>
         )}
       </div>
+
+      {lastFull && <div style={{ marginBottom: 24 }}><AnalysisPanel attemptId={lastFull.id} compact /></div>}
 
       <div className="ik-grid4" style={{ marginBottom: 32 }}>
         <StatCard label={t("dashboard.stats.strengths")} value={strengths.length} description={t("dashboard.stats.strengthsDescription", { count: strengths.length }) + (strongest ? ` · ${t("dashboard.stats.strongest", { name: strongest.name })}` : "")} icon="trending-up" tone="growth" />

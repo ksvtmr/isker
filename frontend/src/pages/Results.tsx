@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useResults } from "../api/assessments";
 import { useScoreProfile } from "../api/competencies";
+import { AnalysisPanel } from "../components/AnalysisPanel";
 import { LinkButton, useSpaClick } from "../components/RouterLink";
 import { ErrorState, PageSkeleton } from "../components/States";
 import type { CompetencyScore } from "../types/api";
@@ -143,6 +144,9 @@ export function ResultsPage() {
           </AIInsight>
         ) : <Card padding={20}><p style={{ fontSize: 14, color: "var(--color-neutral-500)" }}>{t("results.noInsight")}</p></Card>}
       </div>
+
+      {/* AI analysis of the full profile (requested automatically after the assessment; retry if it failed). */}
+      {!isPartial && <div style={{ marginBottom: 24 }}><AnalysisPanel attemptId={attempt.id} /></div>}
 
       <SectionTitle title={t("results.scoresTitle")} description={t("results.scoresText")} />
       <div className="ik-grid-cards">
