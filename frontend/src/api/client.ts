@@ -2,7 +2,7 @@
  * Thin fetch wrapper. All server calls go through here (never from components directly).
  * Auth uses the httpOnly session cookie set by the API; no token is stored in JS. Unsafe requests echo the readable
  * `isker_csrf` cookie in the X-CSRF-Token header (double-submit CSRF protection, enforced by the API).
- * Exception: a cross-site build (see CROSS_SITE) sends the session token as a Bearer header instead.
+ * Exception: a cross-site or standalone build (see TOKEN_AUTH) sends the session token as a Bearer header instead.
  */
 
 export interface ApiErrorBody {
@@ -100,6 +100,13 @@ const BASE = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "").r
  * CSRF token. The token is revoked by sign-out like a cookie session.
  */
 export const CROSS_SITE = BASE !== "";
+/**
+ * Standalone build (GitHub Pages without a server): the API runs inside the browser (src/standalone/), and requests
+ * go to it instead of the network. It has no cookies either, so it uses the same Bearer token as CROSS_SITE.
+ */
+export const STANDALONE = import.meta.env.VITE_STANDALONE === "true";
+/** Session token in JS (Bearer) instead of the httpOnly cookie. */
+export const TOKEN_AUTH = CROSS_SITE || STANDALONE;
 const TOKEN_KEY = "isker_session";
 
 function storages(): Storage[] {
@@ -122,7 +129,7 @@ export function sessionToken(): string | null {
 
 /** Stores (or with null, forgets) the cross-site session token. No-op for same-site builds, which use cookies. */
 export function setSessionToken(token: string | null, remember = false) {
-  if (!CROSS_SITE) return;
+  if (!TOKEN_AUTH) return;
   const [session, local] = storages();
   for (const st of [session, local]) {
     try { st?.removeItem(TOKEN_KEY); } catch { /* ignore */ }
@@ -164,16 +171,17 @@ export async function request<T>(method: Method, path: string, body?: unknown, s
   if (body !== undefined) headers["Content-Type"] = "application/json";
   // Content (questions, competencies, emails) is localized by the API for the interface language.
   headers["Accept-Language"] = currentLanguage();
-  const bearer = CROSS_SITE ? sessionToken() : null;
+  const bearer = TOKEN_AUTH ? sessionToken() : null;
   if (bearer) headers["Authorization"] = `Bearer ${bearer}`;
   else if (method !== "GET") {
     const token = csrfToken();
     if (token) headers["X-CSRF-Token"] = token;
   }
   try {
-    res = await fetch(BASE + path, {
+    const send = STANDALONE ? (await import("../standalone/bridge")).standaloneFetch : fetch;
+    res = await send(BASE + path, {
       method,
-      credentials: CROSS_SITE ? "omit" : "include",
+      credentials: TOKEN_AUTH ? "omit" : "include",
       headers: Object.keys(headers).length ? headers : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal,

@@ -22,3 +22,6 @@ coverage/
 .DS_Store
 .idea/
 .vscode/
+
+# Downloaded build inputs (Pyodide release for the standalone GitHub Pages build)
+.cache/

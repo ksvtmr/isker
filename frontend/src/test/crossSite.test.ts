@@ -69,3 +69,22 @@ describe("same-site API client", () => {
     expect((init.headers as Record<string, string>).Authorization).toBeUndefined();
   });
 });
+
+describe("standalone API client (GitHub Pages without a server)", () => {
+  it("answers requests in the browser, with the Bearer token, never over the network", async () => {
+    vi.resetModules();
+    vi.stubEnv("VITE_API_BASE_URL", "");
+    vi.stubEnv("VITE_STANDALONE", "true");
+    const local = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    vi.doMock("../standalone/bridge", () => ({ standaloneFetch: local }));
+    const network = mockFetch();
+    const client = await import("../api/client");
+    client.setSessionToken("tok-2");
+    await expect(client.api.get("/api/progress")).resolves.toEqual({ ok: true });
+    expect(network).not.toHaveBeenCalled();
+    const [url, init] = local.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/progress");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer tok-2");
+    vi.doUnmock("../standalone/bridge");
+  });
+});

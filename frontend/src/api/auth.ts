@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AuthResponse, SessionInfo, User } from "../types/api";
-import { ApiError, CROSS_SITE, api, clearSignOutReason, setSessionToken } from "./client";
+import { ApiError, TOKEN_AUTH, api, clearSignOutReason, setSessionToken } from "./client";
 import { keys } from "./keys";
 import i18n from "../i18n";
 import type { Language } from "../i18n/config";
@@ -15,8 +15,8 @@ export interface Providers { password: boolean; google: boolean }
 export const authApi = {
   me: () => api.get<User>("/api/auth/me"),
   login: (body: LoginInput) => api.post<AuthResponse>("/api/auth/login", body),
-  // Google sign-in ends on the API's own site (cookie session), so a cross-site build offers password sign-in only.
-  providers: () => api.get<Providers>("/api/auth/providers").then((p) => (CROSS_SITE ? { ...p, google: false } : p)),
+  // Google sign-in ends on the API's own site (cookie session), so token builds offer password sign-in only.
+  providers: () => api.get<Providers>("/api/auth/providers").then((p) => (TOKEN_AUTH ? { ...p, google: false } : p)),
   googleLink: () => api.post<{ url: string }>("/api/auth/google/link"),
   googleUnlink: () => api.del<User>("/api/auth/google"),
   setPassword: (new_password: string) => api.post<Msg>("/api/auth/set-password", { new_password }),

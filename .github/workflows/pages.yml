@@ -1,11 +1,12 @@
-# Publishes the interface on GitHub Pages: https://ksvtmr.github.io/isker/
+# Publishes Isker on GitHub Pages: https://ksvtmr.github.io/isker/
 #
-# Pages hosts static files only, so the built interface calls the API on Render (render.yaml). It runs after the CI
-# workflow passes on main (same rule as Render: a red commit is never published), or by hand from the Actions tab.
+# Default (no server needed): the "standalone" build. The real API (backend/app, Python) runs inside the visitor's
+# browser with Pyodide and keeps its SQLite database in IndexedDB, so each browser has its own private copy of the
+# platform with the demo data. See DEPLOYMENT.md, "GitHub Pages".
+# Optional: with the repository variable PAGES_API_URL set (a Render URL), the interface uses that server instead.
 #
-# One-time setup (see DEPLOYMENT.md, "GitHub Pages"):
-#   - Settings → Pages → Build and deployment → Source: GitHub Actions
-#   - Settings → Secrets and variables → Actions → Variables → PAGES_API_URL = the Render service URL
+# Runs after the CI workflow passes on main (a red commit is never published), or by hand from the Actions tab.
+# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
 name: GitHub Pages
 
 on:
@@ -28,18 +29,23 @@ jobs:
   build:
     if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       VITE_API_BASE_URL: ${{ vars.PAGES_API_URL }}
+      VITE_STANDALONE: ${{ vars.PAGES_API_URL == '' && 'true' || 'false' }}
       VITE_BASE_PATH: /${{ github.event.repository.name }}/
       VITE_SUPPORT_EMAIL: ${{ vars.VITE_SUPPORT_EMAIL }}
+      VITE_SHOW_DEMO: "true"
     steps:
-      - name: Check the API address
+      - name: Mode
         run: |
-          case "$VITE_API_BASE_URL" in
-            https://*) echo "API: $VITE_API_BASE_URL" ;;
-            *) echo "::error::Set the repository variable PAGES_API_URL to the Render URL (https://...)."; exit 1 ;;
-          esac
+          if [ "$VITE_STANDALONE" = "true" ]; then echo "Standalone: the API runs in the browser (no server)."
+          else
+            case "$VITE_API_BASE_URL" in
+              https://*) echo "Interface + API at $VITE_API_BASE_URL" ;;
+              *) echo "::error::PAGES_API_URL must be an https:// URL (or empty for the standalone build)."; exit 1 ;;
+            esac
+          fi
       - uses: actions/checkout@v4
         with:
           # The commit CI just passed (workflow_run), or the chosen branch (manual run).
@@ -48,10 +54,26 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+      - uses: actions/setup-python@v5
+        if: env.VITE_STANDALONE == 'true'
+        with:
+          python-version: "3.12"
+      - name: Cache the Pyodide release
+        if: env.VITE_STANDALONE == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: pyodide-${{ hashFiles('backend/browser/build.py') }}
       - name: Install dependencies (lockfile)
         run: npm ci --no-audit --no-fund
-      - name: Build the interface for Pages
+      - name: Build the interface
         run: npm run build
+      - name: Build the in-browser API (Pyodide runtime + backend/app)
+        if: env.VITE_STANDALONE == 'true'
+        run: python backend/browser/build.py frontend/dist/pyodide
+      - name: Test the in-browser API exactly as published
+        if: env.VITE_STANDALONE == 'true'
+        run: node backend/browser/smoke.mjs frontend/dist/pyodide
       - name: Deep links (/isker/dashboard, page refresh) load the app
         run: cp frontend/dist/index.html frontend/dist/404.html
       - uses: actions/configure-pages@v5

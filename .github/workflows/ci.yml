@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       - name: Lint (ruff)
-        run: ruff check app tests scripts
+        run: ruff check app tests scripts browser
       - name: Type check (mypy)
         run: mypy app
       - name: Migrations — no undocumented destructive steps

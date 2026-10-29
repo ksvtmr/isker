@@ -34,8 +34,9 @@ PostgreSQL at `DATABASE_URL` (default `postgresql+psycopg://isker:isker@localhos
   then runs migrations, and switches traffic only when `/api/health` answers. Roll back from Render → Events.
 - **Previews**: a pull request with `[render preview]` in its title gets its own temporary site and database (needs a
   Render plan with Preview Environments).
-- **GitHub Pages** (optional second address, https://ksvtmr.github.io/isker/): the same interface, published after
-  CI passes on `main`, using the Render API for data and sign-in (`.github/workflows/pages.yml`).
+- **GitHub Pages, no server** (https://ksvtmr.github.io/isker/ once Pages is enabled): the whole platform runs in
+  the visitor's browser — the same Python API via Pyodide, data saved in that browser only. A demo, published after
+  CI passes on `main` (`.github/workflows/pages.yml`).
 
 Details, one-time account setup and rollback: [DEPLOYMENT.md](DEPLOYMENT.md). Step-by-step guide in Russian:
 [docs/claude-code-workflow.ru.md](docs/claude-code-workflow.ru.md).
@@ -131,7 +132,7 @@ ratings, never from a model-chosen number.
 ## Quality checks
 
 ```bash
-cd backend && .venv/bin/pytest && .venv/bin/ruff check app tests scripts && .venv/bin/mypy app \
+cd backend && .venv/bin/pytest && .venv/bin/ruff check app tests scripts browser && .venv/bin/mypy app \
   && .venv/bin/python scripts/check_migrations.py
 npm test && npm run typecheck && npm run lint && npm run build
 # Browser journey + axe-core accessibility run against a running instance (API + built SPA on one origin):

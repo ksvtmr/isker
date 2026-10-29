@@ -291,5 +291,16 @@
   },
   "a11y": {
     "opensInNewTab": "(opens in a new tab)"
+  },
+  "standalone": {
+    "title": "Starting Isker",
+    "runtime": "Loading the platform (about 20 MB, only on the first visit)…",
+    "packages": "Preparing the platform…",
+    "database": "Opening your data…",
+    "firstRun": "On the first visit the demo data is created; this takes up to a minute.",
+    "note": "Demo version: everything runs in this browser, and your data is saved only here.",
+    "failed": "Isker could not start in this browser.",
+    "retry": "Try again",
+    "otherTab": "Isker is already open in another tab of this browser. Close that tab to continue here."
   }
 }

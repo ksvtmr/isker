@@ -2,12 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { ApiError } from "./api/client";
+import { ApiError, STANDALONE } from "./api/client";
 import { App } from "./App";
 import { ToastProvider } from "./components/Toaster";
 import { BASE_PATH } from "./utils/appHref";
 import "./i18n";
 import { I18nDSProvider } from "./i18n/DSBridge";
+import { BootScreen } from "./standalone/BootScreen";
 import "./styles/app.css";
 
 const queryClient = new QueryClient({
@@ -27,7 +28,7 @@ createRoot(document.getElementById("root")!).render(
       <BrowserRouter basename={BASE_PATH || "/"}>
         <I18nDSProvider>
           <ToastProvider>
-            <App />
+            {STANDALONE ? <BootScreen><App /></BootScreen> : <App />}
           </ToastProvider>
         </I18nDSProvider>
       </BrowserRouter>

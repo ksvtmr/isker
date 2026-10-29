@@ -1,0 +1,7 @@
+# Pure-Python packages the in-browser API needs that Pyodide does not ship (installed from PyPI wheels at build
+# time by build.py). Everything else (FastAPI, SQLAlchemy, Pydantic, bcrypt, cryptography) comes from Pyodide.
+pyjwt==2.15.1
+email-validator==2.3.0
+pydantic-settings==2.15.0
+python-dotenv==1.2.4
+authlib==1.3.2

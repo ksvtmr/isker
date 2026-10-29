@@ -90,7 +90,7 @@ Claude работает в своей ветке (например, `claude/...`
 
 ```bash
 # Сервер: стиль кода, типы, безопасность миграций, тесты
-cd backend && .venv/bin/ruff check app tests scripts && .venv/bin/mypy app \
+cd backend && .venv/bin/ruff check app tests scripts browser && .venv/bin/mypy app \
   && .venv/bin/python scripts/check_migrations.py && .venv/bin/pytest -q && cd ..
 
 # Интерфейс: стиль, типы, тесты (включая полноту переводов ru/kk/en), сборка
@@ -150,10 +150,12 @@ git push -u origin feature/my-change
 4. Если какая-то проверка не прошла, Render **ничего не публикует**, а сайт продолжает работать на старой версии.
 5. После публикации проверьте сайт: GitHub → **Actions** → **Smoke check (deployed site)** → **Run workflow**, или
    `bash scripts/smoke.sh https://<ваш-сайт>.onrender.com`.
-6. Если включён GitHub Pages (DEPLOYMENT.md, раздел 5, шаг 7), после тех же зелёных проверок автоматически
-   обновляется и второй адрес: **https://ksvtmr.github.io/isker/**. Там только интерфейс — данные и вход идут через
-   сервер на Render, поэтому без работающего Render этот адрес не работает. Вход через Google там не предлагается
-   (используйте email и пароль). Ход публикации: GitHub → **Actions** → **GitHub Pages**.
+6. **GitHub Pages (без сервера):** после тех же зелёных проверок автоматически обновляется адрес
+   **https://ksvtmr.github.io/isker/** (нужно один раз включить: GitHub → Settings → Pages → Source: **GitHub
+   Actions**, затем Actions → **GitHub Pages** → **Run workflow**). Там вся платформа работает прямо в браузере
+   посетителя: Render не нужен, но данные каждого посетителя хранятся только в его браузере (это демо-версия).
+   Первый запуск — около 15 секунд, каждое обновление страницы — около 10 секунд. Вход: `demo@isker.local` /
+   `IskerDemo2026` или `admin@isker.local` / `IskerAdmin2026`.
 
 ## 11. Читать логи
 

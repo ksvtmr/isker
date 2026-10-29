@@ -33,7 +33,7 @@ Runs on every pull request and every push to `main` (and manually). Jobs, all us
 
 | Job | Steps |
 |---|---|
-| Backend | `pip install -r requirements-dev.txt` (cached) → `ruff check app tests scripts` → `mypy app` → `python scripts/check_migrations.py` (no undocumented destructive migration) → `pytest` (274 tests, SQLite; includes ru/kk content-translation completeness) → on PostgreSQL 16: `alembic upgrade head`, `alembic check` (models = migrations), seed, `alembic downgrade base`, `alembic upgrade head`, seed twice (idempotent) |
+| Backend | `pip install -r requirements-dev.txt` (cached) → `ruff check app tests scripts browser` → `mypy app` → `python scripts/check_migrations.py` (no undocumented destructive migration) → `pytest` (274 tests, SQLite; includes ru/kk content-translation completeness) → on PostgreSQL 16: `alembic upgrade head`, `alembic check` (models = migrations), seed, `alembic downgrade base`, `alembic upgrade head`, seed twice (idempotent) |
 | Frontend | `npm ci` (cached, lockfile) → `npm run lint` → `npm run typecheck` → translation completeness ru/kk/en (`src/test/i18n.test.ts`) → `npm test` (97 tests) → `npm run build` |
 | End-to-end | after Backend and Frontend: PostgreSQL + migrations + seed → API serving the built SPA → Playwright: `scripts/e2e/journey.mjs` (learner and admin journey, axe-core WCAG 2.2 AA, keyboard, mobile) and `scripts/e2e/languages.mjs` (113 page checks in ru/kk/en). Screenshots and the API log are uploaded when it fails |
 | Production image | builds the root `Dockerfile` (what Render deploys), with build cache |
@@ -88,34 +88,46 @@ These steps can only be done by the account owner; nothing in the repository can
    `PRODUCTION_URL` = your Render URL.
 6. **Preview environments** need a Render workspace plan that includes Preview Environments. With it, add
    `[render preview]` to a pull request title to get a preview; without it, test pull requests locally.
-7. **GitHub Pages address** (optional, see below): Settings → Pages → *Build and deployment* → Source: **GitHub
-   Actions**; then Settings → Secrets and variables → Actions → *Variables* → `PAGES_API_URL` = your Render URL
-   (e.g. `https://isker.onrender.com`). The next green CI run on `main` publishes https://ksvtmr.github.io/isker/ ;
-   or run it now: Actions → *GitHub Pages* → *Run workflow*.
+7. **GitHub Pages address** (works without Render, see below): Settings → Pages → *Build and deployment* →
+   Source: **GitHub Actions**. Then Actions → *GitHub Pages* → *Run workflow* (later merges to `main` publish it
+   automatically after green checks). The site is https://ksvtmr.github.io/isker/ .
 
-### GitHub Pages (second address for the same platform)
+### GitHub Pages (no server needed)
 
-GitHub Pages serves static files only, so it hosts the **interface**; sign-in, data and the database stay on the
-Render API. `.github/workflows/pages.yml` runs after CI passes on `main` and builds the interface with
-`VITE_API_BASE_URL` = `PAGES_API_URL` and the `/isker/` path; `render.yaml` allows that origin
-(`CORS_ORIGINS=https://ksvtmr.github.io`).
+GitHub Pages serves static files only, so `.github/workflows/pages.yml` publishes a **standalone** build: the real
+API (`backend/app`, the same Python code, scoring, permissions and seed data as on Render) runs **inside the
+visitor's browser** with [Pyodide](https://pyodide.org), on SQLite instead of PostgreSQL.
 
-How sign-in works there: browsers may refuse the API's cookies on another site (Safari, private windows), so the
-Pages build keeps the session token from sign-in in the tab (`sessionStorage`; `localStorage` with "Remember me")
-and sends it as `Authorization: Bearer` (no CSRF token needed). Sign-out revokes it on the server, and an
-administrator blocking an account ends it at the next request, as on Render. Differences from the Render address:
+* `backend/browser/build.py` packs the Pyodide runtime (self-hosted from its GitHub release, about 21 MB, cached by
+  the browser after the first visit), the few extra Python packages (`backend/browser/requirements.txt`) and
+  `backend/app` into `frontend/dist/pyodide/`; `backend/browser/smoke.mjs` tests that exact package before publishing
+  (health, sign-in, dashboard, Kazakh content, registration, admin list, sign-out).
+* The interface is built with `VITE_STANDALONE=true`: `src/api/client.ts` sends requests to a Web Worker
+  (`src/standalone/worker.ts`) instead of the network. Sign-in uses the session token in the tab
+  (`sessionStorage`; `localStorage` with "Remember me"), the same as the API's Bearer clients.
+* The database is saved in the browser's IndexedDB (before each change is confirmed), so data survives reloads.
+* Accounts: `demo@isker.local` / `IskerDemo2026` (learner with history) and `admin@isker.local` / `IskerAdmin2026`
+  (super administrator) — public demo passwords, fine because every visitor has a private copy.
 
-* Google sign-in is not offered (Google returns to the API's own site); email + password works.
-* Email links (verification, password reset) open the Render address, where the same account works.
-* Every site under `https://ksvtmr.github.io/` (all your repositories' Pages) shares one browser origin, so a
-  script on any of them could read the stored token. Publish only trusted code there, or give Isker a custom
-  domain (Settings → Pages → Custom domain, then update `CORS_ORIGINS` and `PAGES_API_URL`).
-* Security headers come from a `<meta>` Content-Security-Policy (Pages can't send headers); HSTS and
-  `frame-ancestors` protection exist only on the Render address.
-* Free Render services sleep: the first request after 15 idle minutes takes about a minute on both addresses.
+What is different from a real server:
 
-Rollback: Actions → *GitHub Pages* → *Run workflow* on an older commit (choose its branch or tag), or revert on
-`main`. To stop publishing: Settings → Pages → *Unpublish site*.
+* **Data is per browser.** Nothing is shared between visitors or devices; clearing site data resets the platform
+  to the demo state. It is a demo/prototype, not a place for real users' data.
+* **Start-up time:** first visit about 15 s (download + demo data), every full page load about 10 s (Python starts
+  again); moving between pages inside the app is instant.
+* **One tab at a time** per browser: a second tab waits until the first is closed (both would overwrite each
+  other's data otherwise).
+* No email is sent, Google sign-in is not offered, and AI feedback uses the built-in mock provider.
+* Security headers come from a `<meta>` Content-Security-Policy (Pages can't send headers).
+* Every site under `https://ksvtmr.github.io/` (all your repositories' Pages) shares one browser origin, so their
+  scripts could read Isker's local data. Publish only trusted code there, or use a custom domain.
+
+**With a server instead:** set the repository variable `PAGES_API_URL` to a Render URL (Settings → Secrets and
+variables → Actions → *Variables*). The same workflow then publishes the interface only, calling that API
+(`render.yaml` allows the origin with `CORS_ORIGINS=https://ksvtmr.github.io`); data is shared and real.
+
+Rollback: Actions → *GitHub Pages* → *Run workflow* on an older branch or tag, or revert on `main`. To stop
+publishing: Settings → Pages → *Unpublish site*.
 
 ## 6. Environment variables
 
