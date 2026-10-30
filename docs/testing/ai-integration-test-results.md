@@ -20,13 +20,13 @@ To verify Groq where the key is available: `python scripts/ai_models.py groq` �
 |---|---|---|
 | Lint | `ruff check app tests scripts browser` | clean |
 | Types | `mypy app` | no issues (91 files) |
-| Migration guard | `python scripts/check_migrations.py` | 8 migrations OK |
+| Migration guard | `python scripts/check_migrations.py` | 9 migrations OK |
 | Backend tests | `pytest` (SQLite) | **328 passed, 3 skipped** (the 3 skipped are the gated live tests) |
 | Frontend | `npm run typecheck`, `npm run lint`, `vitest` | clean; **108 passed** (14 files) |
 | Translation completeness | `vitest run src/test/i18n.test.ts` | ru / kk / en identical keys (caught and fixed a missing plural form) |
 | Production builds | `npm run build`, `VITE_STANDALONE=true npm run build` | OK |
 | In-browser API (GitHub Pages) | `browser/build.py` + `node browser/smoke.mjs` | PASSED (new modules import under Pyodide) |
-| Migrations on PostgreSQL 16 | `alembic upgrade head`, `alembic check`, downgrade 0008→0007→head with rows | OK; statuses mapped pending→processing, succeeded→completed, failed→failed and back |
+| Migrations on PostgreSQL 16 | `alembic upgrade head`, `alembic check`, downgrade 0009→0008→head with rows (renumbered from 0008 after merging the character-progression 0008) | OK; statuses mapped pending→processing, succeeded→completed, failed→failed and back |
 | Seed prompt versions (PostgreSQL) | `python -m app.seed.run` twice | changed built-ins `answer_evaluation`, `development_analysis` → v2 active; unchanged `profile_insight` stays v1; second run adds nothing. **Found and fixed** a bug: the new function sat below `if __name__ == "__main__"`, so the seed crashed when run as a script (unit tests had imported the module and missed it) |
 | Browser journey | `scripts/e2e/journey.mjs` (register → onboarding → assessment → results with analysis → plan → learning → practice → admin; axe WCAG 2.2 AA; keyboard; mobile) | PASSED; server log: 0 errors, each analysis generated once (1 POST, later GETs read the stored row) |
 | Three languages | `scripts/e2e/languages.mjs` | 113 page checks, 0 failures |
