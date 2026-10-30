@@ -11,6 +11,9 @@ import { ErrorState, PageSkeleton } from "../components/States";
 import type { CompetencyScore } from "../types/api";
 import { AREA_COLOR, confidenceLabel, formatDate, gapLabel, signed } from "../utils/format";
 import { appHref } from "../utils/appHref";
+import { useCharacter } from "../api/character";
+import { SUPPORTIVE_BELOW } from "../character/config";
+import { CharacterPanel, StageBasis, StageChangeNotice } from "../character/CharacterViews";
 
 function Row({ c, tone }: { c: CompetencyScore; tone: string }) {
   const spa = useSpaClick();
@@ -32,6 +35,7 @@ export function ResultsPage() {
   const attemptId = Number(params.get("attempt")) || fallback.data?.attempt_id || null;
   const { data, isLoading, error, refetch } = useResults(attemptId);
   const [view, setView] = useState("radar");
+  const character = useCharacter();
 
   if (fallback.isLoading || isLoading) return <PageSkeleton />;
   if (!attemptId) {
@@ -85,6 +89,20 @@ export function ResultsPage() {
         subtitle={attempt.sequence === 1 && !isPartial ? t("results.completeSubtitle") : undefined}
         action={<LinkButton to="/development-plan" iconRight="arrow-right">{t("results.createPlan")}</LinkButton>}
       />
+
+      <StageChangeNotice />
+      {character.data?.status === "ready" && (
+        <div style={{ marginBottom: 24 }}>
+          {/* The current stage and how this profile feeds it; a low result gets the calm, supportive character. */}
+          <CharacterPanel c={character.data} state={(p.overall ?? 0) < SUPPORTIVE_BELOW ? "supportive" : "confident"} focus={gaps[0] ?? null}>
+            <div style={{ marginTop: 12 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-neutral-800)", marginBottom: 4 }}>{t("character:results.title")}</p>
+              <StageBasis c={character.data} />
+              {(p.overall ?? 0) < SUPPORTIVE_BELOW && <p style={{ marginTop: 8, fontSize: 13, color: "var(--color-neutral-600)" }}>{t("character:results.lowText")}</p>}
+            </div>
+          </CharacterPanel>
+        </div>
+      )}
 
       {isPartial && measured.length > 0 && (
         <div className="ik-grid-cards" style={{ marginBottom: 24 }}>

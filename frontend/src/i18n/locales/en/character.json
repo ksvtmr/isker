@@ -1,0 +1,106 @@
+{
+  "stages": {
+    "novice": {
+      "name": "Novice",
+      "short": "learning the basics and looking for a direction",
+      "description": "Learning the basics, looking for a direction and trying new approaches. The focus now is understanding your strengths."
+    },
+    "starter": {
+      "name": "Starter",
+      "short": "experimenting and testing hypotheses",
+      "description": "Experimenting, testing hypotheses and starting to apply knowledge in first practical tasks."
+    },
+    "entrepreneur": {
+      "name": "Entrepreneur",
+      "short": "planning, deciding and applying competencies in practice",
+      "description": "Plans and makes decisions, develops a product and teamwork, and solves problems systematically."
+    },
+    "leader": {
+      "name": "Business leader",
+      "short": "managing resources and thinking strategically",
+      "description": "Manages resources systematically, makes complex decisions, develops a team and a business, and shows stable strategic skills."
+    }
+  },
+  "states": {
+    "idle": "calm",
+    "happy": "pleased with a completed step",
+    "thinking": "thinking",
+    "confident": "confident",
+    "learning": "studying",
+    "celebrating": "celebrating a confirmed achievement",
+    "working": "working on a task",
+    "supportive": "supportive"
+  },
+  "avatar": {
+    "label": "Character: {{stage}}, stage {{n}} of 4, {{state}}",
+    "noStage": "Character silhouette: the stage appears after your first assessment",
+    "noStageShort": "No stage yet",
+    "stageOf": "Stage {{n}} of {{total}}",
+    "progressAria": "{{pct}}% of the way to the {{next}} stage",
+    "topStage": "Highest stage reached"
+  },
+  "panel": {
+    "stagesAria": "Development stages",
+    "eyebrow": "Your development stage",
+    "howTitle": "How is the stage determined?",
+    "howText": "The stage summarises your current competency profile: the overall score of your latest assessment results (0–100). From {{min}} completed practical tasks with confirmed AI feedback, their average counts for {{weight}}%. Viewing lessons does not change the stage.",
+    "band": "{{name}}: {{min}}–{{max}}",
+    "preliminary": "These are preliminary product thresholds (rules {{version}}), not a validated scale. The stage shows your current profile, not your worth as a person.",
+    "noAssessmentTitle": "Take your first assessment",
+    "noAssessmentText": "Your character and development stage appear after the first full assessment. We don't guess a level before there are results.",
+    "insufficientTitle": "Not enough data for a stage yet",
+    "insufficientText": "Your results don't cover enough competencies with sufficient evidence to summarise them as a stage. A full reassessment fixes this.",
+    "takeAssessment": "Take the assessment",
+    "reassess": "Take a full reassessment",
+    "topStage": "You are at the highest stage. Keep your results stable at the next reassessment.",
+    "recommendation": "Recommendation:",
+    "focus": "work on {{name}}: it is your top priority gap.",
+    "notWorth": "The stage reflects your current competency profile, not your value as a person.",
+    "continue": "Continue development",
+    "toNext_one": "{{count}} point to the {{next}} stage",
+    "toNext_few": "{{count}} points to the {{next}} stage",
+    "toNext_many": "{{count}} points to the {{next}} stage",
+    "toNext_other": "{{count}} points to the {{next}} stage"
+  },
+  "basis": {
+    "assessment": "Assessment: overall score {{score}}, {{assessed}} of {{total}} competencies assessed",
+    "practiceNotYet": "Practice: {{count}} confirmed tasks (counted from {{min}})",
+    "lessons": "Viewed lessons are not counted",
+    "practiceCounted_one": "Practice: {{count}} confirmed task, average {{score}} (weight {{weight}}%)",
+    "practiceCounted_few": "Practice: {{count}} confirmed tasks, average {{score}} (weight {{weight}}%)",
+    "practiceCounted_many": "Practice: {{count}} confirmed tasks, average {{score}} (weight {{weight}}%)",
+    "practiceCounted_other": "Practice: {{count}} confirmed tasks, average {{score}} (weight {{weight}}%)"
+  },
+  "notice": {
+    "upTitle": "New stage: {{name}}",
+    "downTitle": "Your profile was updated: {{name}}",
+    "upText": "Your confirmed results moved you on from {{from}}: you are now {{description}}. Stage score {{score}}.",
+    "downText": "Your latest results give a stage score of {{score}}. This only describes your current profile; your earlier stages stay in your history, and the plan shows where to focus.",
+    "close": "Close"
+  },
+  "aside": {
+    "goal": "Current goal: {{goal}}",
+    "assessmentTitle": "Take your time",
+    "assessmentText": "Your stage stays the same while you answer."
+  },
+  "results": {
+    "title": "What your results mean for your stage",
+    "lowText": "Every profile has areas to grow. Your plan starts with the most useful ones."
+  },
+  "history": {
+    "title": "Stage history",
+    "emptyTitle": "No stage history yet",
+    "emptyText": "Your stage and its changes appear here after your first full assessment.",
+    "current": "Now: {{name}}, stage score {{score}}",
+    "difference": "Earlier stages below are historical results; the current stage is the latest confirmed one.",
+    "initial": "First stage: {{name}}",
+    "up": "{{from}} → {{name}}",
+    "down": "{{from}} → {{name}} (updated profile)",
+    "trigger": {
+      "assessment": "after an assessment",
+      "practice": "after a practical task",
+      "baseline": "from your existing results"
+    },
+    "score": "stage score {{score}}"
+  }
+}

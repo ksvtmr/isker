@@ -17,6 +17,7 @@ from app.models import AIEvaluation, Competency, PracticalTask, PracticeSubmissi
 from app.models.enums import AIInputType, ContentStatus, PracticeStatus, RecommendationStatus
 from app.schemas.common import ERROR_RESPONSES
 from app.schemas.learning import FeedbackOut, SubmitIn, TaskDetail, TaskOut
+from app.services import character as character_service
 from app.services import entitlements
 from app.services import recommendations as rec_service
 from app.services.audit import audit
@@ -249,6 +250,7 @@ def complete(task_id: int, user: CurrentUser, db: DB) -> TaskDetail:
         now = utcnow()
         s.status, s.completed_at = PracticeStatus.COMPLETED, now
         rec_service.on_task_completed(db, user.id, t.id, now)
+        character_service.record_confirmed_result(db, user.id, "practice", submission_id=s.id)
         audit(db, user.id, "practice.completed", "practical_task", t.id)
         db.commit()
     return _detail(db, user.id, t)

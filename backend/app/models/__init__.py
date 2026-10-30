@@ -27,7 +27,7 @@ from app.models.learning import (
     Recommendation,
     UserLearningProgress,
 )
-from app.models.progress import AuditLog, Notification, ProgressSnapshot
+from app.models.progress import AuditLog, CharacterStageEvent, Notification, ProgressSnapshot
 from app.models.rbac import Permission, Role, RolePermission, UserRole
 from app.models.scoring import CompetencyGap, CompetencyScore
 from app.models.user import GoalCompetencyWeight, GoalDefinition, User, UserGoal, UserProfile
@@ -54,6 +54,7 @@ __all__ = [
     "Assessment",
     "AssessmentAttempt",
     "AuditLog",
+    "CharacterStageEvent",
     "Competency",
     "CompetencyArea",
     "CompetencyGap",

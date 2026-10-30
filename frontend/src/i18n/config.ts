@@ -12,7 +12,7 @@ export const LOCALE_TAGS: Record<Language, string> = { ru: "ru-RU", kk: "kk-KZ",
 /** localStorage key for the anonymous visitor's choice (only the language code is stored). */
 export const STORAGE_KEY = "isker.lang";
 
-export const NAMESPACES = ["common", "errors", "auth", "public", "subscriptions", "dashboard", "assessment", "learning", "account", "admin", "adminContent"] as const;
+export const NAMESPACES = ["common", "errors", "auth", "public", "subscriptions", "dashboard", "assessment", "learning", "account", "admin", "adminContent", "character"] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
 export function isLanguage(v: unknown): v is Language {

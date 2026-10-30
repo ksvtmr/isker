@@ -11,6 +11,8 @@ import { ErrorState, PageSkeleton, ApiErrorAlert } from "../components/States";
 import { useToast } from "../components/Toaster";
 import { difficultyLabel, formatDate, resourceTypeLabel } from "../utils/format";
 import { appHref } from "../utils/appHref";
+import { CharacterAside } from "../character/CharacterViews";
+import { useCharacterReaction } from "../character/hooks";
 
 export function LearningDetailPage() {
   const { t } = useTranslation("learning");
@@ -23,6 +25,7 @@ export function LearningDetailPage() {
   const toast = useToast();
   const endRef = useRef<HTMLDivElement>(null);
   const reported = useRef(false);
+  const [charState, react] = useCharacterReaction("learning");
 
   // Reaching the end of the content records reading progress (the user still marks it complete).
   useEffect(() => {
@@ -66,6 +69,7 @@ export function LearningDetailPage() {
           )}
         </Card>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Card padding={16}><CharacterAside state={charState} goal={r.competency_name} /></Card>
           <Card padding={20}>
             <p style={{ fontSize: 13, color: "var(--color-neutral-500)" }}>{t("learningDetail.competency")}</p>
             <LinkButton to={`/competencies/${r.competency_code}`} variant="ghost" size="sm" style={{ paddingLeft: 0 }}>{r.competency_name}</LinkButton>
@@ -77,7 +81,7 @@ export function LearningDetailPage() {
               <div style={{ marginTop: 16 }}>
                 {complete.error && <div style={{ marginBottom: 12 }}><ApiErrorAlert error={complete.error} /></div>}
                 <Button variant="success" iconLeft="check" fullWidth loading={complete.isPending}
-                  onClick={() => complete.mutate(r.id, { onSuccess: () => toast({ title: t("learningDetail.markedTitle"), description: t("learningDetail.markedText") }) })}>
+                  onClick={() => complete.mutate(r.id, { onSuccess: () => { react("happy"); toast({ title: t("learningDetail.markedTitle"), description: t("learningDetail.markedText") }); } })}>
                   {t("learningDetail.markComplete")}
                 </Button>
               </div>
