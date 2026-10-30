@@ -6,6 +6,7 @@ import { useProgress } from "../api/progress";
 import { LinkButton } from "../components/RouterLink";
 import { ErrorState, PageSkeleton } from "../components/States";
 import { AREA_COLOR, formatDate, shortMonth, signed } from "../utils/format";
+import { StageHistory } from "../character/CharacterViews";
 
 type AreaCode = "ideas" | "resources" | "action";
 
@@ -84,6 +85,7 @@ export function ProgressPage() {
           </ChartCard>
         </div>
       </div>
+      <div style={{ marginBottom: 24 }}><StageHistory /></div>
       <div className="ik-grid4" style={{ marginBottom: 24 }}>
         <StatCard label={t("progress.stats.learning")} value={p.completed_resources} description={t("progress.stats.learningDescription")} icon="book-open" tone="growth" />
         <StatCard label={t("progress.stats.practice")} value={p.completed_tasks} description={t("progress.stats.practiceDescription")} icon="pencil-ruler" />

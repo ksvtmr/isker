@@ -43,7 +43,12 @@ export default defineConfig(({ mode }) => {
       proxy: { "/api": { target: apiTarget, changeOrigin: true } },
     },
     preview: { port: 4173, proxy: { "/api": { target: apiTarget, changeOrigin: true } } },
-    build: { sourcemap: true, chunkSizeWarningLimit: 800 },
+    build: {
+      sourcemap: true,
+      chunkSizeWarningLimit: 800,
+      // Character illustrations stay separate files (cached, replaceable, loaded only where shown), not data URIs.
+      assetsInlineLimit: (file: string) => (file.includes("/assets/characters/") ? false : undefined),
+    },
     test: {
       environment: "jsdom",
       globals: true,

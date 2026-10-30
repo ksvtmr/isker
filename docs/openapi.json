@@ -2304,6 +2304,172 @@
         }
       }
     },
+    "/api/assessments/attempts/{attempt_id}/analysis": {
+      "get": {
+        "tags": [
+          "assessments"
+        ],
+        "summary": "AI development analysis of your completed attempt",
+        "operationId": "get_analysis_api_assessments_attempts__attempt_id__analysis_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Analysis Api Assessments Attempts  Attempt Id  Analysis Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "assessments"
+        ],
+        "summary": "Generate, retry or regenerate (in the current language) the AI development analysis",
+        "operationId": "run_analysis_api_assessments_attempts__attempt_id__analysis_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRunIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Run Analysis Api Assessments Attempts  Attempt Id  Analysis Post"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/assessments/attempts/{attempt_id}/results": {
       "get": {
         "tags": [
@@ -4245,6 +4411,149 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response My Evaluation Api Ai Evaluations  Evaluation Id  Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/character": {
+      "get": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Character stage, the data it rests on, and its history",
+        "operationId": "get_character_api_character_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/character/events/{event_id}/seen": {
+      "post": {
+        "tags": [
+          "progress"
+        ],
+        "summary": "Record that a stage change was shown",
+        "operationId": "mark_seen_api_character_events__event_id__seen_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
                 }
               }
             }
@@ -6571,6 +6880,195 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Page_AIEvaluationAdminOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ai/analyses": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "AI development analyses: processing status (no answer content)",
+        "operationId": "ai_analyses_api_admin_ai_analyses_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(pending|succeeded|failed)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Ai Analyses Api Admin Ai Analyses Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ai/analyses/{analysis_id}/retry": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Run a failed AI development analysis again",
+        "operationId": "retry_ai_analysis_api_admin_ai_analyses__analysis_id__retry_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Analysis Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Retry Ai Analysis Api Admin Ai Analyses  Analysis Id  Retry Post"
                 }
               }
             }
@@ -11431,6 +11929,18 @@
         ],
         "title": "AdminUserUpdate"
       },
+      "AnalysisRunIn": {
+        "properties": {
+          "regenerate": {
+            "type": "boolean",
+            "title": "Regenerate",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "AnalysisRunIn",
+        "description": "`regenerate`: write the existing analysis again (e.g. in the current interface language)."
+      },
       "AnswerIn": {
         "properties": {
           "option_id": {
@@ -12277,6 +12787,207 @@
         ],
         "title": "ChangePasswordIn"
       },
+      "CharacterBasis": {
+        "properties": {
+          "competencies_assessed": {
+            "type": "integer",
+            "title": "Competencies Assessed"
+          },
+          "competencies_total": {
+            "type": "integer",
+            "title": "Competencies Total"
+          },
+          "competencies_with_evidence": {
+            "type": "integer",
+            "title": "Competencies With Evidence"
+          },
+          "practice_weight": {
+            "type": "number",
+            "title": "Practice Weight"
+          },
+          "practice_min_tasks": {
+            "type": "integer",
+            "title": "Practice Min Tasks"
+          },
+          "attempt_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "competencies_assessed",
+          "competencies_total",
+          "competencies_with_evidence",
+          "practice_weight",
+          "practice_min_tasks",
+          "attempt_id"
+        ],
+        "title": "CharacterBasis"
+      },
+      "CharacterOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "stage_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Key"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "assessment_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Score"
+          },
+          "practice_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practice Score"
+          },
+          "practice_tasks": {
+            "type": "integer",
+            "title": "Practice Tasks"
+          },
+          "practice_counted": {
+            "type": "boolean",
+            "title": "Practice Counted"
+          },
+          "progress_pct": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Progress Pct"
+          },
+          "next_stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Stage"
+          },
+          "points_to_next": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points To Next"
+          },
+          "rules_version": {
+            "type": "string",
+            "title": "Rules Version"
+          },
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/StageBand"
+            },
+            "type": "array",
+            "title": "Bands"
+          },
+          "basis": {
+            "$ref": "#/components/schemas/CharacterBasis"
+          },
+          "pending_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StageEventOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/StageEventOut"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "stage",
+          "stage_key",
+          "score",
+          "assessment_score",
+          "practice_score",
+          "practice_tasks",
+          "practice_counted",
+          "progress_pct",
+          "next_stage",
+          "points_to_next",
+          "rules_version",
+          "bands",
+          "basis",
+          "pending_event",
+          "history"
+        ],
+        "title": "CharacterOut",
+        "description": "The learner's character stage. `stage` is the last confirmed stage (from the history); `score` and the progress\nfields are the current value of the stage rule, so progress inside a stage shows before the next stage is\nreached. Read-only: no request can set a stage."
+      },
       "CompetencyAdminOut": {
         "properties": {
           "id": {
@@ -12875,6 +13586,28 @@
             ],
             "title": "Explanation"
           },
+          "evidence_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Level"
+          },
+          "evidence_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Count"
+          },
           "assessed_at": {
             "anyOf": [
               {
@@ -12966,8 +13699,37 @@
             "title": "Change Since Previous"
           },
           "change_since_first": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Change Since First"
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison"
+          },
+          "comparison_since_first": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Since First"
           },
           "points": {
             "items": {
@@ -15020,6 +15782,17 @@
             ],
             "title": "Change"
           },
+          "comparison": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison"
+          },
           "assessed_at": {
             "anyOf": [
               {
@@ -15360,7 +16133,7 @@
         "properties": {
           "key": {
             "type": "string",
-            "pattern": "^(answer_evaluation|profile_insight)$",
+            "pattern": "^(answer_evaluation|profile_insight|development_analysis)$",
             "title": "Key"
           },
           "system_prompt": {
@@ -16957,6 +17730,134 @@
         ],
         "title": "SnapshotOut"
       },
+      "StageBand": {
+        "properties": {
+          "stage": {
+            "type": "integer",
+            "title": "Stage"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "min": {
+            "type": "integer",
+            "title": "Min"
+          },
+          "max": {
+            "type": "integer",
+            "title": "Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stage",
+          "key",
+          "min",
+          "max"
+        ],
+        "title": "StageBand"
+      },
+      "StageEventOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sequence": {
+            "type": "integer",
+            "title": "Sequence"
+          },
+          "stage": {
+            "type": "integer",
+            "title": "Stage"
+          },
+          "previous_stage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Stage"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "assessment_score": {
+            "type": "integer",
+            "title": "Assessment Score"
+          },
+          "practice_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practice Score"
+          },
+          "practice_tasks": {
+            "type": "integer",
+            "title": "Practice Tasks"
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "attempt_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt Id"
+          },
+          "rules_version": {
+            "type": "string",
+            "title": "Rules Version"
+          },
+          "confirmed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Confirmed At"
+          },
+          "seen": {
+            "type": "boolean",
+            "title": "Seen"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sequence",
+          "stage",
+          "previous_stage",
+          "direction",
+          "score",
+          "assessment_score",
+          "practice_score",
+          "practice_tasks",
+          "trigger",
+          "attempt_id",
+          "rules_version",
+          "confirmed_at",
+          "seen"
+        ],
+        "title": "StageEventOut"
+      },
       "StartAttemptIn": {
         "properties": {
           "scope": {
@@ -18033,6 +18934,22 @@
             "type": "boolean",
             "title": "Google Linked",
             "default": false
+          },
+          "initial_assessment_completed": {
+            "type": "boolean",
+            "title": "Initial Assessment Completed",
+            "default": false
+          },
+          "in_progress_attempt_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Progress Attempt Id"
           }
         },
         "type": "object",

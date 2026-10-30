@@ -25,6 +25,7 @@ from app.models import (
     AIEvaluation,
     Assessment,
     AssessmentAttempt,
+    CharacterStageEvent,
     Competency,
     CompetencyArea,
     CompetencyGap,
@@ -365,6 +366,11 @@ def _backdate(db: Session, att: AssessmentAttempt, when: datetime) -> None:
     for model in (CompetencyScore, CompetencyGap, Recommendation):
         db.execute(update(model).where(model.attempt_id == att.id).values(created_at=when))
     db.execute(update(ProgressSnapshot).where(ProgressSnapshot.attempt_id == att.id).values(created_at=when))
+    db.execute(
+        update(CharacterStageEvent)
+        .where(CharacterStageEvent.attempt_id == att.id)
+        .values(confirmed_at=when, created_at=when, seen_at=when)
+    )
     db.execute(update(AIEvaluation).where(AIEvaluation.attempt_id == att.id).values(created_at=when))
     answer_ids = [a.id for a in att.answers]
     db.execute(update(AIEvaluation).where(AIEvaluation.answer_id.in_(answer_ids)).values(created_at=when))

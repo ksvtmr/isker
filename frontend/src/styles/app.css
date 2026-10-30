@@ -92,3 +92,47 @@
 /* AI development analysis (components/AnalysisPanel.tsx) */
 .ik-h3 { margin: 0 0 8px; font-size: var(--text-base, 16px); font-weight: 600; }
 .ik-plain-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; }
+
+/* Character progression (src/character). One animation at a time, short and finite; none with reduced motion. */
+.ik-char{display:inline-flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.ik-char__figure{position:relative;flex:none;overflow:hidden}
+.ik-char__img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;transform-origin:50% 100%;user-select:none}
+.ik-char__figure--bust{border-radius:50%;background:var(--color-brand-50);box-shadow:inset 0 0 0 1px var(--color-brand-100)}
+/* head and shoulders: the 200×280 figure scaled so its upper 43% fills the square */
+.ik-char__figure--bust .ik-char__img{width:166%;height:233%;left:-33%;top:-5%}
+.ik-char__figure--empty .ik-char__img{filter:brightness(0);opacity:.1}
+.ik-char__fallback{position:absolute;inset:0;display:grid;place-items:center;border-radius:16px;background:var(--color-neutral-100);color:var(--color-neutral-500);font-weight:600}
+.ik-char__label{margin:0;text-align:center;font-size:14px;font-weight:600;color:var(--color-neutral-900);display:flex;flex-direction:column;gap:2px}
+.ik-char__step{font-size:12px;font-weight:500;color:var(--color-neutral-500)}
+.ik-char__progress{width:100%;min-width:96px}
+.ik-char__hint{margin:0;font-size:12px;color:var(--color-neutral-500);text-align:center}
+.ik-char__img[data-anim="idle"]{animation:ik-char-breathe 3.6s ease-in-out 3}
+.ik-char__img[data-anim="happy"]{animation:ik-char-hop .6s ease-out 1}
+.ik-char__img[data-anim="celebrating"]{animation:ik-char-rise .9s cubic-bezier(.2,.8,.2,1) 1}
+.ik-char__img[data-anim="thinking"],.ik-char__img[data-anim="learning"],.ik-char__img[data-anim="working"],
+.ik-char__img[data-anim="confident"],.ik-char__img[data-anim="supportive"]{animation:ik-char-in .3s ease-out 1}
+.ik-char__img[data-anim="morph"]{animation:ik-char-morph-in .7s ease-out 1 both}
+.ik-char__img--out{animation:ik-char-morph-out .7s ease-in 1 both}
+@keyframes ik-char-breathe{0%,100%{transform:none}50%{transform:translateY(-1px) scaleY(1.01)}}
+@keyframes ik-char-hop{0%,100%{transform:none}40%{transform:translateY(-5px)}70%{transform:translateY(1px)}}
+@keyframes ik-char-rise{0%{transform:scale(.97);opacity:.6}60%{transform:scale(1.02);opacity:1}100%{transform:none}}
+@keyframes ik-char-in{from{opacity:.4}to{opacity:1}}
+@keyframes ik-char-morph-in{from{opacity:0;transform:scale(.96);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@keyframes ik-char-morph-out{from{opacity:1}to{opacity:0;transform:scale(.98)}}
+@media (prefers-reduced-motion:reduce){.ik-char__img{animation:none!important}}
+
+.ik-char-panel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:24px;align-items:center}
+.ik-char-panel__art{display:flex;justify-content:center;padding:8px 8px 0;border-radius:var(--radius-lg);background:linear-gradient(180deg,var(--color-brand-50),#fff)}
+.ik-char-stages{display:flex;gap:6px;list-style:none;padding:0;margin:0;flex-wrap:wrap}
+.ik-char-stages li{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--color-neutral-200);color:var(--color-neutral-600);background:#fff}
+.ik-char-stages li[aria-current="step"]{border-color:var(--color-brand-500);color:var(--color-brand-700);background:var(--color-brand-50);font-weight:600}
+.ik-char-stages li[data-done="true"]{color:var(--color-growth-700)}
+.ik-char-aside{display:flex;gap:14px;align-items:center}
+.ik-char-notice{display:flex;gap:16px;align-items:center;padding:16px 20px;border-radius:var(--radius-lg);border:1px solid var(--color-growth-200);background:var(--color-growth-50);animation:isk-rise .4s ease-out 1}
+.ik-char-notice[data-direction="down"]{border-color:var(--color-brand-100);background:var(--color-brand-50)}
+.ik-char-history{list-style:none;padding:0;margin:0}
+@media (max-width:640px){
+  .ik-char-panel{grid-template-columns:1fr;justify-items:center;text-align:left}
+  .ik-char-panel__body{width:100%}
+  .ik-char-notice{align-items:flex-start}
+}
