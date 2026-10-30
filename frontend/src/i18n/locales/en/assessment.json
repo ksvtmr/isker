@@ -277,7 +277,7 @@
     "priorities": "Development priorities",
     "actions": "Recommended next steps",
     "milestones": "Milestones",
-    "confidence": "How reliable this is",
+    "confidence": "Limitations of this analysis",
     "kind": {
       "learn": "Learn",
       "practice": "Practise",
@@ -292,7 +292,19 @@
     "inWeeks_many": "in {{count}} weeks",
     "reassessIn_few": "A reassessment is useful in about {{count}} weeks.",
     "reassessIn_many": "A reassessment is useful in about {{count}} weeks.",
-    "rewriteFailed": "The analysis could not be written again just now; the previous one is shown."
+    "rewriteFailed": "The analysis could not be written again just now; the previous one is shown.",
+    "basedOn_one": "Based on {{count}} of your answers",
+    "basedOn_few": "Based on {{count}} of your answers",
+    "basedOn_many": "Based on {{count}} of your answers",
+    "basedOn_other": "Based on {{count}} of your answers",
+    "confidenceLevel": {
+      "low": "Low confidence",
+      "medium": "Medium confidence",
+      "high": "High confidence"
+    },
+    "progress": "Since your previous assessment",
+    "questions": "Questions that would make this more reliable",
+    "yourAnswer": "Your answer"
   },
   "firstTime": {
     "title": "Start with your initial assessment",

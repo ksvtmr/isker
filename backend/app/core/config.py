@@ -83,12 +83,21 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     openai_base_url: str = "https://api.openai.com/v1"
+    # Groq (official OpenAI-compatible API). The model is never assumed: set GROQ_MODEL to a model your key can use
+    # (python scripts/ai_models.py lists them).
+    groq_api_key: str = ""
+    groq_model: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.5-flash"
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
     ai_timeout_seconds: float = 30.0
     # The development analysis is one larger request (whole profile + catalog); it gets more time.
     ai_analysis_timeout_seconds: float = 90.0
+    # Transport retries for transient failures only (network errors, 5xx, 429 with a short Retry-After), with
+    # exponential backoff and jitter; invalid output is retried separately (AI_MAX_RETRIES).
+    ai_transport_retries: int = 2
+    ai_max_output_tokens: int = 4096
     ai_max_retries: int = 1
 
     # Seed / demo
@@ -131,15 +140,19 @@ class Settings(BaseSettings):
         if self.is_production and self.email_backend == "console":
             raise ValueError("EMAIL_BACKEND=console is for development only")
         provider = self.ai_provider.strip().lower()
-        if provider not in ("auto", "mock", "openai", "gemini"):
-            raise ValueError("AI_PROVIDER must be auto, mock, openai or gemini")
+        if provider not in ("auto", "mock", "openai", "gemini", "groq"):
+            raise ValueError("AI_PROVIDER must be auto, mock, groq, openai or gemini")
         if not self.mock_ai and provider != "mock":
-            if provider == "auto" and self.ai_api_key and not (self.openai_api_key or self.gemini_api_key):
-                raise ValueError("AI_API_KEY is set: also set AI_PROVIDER=openai or AI_PROVIDER=gemini")
-            if provider in ("openai", "gemini") and not self.ai_key(provider):
+            own_keys = self.groq_api_key or self.openai_api_key or self.gemini_api_key
+            if provider == "auto" and self.ai_api_key and not own_keys:
+                raise ValueError("AI_API_KEY is set: also set AI_PROVIDER=groq, openai or gemini")
+            if provider in ("openai", "gemini", "groq") and not self.ai_key(provider):
                 raise ValueError(f"AI_PROVIDER={provider} needs {provider.upper()}_API_KEY (or AI_API_KEY)")
-            if provider == "auto" and not (self.openai_api_key or self.gemini_api_key) and self.is_production:
-                raise ValueError("MOCK_AI=false but no AI key is configured (GEMINI_API_KEY or OPENAI_API_KEY)")
+            if provider == "auto" and not own_keys and self.is_production:
+                raise ValueError("MOCK_AI=false but no AI key is configured (GROQ_API_KEY, GEMINI_API_KEY or "
+                                 "OPENAI_API_KEY)")
+            if self.resolved_ai_provider == "groq" and not self.groq_model:
+                raise ValueError("Groq needs GROQ_MODEL: a model available to your key (python scripts/ai_models.py)")
         if self.is_production and self.cookie_secure is False:
             raise ValueError("COOKIE_SECURE=false is not allowed in production (session cookies need HTTPS)")
         if self.is_production:
@@ -188,17 +201,19 @@ class Settings(BaseSettings):
         return self.environment.lower() == "production"
 
     def ai_key(self, provider: str) -> str:
-        own = {"openai": self.openai_api_key, "gemini": self.gemini_api_key}.get(provider, "")
-        return own or self.ai_api_key
+        own = {"openai": self.openai_api_key, "gemini": self.gemini_api_key, "groq": self.groq_api_key}
+        return own.get(provider, "") or self.ai_api_key
 
     @property
     def resolved_ai_provider(self) -> str:
-        """mock, openai or gemini. Outside production, MOCK_AI=false without any key still means mock (dev)."""
+        """mock, openai, gemini or groq. Outside production, MOCK_AI=false without any key still means mock (dev)."""
         provider = self.ai_provider.strip().lower()
         if self.mock_ai or provider == "mock":
             return "mock"
-        if provider in ("openai", "gemini"):
+        if provider in ("openai", "gemini", "groq"):
             return provider
+        if self.groq_api_key:
+            return "groq"
         if self.gemini_api_key:
             return "gemini"
         return "openai" if self.openai_api_key else "mock"
@@ -209,7 +224,8 @@ class Settings(BaseSettings):
 
     @property
     def ai_model(self) -> str | None:
-        return {"openai": self.openai_model, "gemini": self.gemini_model}.get(self.resolved_ai_provider)
+        return {"openai": self.openai_model, "gemini": self.gemini_model, "groq": self.groq_model}.get(
+            self.resolved_ai_provider)
 
 
 @lru_cache

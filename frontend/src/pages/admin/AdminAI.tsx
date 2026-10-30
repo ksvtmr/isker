@@ -1,7 +1,7 @@
 import { Button, Card, Checkbox, ConfirmActionDialog, EmptyState, InlineAlert, Modal, Select, StatusBadge, Tabs, Textarea, tabPanelProps } from "@isker/design-system";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { adminApi, useAdminAnalyses, useAdminEvaluations, useAdminMutation, useAdminPrompts, type AIAnalysisRow, type AIEvaluationRow, type PromptVersion } from "../../api/admin";
+import { adminApi, useAdminAIUsage, useAdminAnalyses, useAdminEvaluations, useAdminMutation, useAdminPrompts, type AIAnalysisRow, type AIEvaluationRow, type PromptVersion } from "../../api/admin";
 import { can, useMe } from "../../api/auth";
 import { errorMessage } from "../../api/client";
 import { ErrorState, PageSkeleton } from "../../components/States";
@@ -132,7 +132,7 @@ function Analyses() {
   if (isLoading) return <PageSkeleton chart={false} />;
   if (error || !data) return <ErrorState error={error} onRetry={() => refetch()} />;
   const label = (s: AIAnalysisRow["status"]) => t(`ai.analyses.statuses.${s}`);
-  const badge = (s: AIAnalysisRow["status"]) => <StatusBadge status={s === "succeeded" ? "done" : s === "pending" ? "progress" : "locked"}>{label(s)}</StatusBadge>;
+  const badge = (s: AIAnalysisRow["status"]) => <StatusBadge status={s === "completed" ? "done" : s === "failed" ? "locked" : "progress"}>{label(s)}</StatusBadge>;
   const pages = Math.max(1, Math.ceil(data.total / data.page_size));
   return (
     <>
@@ -140,25 +140,26 @@ function Analyses() {
       <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
         <div style={{ width: 220 }}>
           <Select aria-label={t("ai.filterByStatus")} placeholder={t("ai.allStatuses")} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-            options={(["pending", "succeeded", "failed"] as const).map((v) => ({ value: v, label: `${label(v)} (${data.counts[v]})` }))} />
+            options={(["pending", "processing", "completed", "failed"] as const).map((v) => ({ value: v, label: `${label(v)} (${data.counts[v]})` }))} />
         </div>
       </div>
       {retry.error && <div style={{ marginBottom: 12 }}><InlineAlert>{errorMessage(retry.error)}</InlineAlert></div>}
       <Card style={{ overflow: "hidden" }}>
         <div className="ik-table-wrap">
           <table className="ik-table">
-            <thead><tr><th>{t("common:format.numberHeader")}</th><th>{t("ai.analyses.columns.user")}</th><th>{t("ai.analyses.columns.attempt")}</th><th>{t("content.status")}</th><th>{t("ai.columns.provider")}</th><th>{t("ai.analyses.columns.language")}</th><th>{t("ai.analyses.columns.error")}</th><th className="num">{t("ai.analyses.columns.runs")}</th><th className="num">{t("ai.columns.latency")}</th><th>{t("ai.columns.date")}</th><th><span className="isk-sr-only">{t("content.actions")}</span></th></tr></thead>
+            <thead><tr><th>{t("common:format.numberHeader")}</th><th>{t("ai.analyses.columns.user")}</th><th>{t("ai.analyses.columns.attempt")}</th><th>{t("content.status")}</th><th>{t("ai.columns.provider")}</th><th>{t("ai.analyses.columns.language")}</th><th>{t("ai.analyses.columns.error")}</th><th className="num">{t("ai.analyses.columns.runs")}</th><th className="num">{t("ai.columns.latency")}</th><th className="num">{t("ai.analyses.columns.tokens")}</th><th>{t("ai.columns.date")}</th><th><span className="isk-sr-only">{t("content.actions")}</span></th></tr></thead>
             <tbody>{data.items.length === 0 && (
-              <tr><td colSpan={11}><EmptyState icon="bot" title={t("ai.analyses.emptyTitle")} description={t("ai.analyses.emptyText")} /></td></tr>
+              <tr><td colSpan={12}><EmptyState icon="bot" title={t("ai.analyses.emptyTitle")} description={t("ai.analyses.emptyText")} /></td></tr>
             )}{data.items.map((a) => (
               <tr key={a.id}>
                 <td className="num">{t("common:format.id", { id: a.id })}</td><td>{a.user_email}</td><td className="num">{t("common:format.id", { id: a.attempt_id })}</td><td>{badge(a.status)}</td>
                 <td>{a.provider ? `${a.provider} · ${a.model ?? ""}` : "—"}</td><td>{a.language.toUpperCase()}</td>
                 <td>{a.error_code ? t(`ai.analyses.errors.${a.error_code}`, { defaultValue: a.error_code }) : "—"}</td>
-                <td className="num">{a.runs}</td><td className="num">{a.latency_ms != null ? t("ai.latencyMs", { n: formatNumber(a.latency_ms) }) : "—"}</td><td>{formatDate(a.updated_at)}</td>
-                <td>{a.status === "failed" && can(me, "ai.manage") && (
+                <td className="num">{a.runs}</td><td className="num">{a.latency_ms != null ? t("ai.latencyMs", { n: formatNumber(a.latency_ms) }) : "—"}</td>
+                <td className="num">{a.prompt_tokens != null ? `${formatNumber(a.prompt_tokens)} / ${formatNumber(a.completion_tokens ?? 0)}` : "—"}</td><td>{formatDate(a.updated_at)}</td>
+                <td>{(a.status === "failed" || a.status === "pending") && can(me, "ai.manage") && (
                   <Button size="sm" variant="secondary" iconLeft="refresh-cw" loading={retry.isPending && retry.variables === a.id}
-                    onClick={() => retry.mutate(a.id, { onSuccess: (r) => toast({ title: t(`ai.analyses.retried.${r.status === "succeeded" ? "ok" : "failed"}`) }) })}>{t("ai.analyses.retry")}</Button>
+                    onClick={() => retry.mutate(a.id, { onSuccess: (r) => toast({ title: t(`ai.analyses.retried.${r.status === "completed" ? "ok" : "failed"}`) }) })}>{t("ai.analyses.retry")}</Button>
                 )}</td>
               </tr>))}
             </tbody>
@@ -175,13 +176,68 @@ function Analyses() {
   );
 }
 
+function Usage() {
+  const { t } = useTranslation("adminContent");
+  const [days, setDays] = useState("7");
+  const { data, isLoading, error, refetch } = useAdminAIUsage(Number(days));
+  if (isLoading) return <PageSkeleton chart={false} />;
+  if (error || !data) return <ErrorState error={error} onRetry={() => refetch()} />;
+  const pct = (v: number | null) => (v == null ? "—" : formatNumber(v, { style: "percent", maximumFractionDigits: 1 }));
+  const ms = (v: number | null) => (v == null ? "—" : t("ai.latencyMs", { n: formatNumber(v) }));
+  const c = data.config;
+  const rows: [string, string][] = [
+    [t("ai.usage.provider"), `${c.provider}${c.model ? ` · ${c.model}` : ""}`],
+    [t("ai.usage.key"), c.key_configured ? t("ai.usage.keySet") : t("ai.usage.keyMissing")],
+    [t("ai.usage.timeouts"), `${c.timeout_seconds} / ${c.analysis_timeout_seconds} s`],
+    [t("ai.usage.retries"), `${c.output_retries} / ${c.transport_retries}`],
+    [t("ai.usage.maxTokens"), formatNumber(c.max_output_tokens)],
+    ...Object.entries(data.limits).map(([k, v]): [string, string] => [t("ai.usage.limit", { name: k }), t("ai.usage.perWindow", { n: v.requests, minutes: Math.round(v.window_seconds / 60) })]),
+  ];
+  const stats: [string, string, string][] = [
+    [t("ai.usage.total"), formatNumber(data.evaluations.total), formatNumber(data.analyses.total)],
+    [t("ai.usage.failureRate"), pct(data.evaluations.fallback_rate), pct(data.analyses.failure_rate)],
+    [t("ai.usage.latencyAvg"), ms(data.evaluations.latency.avg_ms), ms(data.analyses.latency.avg_ms)],
+    [t("ai.usage.latencyP95"), ms(data.evaluations.latency.p95_ms), ms(data.analyses.latency.p95_ms)],
+    [t("ai.analyses.columns.tokens"), "—", `${formatNumber(data.analyses.tokens.prompt)} / ${formatNumber(data.analyses.tokens.completion)}`],
+  ];
+  return (
+    <>
+      <p className="isk-hint" style={{ marginBottom: 12 }}>{t("ai.usage.intro")}</p>
+      <div style={{ width: 220, marginBottom: 16 }}>
+        <Select aria-label={t("ai.usage.period")} value={days} onChange={(e) => setDays(e.target.value)}
+          options={["1", "7", "30", "90"].map((d) => ({ value: d, label: t("ai.usage.days", { count: Number(d) }) }))} />
+      </div>
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))" }}>
+        <Card style={{ overflow: "hidden" }}>
+          <div className="ik-table-wrap"><table className="ik-table">
+            <caption className="isk-sr-only">{t("ai.usage.configTitle")}</caption>
+            <tbody>{rows.map(([k, v]) => <tr key={k}><th scope="row">{k}</th><td>{v}</td></tr>)}</tbody>
+          </table></div>
+        </Card>
+        <Card style={{ overflow: "hidden" }}>
+          <div className="ik-table-wrap"><table className="ik-table">
+            <caption className="isk-sr-only">{t("ai.usage.statsTitle")}</caption>
+            <thead><tr><th><span className="isk-sr-only">{t("ai.usage.metric")}</span></th><th className="num">{t("ai.tabEvaluations")}</th><th className="num">{t("ai.tabAnalyses")}</th></tr></thead>
+            <tbody>{stats.map(([k, a, b]) => <tr key={k}><th scope="row">{k}</th><td className="num">{a}</td><td className="num">{b}</td></tr>)}</tbody>
+          </table></div>
+        </Card>
+      </div>
+      {Object.keys(data.analyses.errors).length > 0 && (
+        <p className="isk-hint" style={{ marginTop: 12 }}>
+          {t("ai.usage.errors")}: {Object.entries(data.analyses.errors).map(([k, v]) => `${t(`ai.analyses.errors.${k}`, { defaultValue: k })} — ${v}`).join(", ")}
+        </p>
+      )}
+    </>
+  );
+}
+
 export function AdminAI() {
   const { t } = useTranslation("adminContent");
   const [tab, setTab] = useState("evaluations");
   return (
     <>
-      <div style={{ marginBottom: 16 }}><Tabs id="admin-ai" ariaLabel={t("content.aiPage.title")} value={tab} onChange={setTab} tabs={[{ value: "evaluations", label: t("ai.tabEvaluations") }, { value: "analyses", label: t("ai.tabAnalyses") }, { value: "prompts", label: t("ai.tabPrompts") }]} /></div>
-      <div {...tabPanelProps("admin-ai", tab)}>{tab === "evaluations" ? <Evaluations /> : tab === "analyses" ? <Analyses /> : <Prompts />}</div>
+      <div style={{ marginBottom: 16 }}><Tabs id="admin-ai" ariaLabel={t("content.aiPage.title")} value={tab} onChange={setTab} tabs={[{ value: "evaluations", label: t("ai.tabEvaluations") }, { value: "analyses", label: t("ai.tabAnalyses") }, { value: "prompts", label: t("ai.tabPrompts") }, { value: "usage", label: t("ai.tabUsage") }]} /></div>
+      <div {...tabPanelProps("admin-ai", tab)}>{tab === "evaluations" ? <Evaluations /> : tab === "analyses" ? <Analyses /> : tab === "usage" ? <Usage /> : <Prompts />}</div>
     </>
   );
 }

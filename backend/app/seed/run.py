@@ -141,18 +141,7 @@ def seed_reference(db: Session) -> None:
         t.difficulty, t.duration_minutes, t.rubric, t.min_length = Difficulty(diff), minutes, rubric, min_len
         db.add(t)
 
-    for key, (system, user_tpl) in DEFAULT_PROMPTS.items():
-        if db.scalar(select(AIPromptVersion.id).where(AIPromptVersion.key == key)) is None:
-            db.add(
-                AIPromptVersion(
-                    key=key,
-                    version=1,
-                    system_prompt=system,
-                    user_template=user_tpl,
-                    notes="Initial version",
-                    is_active=True,
-                )
-            )
+    sync_builtin_prompts(db)
     db.flush()
     try:
         from app.seed.apply_translations import apply_content_translations
@@ -533,8 +522,38 @@ def run(with_demo: bool = True) -> None:
         language_var.reset(lang_token)
 
 
+BUILTIN_NOTES = ("Initial version", "Built-in default")
+
+
+def _is_builtin(pv: AIPromptVersion) -> bool:
+    return (pv.notes or "").startswith(BUILTIN_NOTES)
+
+
+def sync_builtin_prompts(db: Session) -> None:
+    """Adds the built-in prompt templates (app/ai/prompts.py) as versions. A changed built-in template becomes a new
+    version; it is activated only when the active version is itself built-in, so an administrator's version stays
+    active. Nothing is edited or deleted: earlier versions stay for audit and rollback."""
+    for key, (system, user_tpl) in DEFAULT_PROMPTS.items():
+        versions = list(db.scalars(select(AIPromptVersion).where(AIPromptVersion.key == key)
+                                   .order_by(AIPromptVersion.version)))
+        if any(v.system_prompt == system and v.user_template == user_tpl and _is_builtin(v) for v in versions):
+            continue
+        active = [v for v in versions if v.is_active]
+        activate = not active or all(_is_builtin(v) for v in active)
+        if activate:
+            for v in active:
+                v.is_active = False
+        number = (versions[-1].version if versions else 0) + 1
+        db.add(AIPromptVersion(key=key, version=number, system_prompt=system, user_template=user_tpl,
+                               notes="Initial version" if number == 1 else "Built-in default (updated)",
+                               is_active=activate))
+        log.info("Prompt %s: built-in version %s added%s", key, number, "" if activate else " (not activated: an "
+                 "administrator's version is active)")
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-demo", action="store_true")
     run(with_demo=not ap.parse_args().no_demo)
+

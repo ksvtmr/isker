@@ -75,7 +75,7 @@ export const useAnalysis = (attemptId: number | null) =>
     queryKey: ["analysis", attemptId],
     queryFn: () => assessmentsApi.analysis(attemptId!),
     enabled: !!attemptId,
-    refetchInterval: (q) => (q.state.data?.status === "pending" ? 4000 : false),
+    refetchInterval: (q) => (q.state.data?.status === "processing" ? 4000 : false),
   });
 
 /** Generate / retry / regenerate (in the current language). Idempotent on the server: one analysis per attempt. */

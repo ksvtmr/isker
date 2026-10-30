@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
@@ -8,9 +9,12 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from app.ai import analysis as analysis_service
 from app.api.deps import DB, require_permission
+from app.core.config import get_settings
 from app.core.content_i18n import LANGS, pair_by_key, reconcile_translations, translation_status
 from app.core.context import language_var
+from app.core.database import utcnow
 from app.core.errors import ConflictError, NotFoundError, ValidationError
+from app.core.ratelimit import RULES as RATE_RULES
 from app.models import (
     AIAnalysis,
     AIEvaluation,
@@ -693,7 +697,9 @@ def ai_evaluations(
 def ai_analyses(
     _: AIViewer,
     db: DB,
-    status_filter: Annotated[str | None, Query(alias="status", pattern="^(pending|succeeded|failed)$")] = None,
+    status_filter: Annotated[
+        str | None, Query(alias="status", pattern="^(pending|processing|completed|failed)$")
+    ] = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
 ) -> dict:
@@ -706,14 +712,78 @@ def ai_analyses(
     items = [{
         "id": a.id, "attempt_id": a.attempt_id, "user_id": a.user_id, "user_email": email, "status": a.status,
         "language": a.language, "provider": a.provider, "model": a.model, "error_code": a.error_code, "runs": a.runs,
-        "latency_ms": a.latency_ms, "created_at": a.created_at, "updated_at": a.updated_at,
+        "latency_ms": a.latency_ms, "prompt_tokens": a.prompt_tokens, "completion_tokens": a.completion_tokens,
+        "created_at": a.created_at, "updated_at": a.updated_at,
         "completed_at": a.completed_at,
     } for a, email in rows]
     return {"items": items, "total": total, "page": page, "page_size": page_size,
-            "counts": {k: counts.get(k, 0) for k in ("pending", "succeeded", "failed")}}
+            "counts": {k: counts.get(k, 0) for k in analysis_service.STATUSES}}
 
 
-@router.post("/ai/analyses/{analysis_id}/retry", summary="Run a failed AI development analysis again")
+def _latency(values: list[int]) -> dict:
+    v = sorted(values)
+    if not v:
+        return {"avg_ms": None, "p95_ms": None}
+    return {"avg_ms": round(sum(v) / len(v)), "p95_ms": v[min(len(v) - 1, int(0.95 * (len(v) - 1) + 0.5))]}
+
+
+@router.get("/ai/usage", summary="AI usage, failures, latency, tokens and limits (no secrets, no learner content)")
+def ai_usage(_: AIViewer, db: DB, days: Annotated[int, Query(ge=1, le=90)] = 7) -> dict:
+    s = get_settings()
+    since = utcnow() - timedelta(days=days)
+    evals = db.execute(select(AIEvaluation.status, AIEvaluation.provider, AIEvaluation.latency_ms)
+                       .where(AIEvaluation.created_at >= since)).all()
+    analyses = db.execute(select(AIAnalysis.status, AIAnalysis.provider, AIAnalysis.error_code, AIAnalysis.latency_ms,
+                                 AIAnalysis.prompt_tokens, AIAnalysis.completion_tokens)
+                          .where(AIAnalysis.updated_at >= since)).all()
+    eval_status: dict[str, int] = {}
+    for e in evals:
+        eval_status[e.status.value] = eval_status.get(e.status.value, 0) + 1
+    an_status: dict[str, int] = {k: 0 for k in analysis_service.STATUSES}
+    an_errors: dict[str, int] = {}
+    for a in analyses:
+        an_status[a.status] = an_status.get(a.status, 0) + 1
+        if a.error_code:
+            an_errors[a.error_code] = an_errors.get(a.error_code, 0) + 1
+    finished = an_status["completed"] + an_status["failed"]
+    return {
+        "days": days,
+        # Configuration without secrets: whether a key is set, never the key.
+        "config": {
+            "provider": s.resolved_ai_provider, "model": s.ai_model,
+            "key_configured": bool(s.resolved_ai_provider == "mock" or s.ai_key(s.resolved_ai_provider)),
+            "timeout_seconds": s.ai_timeout_seconds, "analysis_timeout_seconds": s.ai_analysis_timeout_seconds,
+            "output_retries": s.ai_max_retries, "transport_retries": s.ai_transport_retries,
+            "max_output_tokens": s.ai_max_output_tokens,
+        },
+        "limits": {name: {"requests": n, "window_seconds": w} for name, (n, w) in RATE_RULES.items()
+                   if name.startswith("ai_")},
+        "evaluations": {
+            "total": len(evals), "by_status": eval_status,
+            # Fallback = the provider failed or its answer did not pass validation; the rubric heuristic was used.
+            "fallback_rate": round(eval_status.get("fallback", 0) / len(evals), 3) if evals else None,
+            "by_provider": _count(e.provider for e in evals),
+            "latency": _latency([e.latency_ms for e in evals if e.latency_ms is not None and e.provider != "mock"]),
+        },
+        "analyses": {
+            "total": len(analyses), "by_status": an_status, "errors": an_errors,
+            "failure_rate": round(an_status["failed"] / finished, 3) if finished else None,
+            "by_provider": _count(a.provider for a in analyses if a.provider),
+            "latency": _latency([a.latency_ms for a in analyses if a.latency_ms is not None and a.provider != "mock"]),
+            "tokens": {"prompt": sum(a.prompt_tokens or 0 for a in analyses),
+                       "completion": sum(a.completion_tokens or 0 for a in analyses)},
+        },
+    }
+
+
+def _count(values) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for v in values:
+        out[v] = out.get(v, 0) + 1
+    return out
+
+
+@router.post("/ai/analyses/{analysis_id}/retry", summary="Run a failed (or queued, never started) AI analysis")
 def retry_ai_analysis(analysis_id: int, admin: AIManager, db: DB) -> dict:
     row = db.get(AIAnalysis, analysis_id)
     if row is None:
@@ -722,8 +792,8 @@ def retry_ai_analysis(analysis_id: int, admin: AIManager, db: DB) -> dict:
     owner = db.get(User, row.user_id)
     if att is None or owner is None:  # pragma: no cover - cascades delete analyses with their attempt/user
         raise NotFoundError("Analysis not found", "ANALYSIS_NOT_FOUND")
-    if row.status != "failed":
-        raise ConflictError("Only a failed analysis can be retried.", "ANALYSIS_NOT_FAILED")
+    if row.status not in ("failed", "pending"):
+        raise ConflictError("Only a failed or queued analysis can be run.", "ANALYSIS_NOT_FAILED")
     audit(db, admin.id, "admin.ai_analysis_retried", "ai_analysis", row.id, attempt_id=row.attempt_id)
     db.commit()
     # Written in the learner's language, not the administrator's.

@@ -39,8 +39,9 @@ services:
         value: https://ksvtmr.github.io
       # Email links use RENDER_EXTERNAL_URL automatically. Without SMTP_* variables no email is sent
       # (EMAIL_BACKEND=auto → disabled in production) and the app says so honestly.
-      # Built-in rule-based AI until a key is set. For Gemini: put GEMINI_API_KEY in Render → Environment (secret,
-      # never in this file), then set MOCK_AI=false and AI_PROVIDER=gemini there. A missing key stops the deploy with
+      # Built-in rule-based AI until a key is set. For Groq: put GROQ_API_KEY in Render → Environment (secret, never
+      # in this file), set GROQ_MODEL (python scripts/ai_models.py groq), MOCK_AI=false and AI_PROVIDER=groq there.
+      # Gemini works the same way with GEMINI_API_KEY and AI_PROVIDER=gemini. A missing key stops the deploy with
       # a clear error instead of silently using the rule-based provider.
       - key: MOCK_AI
         value: "true"
@@ -49,6 +50,8 @@ services:
         value: IskerDemo2026
       # Asked for during deployment; never stored in the repository.
       - key: ADMIN_PASSWORD
+        sync: false
+      - key: GROQ_API_KEY
         sync: false
       - key: GEMINI_API_KEY
         sync: false

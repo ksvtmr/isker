@@ -452,8 +452,9 @@
     "analyses": {
       "intro": "One AI development analysis per completed assessment. Only processing information is shown here, not the learner's answers or the analysis text.",
       "statuses": {
-        "pending": "Running",
-        "succeeded": "Ready",
+        "pending": "Queued",
+        "processing": "Running",
+        "completed": "Ready",
         "failed": "Failed"
       },
       "columns": {
@@ -461,7 +462,8 @@
         "attempt": "Assessment",
         "language": "Language",
         "error": "Problem",
-        "runs": "Runs"
+        "runs": "Runs",
+        "tokens": "Tokens (in / out)"
       },
       "errors": {
         "provider_unavailable": "AI service unreachable",
@@ -477,6 +479,32 @@
       "emptyTitle": "No analyses yet",
       "emptyText": "Analyses appear here after learners complete a full assessment.",
       "next": "Next"
+    },
+    "tabUsage": "Usage and limits",
+    "usage": {
+      "intro": "AI configuration (the key itself is never shown), request limits and how AI calls went in the chosen period. No learner content.",
+      "period": "Period",
+      "days_one": "Last {{count}} day",
+      "days_other": "Last {{count}} days",
+      "configTitle": "Configuration",
+      "statsTitle": "Calls",
+      "metric": "Metric",
+      "provider": "Provider and model",
+      "key": "API key",
+      "keySet": "configured (server side)",
+      "keyMissing": "missing",
+      "timeouts": "Timeouts (answer / analysis)",
+      "retries": "Retries (invalid output / network)",
+      "maxTokens": "Output token limit",
+      "limit": "Limit {{name}}",
+      "perWindow": "{{n}} per {{minutes}} min per user",
+      "total": "Calls",
+      "failureRate": "Failed or fallback",
+      "latencyAvg": "Average latency",
+      "latencyP95": "95th percentile latency",
+      "errors": "Analysis problems",
+      "days_few": "Last {{count}} days",
+      "days_many": "Last {{count}} days"
     }
   },
   "sync": {

@@ -29,7 +29,10 @@ class Scripted(AIProvider):
         return "{}"
 
 
-def _valid(score=99, ratings=(4, 2)):
+QUOTES = ("interview customers", "a free landing page")  # excerpts of the answer in _eval
+
+
+def _valid(score=99, ratings=(4, 2), quotes=QUOTES):
     return json.dumps(
         {
             "competency": "Valuing Ideas",
@@ -37,8 +40,8 @@ def _valid(score=99, ratings=(4, 2)):
             "level": "Proficient",
             "confidence": 0.8,
             "criteria": [
-                {"criterion": c["criterion"], "rating": r, "evidence": "x"}
-                for c, r in zip(RUBRIC, ratings, strict=True)
+                {"criterion": c["criterion"], "rating": r, "evidence": q}
+                for c, r, q in zip(RUBRIC, ratings, quotes, strict=True)
             ],
             "evidence": ["e"],
             "strengths": ["s"],
@@ -102,3 +105,34 @@ def test_mock_provider_is_deterministic(db):
     a = _eval(db, MockAIProvider()).score
     b = _eval(db, MockAIProvider()).score
     assert a == b
+
+
+def test_ratings_without_a_quote_from_the_answer_are_lowered(db):
+    # The second rating cites text that is not in the answer: it counts as 0, the first one stays.
+    quotes = ("I would INTERVIEW customers", "ran a paid ad campaign")
+    res = _eval(db, Scripted([_valid(ratings=(4, 4), quotes=quotes)]))
+    assert res.score == 50 and res.record.status == AIEvalStatus.SUCCESS
+    assert "Low-cost methods" in res.record.error
+    # Quotes split by an ellipsis must each occur in the answer.
+    res = _eval(db, Scripted([_valid(ratings=(4, 4), quotes=("interview … landing page", "free … page"))]))
+    assert res.score == 100
+
+
+def test_no_supported_rating_at_all_is_rejected_then_falls_back(db):
+    invented = _valid(ratings=(4, 4), quotes=("built a prototype in a week", ""))
+    res = _eval(db, Scripted([invented, invented]))
+    assert res.record.status == AIEvalStatus.FALLBACK and "no rating is supported" in res.record.error
+
+
+def test_answer_is_redacted_before_it_reaches_the_provider(db):
+    seen = []
+
+    class Recording(Scripted):
+        def evaluate(self, req):
+            seen.append(req.user_prompt)
+            return super().evaluate(req)
+
+    evaluate_text(db, user_id=None, competency_id=None, competency_name="Valuing Ideas", question="Q",
+                  answer="Write me at me@x.kz. I would interview customers and use a free landing page.",
+                  rubric=RUBRIC, input_type=AIInputType.OPEN_ANSWER, provider=Recording([_valid()]))
+    assert "me@x.kz" not in seen[0] and "[email]" in seen[0]

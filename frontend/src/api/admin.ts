@@ -220,6 +220,7 @@ export const adminApi = {
   unpublishTask: (id: number) => api.del<{ message: string }>(`/api/admin/tasks/${id}`),
   evaluations: (status: string, page: number) => api.get<Page<AIEvaluationRow>>(`/api/admin/ai/evaluations${qs({ status, page })}`),
   analyses: (status: string, page: number) => api.get<AIAnalysisPage>(`/api/admin/ai/analyses${qs({ status, page })}`),
+  aiUsage: (days: number) => api.get<AIUsage>(`/api/admin/ai/usage${qs({ days })}`),
   retryAnalysis: (id: number) => api.post<{ id: number; status: string; error_code: string | null; runs: number }>(`/api/admin/ai/analyses/${id}/retry`),
   prompts: () => api.get<PromptVersion[]>("/api/admin/ai/prompts"),
   createPrompt: (body: { key: string; system_prompt: string; user_template: string; notes?: string; activate: boolean }) =>
@@ -271,6 +272,8 @@ export const useAdminEvaluations = (status: string, page: number) =>
   useQuery({ queryKey: keys.admin("evaluations", status, page), queryFn: () => adminApi.evaluations(status, page) });
 export const useAdminAnalyses = (status: string, page: number) =>
   useQuery({ queryKey: keys.admin("analyses", status, page), queryFn: () => adminApi.analyses(status, page) });
+export const useAdminAIUsage = (days: number) =>
+  useQuery({ queryKey: keys.admin("ai-usage", days), queryFn: () => adminApi.aiUsage(days) });
 export const useAdminPrompts = () => useQuery({ queryKey: keys.admin("prompts"), queryFn: adminApi.prompts });
 
 /** Learner-side queries that show admin-edited content (catalogue, learning, practice, assessments, plans). */
@@ -298,15 +301,28 @@ export interface AIAnalysisRow {
   attempt_id: number;
   user_id: number;
   user_email: string;
-  status: "pending" | "succeeded" | "failed";
+  status: "pending" | "processing" | "completed" | "failed";
   language: string;
   provider: string | null;
   model: string | null;
   error_code: string | null;
   runs: number;
   latency_ms: number | null;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
 }
-export interface AIAnalysisPage { items: AIAnalysisRow[]; total: number; page: number; page_size: number; counts: Record<"pending" | "succeeded" | "failed", number> }
+interface Latency { avg_ms: number | null; p95_ms: number | null }
+/** GET /api/admin/ai/usage: configuration (never the key), limits and counts for the last `days` days. */
+export interface AIUsage {
+  days: number;
+  config: { provider: string; model: string; key_configured: boolean; timeout_seconds: number; analysis_timeout_seconds: number;
+    output_retries: number; transport_retries: number; max_output_tokens: number };
+  limits: Record<string, { requests: number; window_seconds: number }>;
+  evaluations: { total: number; by_status: Record<string, number>; fallback_rate: number | null; by_provider: Record<string, number>; latency: Latency };
+  analyses: { total: number; by_status: Record<string, number>; errors: Record<string, number>; failure_rate: number | null;
+    by_provider: Record<string, number>; latency: Latency; tokens: { prompt: number; completion: number } };
+}
+export interface AIAnalysisPage { items: AIAnalysisRow[]; total: number; page: number; page_size: number; counts: Record<AIAnalysisRow["status"], number> }

@@ -1,6 +1,7 @@
 """AI provider abstraction.
 
     AIProvider
+        ├── GroqProvider     (AI_PROVIDER=groq or auto with GROQ_API_KEY; GROQ_MODEL required, MOCK_AI=false)
         ├── OpenAIProvider   (AI_PROVIDER=openai or auto with OPENAI_API_KEY, MOCK_AI=false)
         ├── GeminiProvider   (AI_PROVIDER=gemini or auto with GEMINI_API_KEY, MOCK_AI=false)
         └── MockAIProvider   (MOCK_AI=true, the default; deterministic, no network)
@@ -12,10 +13,13 @@ goes through the same governance path.
 from __future__ import annotations
 
 import json
+import random
 import re
+import time
 import unicodedata
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Any
 
 import httpx
 
@@ -194,43 +198,98 @@ class MockAIProvider(AIProvider):
 
 
 # ---------------------------------------------------------------------------
-# OpenAI provider (Chat Completions, JSON mode). Key is only ever read server-side.
+# HTTP providers. Keys are only ever read server-side and sent in headers; errors carry status codes only, never
+# response bodies (which could echo request data) or keys.
 # ---------------------------------------------------------------------------
 
+TRANSIENT_STATUS = {408, 409, 425, 500, 502, 503, 504}
+MAX_RETRY_AFTER = 10.0  # seconds; a longer provider back-off is reported as rate limited instead of waited out
 
-class OpenAIProvider(AIProvider):
-    name = "openai"
 
-    def __init__(self, api_key: str, model: str, base_url: str, timeout: float, analysis_timeout: float | None = None):
+class _HTTPProvider(AIProvider):
+    """Shared transport: timeout per call, limited retries with exponential backoff and jitter for transient
+    failures (network errors, 5xx, 429 with a short Retry-After), token usage of the last call."""
+
+    def __init__(self, api_key: str, model: str, base_url: str, timeout: float, analysis_timeout: float | None = None,
+                 retries: int = 2, max_output_tokens: int = 4096):
         self._key = api_key
         self.model = model
         self._base = base_url.rstrip("/")
         self._timeout = timeout
         self._analysis_timeout = analysis_timeout or timeout
+        self._retries = max(0, retries)
+        self._max_output = max_output_tokens
+        self.last_usage: dict | None = None
+
+    def _post(self, url: str, headers: dict, body: dict, timeout: float) -> httpx.Response:
+        attempt = 0
+        while True:
+            try:
+                r = httpx.post(url, headers=headers, json=body, timeout=timeout)
+            except httpx.HTTPError as e:
+                if attempt < self._retries:
+                    attempt += 1
+                    _sleep_backoff(attempt)
+                    continue
+                raise AIProviderError(f"network error: {type(e).__name__}") from e
+            if r.status_code == 429:
+                wait = _retry_after(r)
+                if attempt < self._retries and wait is not None and wait <= MAX_RETRY_AFTER:
+                    attempt += 1
+                    time.sleep(wait + random.uniform(0, 0.5))  # noqa: S311 - jitter, not cryptography
+                    continue
+                raise AIProviderError("provider rate limit (HTTP 429)")
+            if r.status_code in TRANSIENT_STATUS and attempt < self._retries:
+                attempt += 1
+                _sleep_backoff(attempt)
+                continue
+            if r.status_code >= 400:
+                raise AIProviderError(f"provider returned HTTP {r.status_code}")
+            return r
+
+
+def _sleep_backoff(attempt: int) -> None:
+    time.sleep(min(8.0, 0.5 * 2 ** (attempt - 1)) + random.uniform(0, 0.25))  # noqa: S311 - jitter
+
+
+def _retry_after(r: httpx.Response) -> float | None:
+    try:
+        return float(r.headers.get("retry-after", ""))
+    except ValueError:
+        return None
+
+
+class OpenAIProvider(_HTTPProvider):
+    """OpenAI Chat Completions (JSON mode). Also the base of providers with the same documented API."""
+
+    name = "openai"
 
     def _chat(self, system: str, user: str, timeout: float | None = None) -> str:
+        r = self._post(
+            f"{self._base}/chat/completions",
+            {"Authorization": f"Bearer {self._key}"},
+            {
+                "model": self.model,
+                "temperature": 0,
+                "max_completion_tokens": self._max_output,
+                "response_format": {"type": "json_object"},
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            },
+            timeout or self._timeout,
+        )
         try:
-            r = httpx.post(
-                f"{self._base}/chat/completions",
-                headers={"Authorization": f"Bearer {self._key}"},
-                json={
-                    "model": self.model,
-                    "temperature": 0,
-                    "response_format": {"type": "json_object"},
-                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                },
-                timeout=timeout or self._timeout,
-            )
-        except httpx.HTTPError as e:
-            raise AIProviderError(f"network error: {type(e).__name__}") from e
-        if r.status_code == 429:
-            raise AIProviderError("provider rate limit (HTTP 429)")
-        if r.status_code >= 400:
-            raise AIProviderError(f"provider returned HTTP {r.status_code}")
-        try:
-            return r.json()["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, ValueError) as e:
+            data = r.json()
+            choice = data["choices"][0]
+            text = choice["message"]["content"]
+        except (KeyError, IndexError, ValueError, TypeError) as e:
             raise AIProviderError("unexpected provider response shape") from e
+        usage = data.get("usage") or {}
+        self.last_usage = {k: usage.get(k) for k in ("prompt_tokens", "completion_tokens", "total_tokens")}
+        if choice.get("finish_reason") == "length":
+            raise AIProviderError("provider response truncated (output limit)")
+        if not text or not str(text).strip():
+            raise AIProviderError("empty provider response")
+        return str(text)
 
     def evaluate(self, req: EvaluationRequest) -> str:
         return self._chat(req.system_prompt, req.user_prompt)
@@ -242,48 +301,49 @@ class OpenAIProvider(AIProvider):
         return self._chat(req.system_prompt, req.user_prompt, self._analysis_timeout)
 
 
+class GroqProvider(OpenAIProvider):
+    """Groq: the official OpenAI-compatible Chat Completions API (https://api.groq.com/openai/v1), JSON mode.
+    The model is never assumed: GROQ_MODEL must name a model available to the key (scripts/ai_models.py lists them)."""
+
+    name = "groq"
+
+
 # ---------------------------------------------------------------------------
 # Google Gemini provider (Generative Language API, JSON output). The key goes in the x-goog-api-key header, never in
 # the URL, and never appears in errors or logs.
 # ---------------------------------------------------------------------------
 
 
-class GeminiProvider(AIProvider):
+class GeminiProvider(_HTTPProvider):
     name = "gemini"
 
-    def __init__(self, api_key: str, model: str, base_url: str, timeout: float, analysis_timeout: float | None = None):
-        self._key = api_key
-        self.model = model
-        self._base = base_url.rstrip("/")
-        self._timeout = timeout
-        self._analysis_timeout = analysis_timeout or timeout
-
     def _generate(self, system: str, user: str, timeout: float | None = None) -> str:
-        try:
-            r = httpx.post(
-                f"{self._base}/models/{self.model}:generateContent",
-                headers={"x-goog-api-key": self._key},
-                json={
-                    "systemInstruction": {"parts": [{"text": system}]},
-                    "contents": [{"role": "user", "parts": [{"text": user}]}],
-                    "generationConfig": {"temperature": 0, "responseMimeType": "application/json"},
-                },
-                timeout=timeout or self._timeout,
-            )
-        except httpx.HTTPError as e:
-            raise AIProviderError(f"network error: {type(e).__name__}") from e
-        if r.status_code == 429:
-            raise AIProviderError("provider rate limit (HTTP 429)")
-        if r.status_code >= 400:
-            raise AIProviderError(f"provider returned HTTP {r.status_code}")
+        r = self._post(
+            f"{self._base}/models/{self.model}:generateContent",
+            {"x-goog-api-key": self._key},
+            {
+                "systemInstruction": {"parts": [{"text": system}]},
+                "contents": [{"role": "user", "parts": [{"text": user}]}],
+                "generationConfig": {"temperature": 0, "responseMimeType": "application/json",
+                                     "maxOutputTokens": self._max_output},
+            },
+            timeout or self._timeout,
+        )
+        data = None
         try:
             data = r.json()
             candidate = data["candidates"][0]
             text = "".join(part.get("text", "") for part in candidate["content"]["parts"])
         except (KeyError, IndexError, ValueError, TypeError) as e:
-            blocked = isinstance(locals().get("data"), dict) and data.get("promptFeedback", {}).get("blockReason")
+            blocked = isinstance(data, dict) and data.get("promptFeedback", {}).get("blockReason")
             reason = "response blocked by the provider" if blocked else "unexpected provider response shape"
             raise AIProviderError(reason) from e
+        meta = data.get("usageMetadata") or {}
+        self.last_usage = {"prompt_tokens": meta.get("promptTokenCount"),
+                           "completion_tokens": meta.get("candidatesTokenCount"),
+                           "total_tokens": meta.get("totalTokenCount")}
+        if candidate.get("finishReason") == "MAX_TOKENS":
+            raise AIProviderError("provider response truncated (output limit)")
         if not text.strip():
             raise AIProviderError("empty provider response")
         return text
@@ -301,10 +361,12 @@ class GeminiProvider(AIProvider):
 def get_provider() -> AIProvider:
     s = get_settings()
     provider = s.resolved_ai_provider
+    common: dict[str, Any] = dict(timeout=s.ai_timeout_seconds, analysis_timeout=s.ai_analysis_timeout_seconds,
+                                  retries=s.ai_transport_retries, max_output_tokens=s.ai_max_output_tokens)
+    if provider == "groq":
+        return GroqProvider(s.ai_key("groq"), s.groq_model, s.groq_base_url, **common)
     if provider == "gemini":
-        return GeminiProvider(s.ai_key("gemini"), s.gemini_model, s.gemini_base_url, s.ai_timeout_seconds,
-                              s.ai_analysis_timeout_seconds)
+        return GeminiProvider(s.ai_key("gemini"), s.gemini_model, s.gemini_base_url, **common)
     if provider == "openai":
-        return OpenAIProvider(s.ai_key("openai"), s.openai_model, s.openai_base_url, s.ai_timeout_seconds,
-                              s.ai_analysis_timeout_seconds)
+        return OpenAIProvider(s.ai_key("openai"), s.openai_model, s.openai_base_url, **common)
     return MockAIProvider()

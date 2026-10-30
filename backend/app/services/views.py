@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.ai.privacy import truncate
 from app.ai.providers import heuristic_insight
 from app.ai.service import RULE_BASED as AI_RULE_BASED
 from app.core.i18n import lang as tr_lang
@@ -12,6 +13,7 @@ from app.core.i18n import tr
 from app.models import (
     AIAnalysis,
     AIEvaluation,
+    Answer,
     AssessmentAttempt,
     Competency,
     CompetencyArea,
@@ -338,7 +340,7 @@ def analysis_view(db: Session, att: AssessmentAttempt, row: AIAnalysis | None) -
         "provider": row.provider, "model": row.model, "rule_based": row.provider in AI_RULE_BASED,
         "runs": row.runs, "completed_at": row.completed_at, "analysis": None,
     }
-    if row.status != "succeeded" or not row.output:
+    if row.status != "completed" or not row.output:
         return base
     out = row.output
     if row.provider in AI_RULE_BASED and row.language != tr_lang():
@@ -376,20 +378,41 @@ def analysis_view(db: Session, att: AssessmentAttempt, row: AIAnalysis | None) -
         return {"id": t.id, "title": t.title, "minutes": t.duration_minutes,
                 "available": t.status == ContentStatus.PUBLISHED}
 
+    answer_ids = {i for group in ("strengths", "development_areas", "competency_insights")
+                  for c in out.get(group, []) for i in c.get("evidence", [])}
+    answers = {a.id: a for a in db.scalars(select(Answer).where(Answer.attempt_id == att.id,
+                                                                 Answer.id.in_(answer_ids)))} if answer_ids else {}
+
+    def evidence(ids: list[int]) -> list[dict]:
+        # The learner's own answers (this attempt only), in the reader's language; free text shortened, not redacted.
+        out_ = []
+        for i in ids:
+            a = answers.get(i)
+            if a is not None:
+                text = a.option.label if a.option is not None else truncate(a.text_response or "", 240)
+                out_.append({"answer_id": a.id, "question": truncate(a.question.text, 200), "response": text})
+        return out_
+
+    def claim(c: dict) -> dict:
+        # Outputs written before claims carried evidence have none: shown without it, confidence unknown.
+        return {**comp(c["competency_code"]), "evidence": evidence(c.get("evidence", [])),
+                "reasoning_summary": c.get("reasoning_summary"), "confidence": c.get("confidence")}
+
     analysis = {
         "summary": out["summary"],
-        "strengths": [{**comp(s["competency_code"]), "explanation": s["explanation"]}
-                      for s in out.get("strengths", [])],
-        "development_areas": [{**comp(d["competency_code"]), "explanation": d["explanation"], "priority": d["priority"]}
+        "strengths": [{**claim(s), "explanation": s["explanation"]} for s in out.get("strengths", [])],
+        "development_areas": [{**claim(d), "explanation": d["explanation"], "priority": d["priority"]}
                               for d in sorted(out.get("development_areas", []), key=lambda d: d["priority"])],
-        "competency_insights": [{**comp(i["competency_code"]), "insight": i["insight"]}
-                                for i in out.get("competency_insights", [])],
+        "competency_insights": [{**claim(i), "insight": i["insight"]} for i in out.get("competency_insights", [])],
         "recommended_actions": [{"competency": comp(a["competency_code"]), "kind": a["kind"], "reason": a["reason"],
                                  "resource": resource(a.get("resource_id")), "task": task(a.get("task_id"))}
                                 for a in out.get("recommended_actions", [])],
         "milestones": [{**comp(m["competency_code"]), "objective": m["objective"], "measure": m["measure"],
                         "target_weeks": m["target_weeks"]} for m in out.get("milestones", [])],
-        "confidence_notes": out.get("confidence_notes", []),
+        "progress_notes": [{**comp(n["competency_code"]), "explanation": n["explanation"]}
+                           for n in out.get("progress_notes", [])],
+        "limitations": out.get("limitations") or out.get("confidence_notes", []),
+        "additional_questions": out.get("additional_questions", []),
         "reassessment_weeks": out.get("reassessment_weeks"),
     }
     return {**base, "analysis": analysis}

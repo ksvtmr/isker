@@ -147,6 +147,7 @@ def save_position(attempt_id: int, body: PositionIn, user: CurrentUser, db: DB) 
 def submit(attempt_id: int, user: CurrentUser, db: DB) -> AttemptResults:
     att = svc.get_attempt(db, user, attempt_id)
     svc.submit(db, user, att)
+    analysis_service.enqueue(db, user, att)  # queued; runs when the results page asks for it
     db.commit()
     return results_for(db, user.id, att)
 
@@ -175,7 +176,7 @@ def run_analysis(attempt_id: int, body: AnalysisRunIn, user: CurrentUser, db: DB
     if att.status != AttemptStatus.COMPLETED:
         raise ConflictError("Finish the assessment first.", "ATTEMPT_NOT_COMPLETED")
     existing = analysis_service.get_analysis(db, att.id)
-    if existing is None or existing.status == "failed" or body.regenerate:
+    if existing is None or existing.status in ("pending", "failed") or body.regenerate:
         enforce("ai_analysis_user", str(user.id))
     row = analysis_service.run_analysis(db, user, att, regenerate=body.regenerate)
     return views.analysis_view(db, att, row)

@@ -159,13 +159,14 @@ def test_same_method_is_compared(client):
 def test_analysis_lifecycle_is_idempotent_and_references_real_content(client, db):
     new_learner(client)
     att_id = complete_full(client)
-    assert client.get(f"/api/assessments/attempts/{att_id}/analysis").json()["status"] == "none"
+    # Queued at submit; nothing has run yet.
+    assert client.get(f"/api/assessments/attempts/{att_id}/analysis").json()["status"] == "pending"
     before = [(s.competency_id, s.score) for s in db.scalars(
         select(CompetencyScore).where(CompetencyScore.attempt_id == att_id))]
     r = client.post(f"/api/assessments/attempts/{att_id}/analysis", json={})
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["status"] == "succeeded" and body["rule_based"] is True and body["language"] == "en"
+    assert body["status"] == "completed" and body["rule_based"] is True and body["language"] == "en"
     a = body["analysis"]
     assert a["summary"] and a["development_areas"] and a["milestones"] and a["reassessment_weeks"]
     for act in a["recommended_actions"]:
@@ -207,7 +208,7 @@ def test_invalid_output_fails_safely_then_retry_succeeds_without_duplicates(clie
     assert len(fake.requests) == 2
     monkeypatch.setattr(analysis_mod, "get_provider", lambda: MockAIProvider())
     r = client.post(f"/api/assessments/attempts/{att_id}/analysis", json={}).json()
-    assert r["status"] == "succeeded" and r["runs"] == 2
+    assert r["status"] == "completed" and r["runs"] == 2
     db.expire_all()
     assert db.scalar(select(func.count()).select_from(AIAnalysis)) == 1
 
@@ -268,12 +269,12 @@ def test_language_is_passed_and_checked(client, monkeypatch):
     assert all(req.facts["language"] == "kk" and "Kazakh" in req.system_prompt for req in fake.requests)
     monkeypatch.setattr(analysis_mod, "get_provider", lambda: MockAIProvider())
     r = client.post(f"/api/assessments/attempts/{att_id}/analysis", json={}, headers=kk).json()
-    assert r["status"] == "succeeded" and r["language"] == "kk"
+    assert r["status"] == "completed" and r["language"] == "kk"
     assert any("ә" in t or "қ" in t or "ғ" in t for t in [r["analysis"]["summary"]])  # ә қ ғ
     # Regenerate in Russian: same row, new language.
     r = client.post(f"/api/assessments/attempts/{att_id}/analysis", json={"regenerate": True},
                     headers={"Accept-Language": "ru"}).json()
-    assert r["status"] == "succeeded" and r["language"] == "ru" and r["runs"] == 3
+    assert r["status"] == "completed" and r["language"] == "ru" and r["runs"] == 3
 
 
 def test_analysis_runs_are_rate_limited(client):
@@ -284,15 +285,21 @@ def test_analysis_runs_are_rate_limited(client):
     assert codes[:10] == [200] * 10 and codes[10] == 429
 
 
-def test_facts_contain_no_personal_data(client, db):
+def test_facts_contain_answers_but_no_personal_data(client, db):
     new_learner(client)
     att_id = complete_full(client)
     from app.models import User
 
     user = db.scalar(select(User).where(User.email == "learner@example.com"))
-    facts = json.dumps(analysis_mod.build_facts(db, user, db.get(AssessmentAttempt, att_id)), ensure_ascii=False)
-    for private in ("learner@example.com", "Dana", "Small online shop", "CS student", "landing page"):
-        assert private not in facts
+    facts = analysis_mod.build_facts(db, user, db.get(AssessmentAttempt, att_id))
+    dumped = json.dumps(facts, ensure_ascii=False)
+    for private in ("learner@example.com", "Dana", "Small online shop", "CS student"):
+        assert private not in dumped
+    # The learner's own answers are there (question + chosen option or redacted text), each tied to competencies.
+    ids = {a["answer_id"] for a in facts["answers"]}
+    assert ids and all(a["question"] and a["response"] for a in facts["answers"])
+    assert any("landing page" in a["response"] for a in facts["answers"])
+    assert all(set(c["answer_ids"]) <= ids for c in facts["competencies"])
 
 
 # --- Admin ------------------------------------------------------------------------------------------------------------
@@ -315,7 +322,7 @@ def test_admin_sees_and_retries_failed_analyses(client, db, monkeypatch):
     login(client, "boss@example.com")
     monkeypatch.setattr(analysis_mod, "get_provider", lambda: MockAIProvider())
     r = client.post(f"/api/admin/ai/analyses/{aid}/retry").json()
-    assert r["status"] == "succeeded"
+    assert r["status"] == "completed"
     assert client.post(f"/api/admin/ai/analyses/{aid}/retry").status_code == 409
 
 
@@ -347,6 +354,7 @@ def test_api_key_is_never_returned(client, db, monkeypatch):
 
 
 def test_gemini_sends_key_in_header_only_and_hides_errors(monkeypatch):
+    monkeypatch.setattr("app.ai.providers.time.sleep", lambda s: None)  # transport retries without waiting
     calls = []
 
     def fake_post(url, headers=None, json=None, timeout=None):  # MOCKED HTTP
@@ -379,11 +387,11 @@ def test_failed_regeneration_keeps_the_previous_analysis(client, monkeypatch):
     new_learner(client)
     att_id = complete_full(client)
     first = client.post(f"/api/assessments/attempts/{att_id}/analysis", json={}).json()
-    assert first["status"] == "succeeded" and first["language"] == "en"
+    assert first["status"] == "completed" and first["language"] == "en"
     monkeypatch.setattr(analysis_mod, "get_provider", lambda: FakeProvider([AIProviderError("network error: X")]))
     r = client.post(f"/api/assessments/attempts/{att_id}/analysis", json={"regenerate": True},
                     headers={"Accept-Language": "ru"}).json()
-    assert r["status"] == "succeeded" and r["error_code"] == "provider_unavailable"
+    assert r["status"] == "completed" and r["error_code"] == "provider_unavailable"
     assert r["language"] == "en" and r["analysis"]["summary"] == first["analysis"]["summary"]
 
 

@@ -38,12 +38,13 @@ class AIPromptVersion(Base):
 
 class AIAnalysis(Base):
     """AI development analysis of one completed attempt (app/ai/analysis.py): one row per attempt, so retries update
-    it instead of adding results. `output` is the validated DevelopmentAnalysis; it never changes scores."""
+    it instead of adding results. `output` is the validated DevelopmentAnalysis; it never changes scores.
+    status: pending (queued) → processing → completed | failed."""
 
     __tablename__ = "ai_analyses"
     __table_args__ = (
         UniqueConstraint("attempt_id"),
-        CheckConstraint("status IN ('pending', 'succeeded', 'failed')", name="status_valid"),
+        CheckConstraint("status IN ('pending', 'processing', 'completed', 'failed')", name="status_valid"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -60,6 +61,11 @@ class AIAnalysis(Base):
     error_code: Mapped[str | None] = mapped_column(String(32))
     runs: Mapped[int] = mapped_column(Integer, default=0)
     latency_ms: Mapped[int | None] = mapped_column(Integer)
+    # Tokens reported by the provider for the last run (all tries); NULL for the rule-based provider.
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer)
+    # sha256 of facts + prompt + provider + model of the stored output: an unchanged regeneration is not re-run.
+    input_digest: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

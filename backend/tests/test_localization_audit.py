@@ -143,7 +143,7 @@ class Scripted(AIProvider):
 def _reply(explanation: str) -> str:
     return json.dumps({
         "competency": "Valuing Ideas", "score": 50, "level": "", "confidence": 0.8,
-        "criteria": [{"criterion": c["criterion"], "rating": 3, "evidence": ""} for c in RUBRIC],
+        "criteria": [{"criterion": c["criterion"], "rating": 3, "evidence": "interview customers"} for c in RUBRIC],
         "evidence": [], "strengths": [], "development_areas": [], "explanation": explanation,
     })
 

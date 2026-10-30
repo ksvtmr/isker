@@ -198,13 +198,14 @@ CATALOG: dict[str, dict[str, str]] = {
     },
     # Development analysis: language instruction for real models, and the rule-based (mock) analysis texts
     "analysis.language_instruction": {
-        "ru": "Write every free-text field (summary, explanation, insight, reason, objective, measure, "
-        "confidence_notes) in Russian. Set \"language\" to \"ru\". Keep JSON keys and competency codes as given.",
-        "kk": "Write every free-text field (summary, explanation, insight, reason, objective, measure, "
-        "confidence_notes) in Kazakh (Cyrillic). Set \"language\" to \"kk\". Keep JSON keys and competency codes "
-        "as given.",
-        "en": "Write every free-text field in English. Set \"language\" to \"en\". Keep JSON keys and competency codes "
-        "as given.",
+        "ru": "Write every free-text field (summary, explanation, insight, reasoning_summary, reason, objective, "
+        "measure, limitations, additional_questions, progress notes) in Russian. Set \"language\" to \"ru\". Keep "
+        "JSON keys, enum values and competency codes as given.",
+        "kk": "Write every free-text field (summary, explanation, insight, reasoning_summary, reason, objective, "
+        "measure, limitations, additional_questions, progress notes) in Kazakh (Cyrillic). Set \"language\" to "
+        "\"kk\". Keep JSON keys, enum values and competency codes as given.",
+        "en": "Write every free-text field in English. Set \"language\" to \"en\". Keep JSON keys, enum values and "
+        "competency codes as given.",
     },
     "analysis.summary": {
         "ru": "По результатам оценки ваш общий балл — {overall} из 100. Сильнее всего проявилась компетенция «{best}», "
@@ -276,6 +277,31 @@ CATALOG: dict[str, dict[str, str]] = {
         "ru": "Баллы — оценка по ответам в этом тесте, а не научно подтверждённое измерение или диагноз.",
         "kk": "Баллдар — осы тесттегі жауаптар бойынша бағалау, ғылыми расталған өлшем немесе диагноз емес.",
         "en": "Scores are estimates from your answers to this assessment, not a validated measurement or diagnosis.",
+    },
+    "analysis.reasoning": {
+        "ru": "Вывод основан на ваших ответах в этом тесте (ответов: {n}) и баллах {score} из 100.",
+        "kk": "Қорытынды осы тесттегі жауаптарыңызға (жауап саны: {n}) және 100-ден {score} балға негізделген.",
+        "en": "Based on your answers in this assessment (answers used: {n}) and a score of {score} out of 100.",
+    },
+    "analysis.progress_up": {
+        "ru": "«{name}»: {previous} → {current} по сравнению с предыдущей сопоставимой оценкой.",
+        "kk": "«{name}»: алдыңғы салыстырмалы бағалаумен салыстырғанда {previous} → {current}.",
+        "en": "{name}: {previous} → {current} since your previous comparable assessment.",
+    },
+    "analysis.progress_down": {
+        "ru": "«{name}»: {previous} → {current} по сравнению с предыдущей сопоставимой оценкой; стоит вернуться к "
+        "этой компетенции.",
+        "kk": "«{name}»: алдыңғы салыстырмалы бағалаумен салыстырғанда {previous} → {current}; бұл құзыретке қайта "
+        "оралған жөн.",
+        "en": "{name}: {previous} → {current} since your previous comparable assessment; worth revisiting.",
+    },
+    "analysis.question_more": {
+        "ru": "«{name}»: опишите недавнюю реальную ситуацию, где понадобилась эта компетенция. Что вы сделали и что "
+        "получилось?",
+        "kk": "«{name}»: осы құзырет қажет болған жақындағы нақты жағдайды сипаттаңыз. Не істедіңіз және нәтижесі "
+        "қандай болды?",
+        "en": "{name}: describe a recent real situation that needed this competency. What did you do, and what "
+        "happened?",
     },
     "notify.overall": {
         "ru": "Общий балл {score} / 100.",

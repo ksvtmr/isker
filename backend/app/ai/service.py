@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from dataclasses import dataclass
 
@@ -17,6 +18,7 @@ from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.ai.privacy import redact
 from app.ai.prompts import DEFAULT_PROMPTS, EVALUATION_KEY, INSIGHT_KEY
 from app.ai.providers import (
     AIProvider,
@@ -32,11 +34,13 @@ from app.core.config import get_settings
 from app.core.content_i18n import normalize
 from app.core.context import language_var
 from app.core.i18n import tr
-from app.models import AIEvaluation, AIPromptVersion
+from app.models import AIEvaluation, AIPromptVersion, User
 from app.models.enums import AIEvalStatus, AIInputType
 from app.services.levels import level_name_for
 
 log = logging.getLogger("isker.ai")
+
+MAX_EVALUATED_CHARS = 4000  # an open answer or practice submission sent for evaluation
 
 
 @dataclass
@@ -119,6 +123,28 @@ def _evaluation_texts(out: EvaluationOutput) -> list[str]:
     return [out.explanation, *out.strengths, *out.development_areas]
 
 
+def _norm_quote(s: str) -> str:
+    s = s.casefold().replace("’", "'").replace("“", '"').replace("”", '"').replace("«", '"').replace("»", '"')
+    return re.sub(r"\s+", " ", s.strip(" \t\n\"'.,;:")).strip()
+
+
+def unverified_evidence(output: EvaluationOutput, answer: str) -> list[str]:
+    """Criteria rated above 0 whose evidence is not an excerpt of the answer (fragments around "…" each must occur
+    in it, ignoring case, spacing and surrounding quotes). Such ratings are lowered to 0, so a model cannot raise a
+    score with evidence that is not in the learner's text."""
+    text = _norm_quote(answer)
+    bad = []
+    for c in output.criteria:
+        if c.rating <= 0:
+            continue
+        parts = [_norm_quote(p) for p in re.split(r"\.\.\.|…", c.evidence)]
+        parts = [p for p in parts if p]
+        if not parts or any(p not in text for p in parts):
+            bad.append(c.criterion)
+            c.rating = 0
+    return bad
+
+
 def _format_rubric(rubric: list[dict]) -> str:
     return "\n".join(f"- {r['criterion']}: {r['description']}" for r in rubric)
 
@@ -142,6 +168,10 @@ def evaluate_text(
     lang = language_var.get()
     rule_based = provider.name in RULE_BASED
     pv, system, user_tpl = active_prompt(db, EVALUATION_KEY)
+    if not rule_based:
+        # What leaves the server: personal identifiers removed, prompt fences neutralised, length capped.
+        owner = db.get(User, user_id) if user_id else None
+        answer = redact(answer, names=(owner.full_name,) if owner else (), limit=MAX_EVALUATED_CHARS)
     user_prompt = user_tpl.format(
         competency=competency_name, question=question, rubric=_format_rubric(rubric), answer=answer
     )
@@ -162,6 +192,13 @@ def evaluate_text(
             if missing:
                 raise ValueError(f"missing criteria: {', '.join(missing)}")
             if not rule_based:
+                positive = [c for c in output.criteria if c.rating > 0]
+                unverified = unverified_evidence(output, answer)
+                if positive and len(unverified) == len(positive):
+                    raise ValueError("no rating is supported by a quote from the answer")
+                if unverified:
+                    errors.append(f"attempt {attempts}: ratings lowered to 0 (evidence not in the answer): "
+                                  f"{', '.join(unverified)[:200]}")
                 check_language(_evaluation_texts(output), lang)
             break
         except (AIProviderError, json.JSONDecodeError, PydanticValidationError, ValueError) as e:

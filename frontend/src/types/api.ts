@@ -557,13 +557,25 @@ export interface NotificationItem {
 
 // --- AI development analysis (GET/POST /api/assessments/attempts/{id}/analysis) -------------------------------------
 
-export type AnalysisStatus = "none" | "pending" | "succeeded" | "failed";
+/** none: no row yet; pending: queued at submit; processing: being written; completed; failed. */
+export type AnalysisStatus = "none" | "pending" | "processing" | "completed" | "failed";
 
 export interface AnalysisCompetency {
   code: string;
   name: string;
   score: number | null;
   evidence_level: EvidenceLevel | null;
+}
+
+/** One of the learner's own answers that a claim rests on (this attempt only). */
+export interface AnalysisEvidence { answer_id: number; question: string; response: string }
+
+/** A claim: competency + the answers it rests on, a short reasoning and a confidence capped by the evidence level.
+ * Analyses written before claims carried evidence have empty evidence and null reasoning/confidence. */
+export interface AnalysisClaim extends AnalysisCompetency {
+  evidence: AnalysisEvidence[];
+  reasoning_summary: string | null;
+  confidence: "low" | "medium" | "high" | null;
 }
 
 export interface AnalysisAction {
@@ -576,12 +588,14 @@ export interface AnalysisAction {
 
 export interface DevelopmentAnalysis {
   summary: string;
-  strengths: (AnalysisCompetency & { explanation: string })[];
-  development_areas: (AnalysisCompetency & { explanation: string; priority: number })[];
-  competency_insights: (AnalysisCompetency & { insight: string })[];
+  strengths: (AnalysisClaim & { explanation: string })[];
+  development_areas: (AnalysisClaim & { explanation: string; priority: number })[];
+  competency_insights: (AnalysisClaim & { insight: string })[];
   recommended_actions: AnalysisAction[];
   milestones: (AnalysisCompetency & { objective: string; measure: string; target_weeks: number })[];
-  confidence_notes: string[];
+  progress_notes: (AnalysisCompetency & { explanation: string })[];
+  limitations: string[];
+  additional_questions: string[];
   reassessment_weeks: number | null;
 }
 

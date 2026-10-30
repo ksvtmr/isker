@@ -60,43 +60,11 @@ reassessment does.
 
 After a full assessment the analysis explains the deterministic results; it never changes scores, gaps or plan items.
 
-**Input ("facts", data-minimised):** language; assessment/scoring version; overall score; per competency: code,
-name, area, score, level, per-method scores, evidence level, target, gap, priority rank; goal codes/titles;
-experience level, weekly learning minutes, preferred format; counts of completed resources/tasks; the catalog of
-up to 3 resources and 2 tasks per top-5 gap competency that are **published and available on the learner's plan**
-(advanced resources only with the entitlement), with completion flags. No name, email, free-text answer or other
-personal data (test `test_facts_contain_no_personal_data`).
-
-**Output schema** (strict Pydantic, `DevelopmentAnalysis`):
-
-```
-summary: str
-strengths: [{competency_code, explanation}]                      ≤5
-development_areas: [{competency_code, explanation, priority 1-5}] ≤5
-competency_insights: [{competency_code, insight}]                 ≤15
-recommended_actions: [{competency_code, kind: learn|practice|reflect, resource_id?, task_id?, reason}] ≤10
-milestones: [{competency_code, objective, measure, target_weeks 1-26}] ≤6
-confidence_notes: [str]                                           ≤6
-reassessment_weeks: int 2-26
-language: ru|kk|en
-```
-
-(`learning_path` = the `learn` actions, `practice_tasks` = the `practice` actions.)
-
-**Validation before saving:** JSON parse → schema → references: every competency code must be in the facts; a
-`learn` action needs a catalog resource of the same competency, a `practice` action a catalog task of the same
-competency, a `reflect` action neither → `language` field must equal the requested language → script check of the
-summary alone and of all texts together (Cyrillic for ru/kk, Latin for en). Invalid output, a wrong language or a
-provider error → retry (`AI_MAX_RETRIES`, default 1 → 2 tries; a 429 stops immediately) → `failed` with
-`error_code` `invalid_output` | `wrong_language` | `provider_unavailable` | `rate_limited`.
-
-**Lifecycle:** one row per attempt in `ai_analyses` (unique `attempt_id`), status `pending → succeeded | failed`,
-runs counter, provider, model, prompt version, latency. Concurrent requests see `pending` and do not start a second
-run; a `pending` row older than 3 minutes is treated as interrupted. Endpoints (owner only, attempt must be
-completed): `GET /api/assessments/attempts/{id}/analysis`, `POST …/analysis {regenerate}` (rate limit
-`ai_analysis_user`: 10 runs per user per hour). Display: model texts as written; competency names, scores and
-resource/task titles are read from the database at display time, and an item that is no longer published/available is
-shown without a link.
+> **Updated 2026-10-30.** The analysis is now evidence-grounded (claims cite the learner's answers, carry a reasoning
+> summary and a confidence capped by the evidence level), facts include the redacted answers and progress, and the
+> lifecycle is `pending → processing → completed | failed`. The current description is in
+> [assessment-analysis.md](assessment-analysis.md); providers and limits in
+> [provider-integration.md](provider-integration.md).
 
 **Providers** (`app/ai/providers.py`): `GeminiProvider` (Generative Language API `generateContent`, JSON response
 mode, key in the `x-goog-api-key` header), `OpenAIProvider` (Chat Completions, JSON mode), `MockAIProvider`

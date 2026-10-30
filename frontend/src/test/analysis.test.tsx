@@ -1,4 +1,4 @@
-/** AI development analysis panel: requested automatically, pending, failed with retry, and real links only. */
+/** AI development analysis panel: requested automatically, processing, failed with retry, evidence, real links only. */
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -6,20 +6,26 @@ import { AnalysisPanel } from "../components/AnalysisPanel";
 import { mockApi, renderWithProviders } from "./utils";
 
 const comp = (code: string, name: string, score: number) => ({ code, name, score, evidence_level: "sufficient" });
+const basis = (ids: number[], confidence: "low" | "medium" | "high") => ({
+  evidence: ids.map((id) => ({ answer_id: id, question: `Question ${id}?`, response: `Answer ${id}` })),
+  reasoning_summary: "Two demonstrated answers support it.", confidence,
+});
 const ready = {
-  status: "succeeded", attempt_id: 5, language: "en", error_code: null, provider: "gemini", model: "gemini-test", rule_based: false, runs: 1,
+  status: "completed", attempt_id: 5, language: "en", error_code: null, provider: "gemini", model: "gemini-test", rule_based: false, runs: 1,
   completed_at: "2026-10-29T10:00:00Z",
   analysis: {
     summary: "Your overall score is 64 out of 100.",
-    strengths: [{ ...comp("creativity", "Creativity", 82), explanation: "Strong idea generation." }],
-    development_areas: [{ ...comp("planning", "Planning and management", 41), explanation: "Largest gap.", priority: 1 }],
+    strengths: [{ ...comp("creativity", "Creativity", 82), ...basis([7, 9], "high"), explanation: "Strong idea generation." }],
+    development_areas: [{ ...comp("planning", "Planning and management", 41), ...basis([11], "medium"), explanation: "Largest gap.", priority: 1 }],
     competency_insights: [],
     recommended_actions: [
       { competency: comp("planning", "Planning and management", 41), kind: "learn", reason: "Matches your level.", resource: { id: 12, title: "Project planning basics", type: "article", minutes: 20, available: true }, task: null },
       { competency: comp("planning", "Planning and management", 41), kind: "practice", reason: "Apply it.", resource: null, task: { id: 3, title: "Plan a launch", minutes: 45, available: false } },
     ],
     milestones: [{ ...comp("planning", "Planning and management", 41), objective: "Raise Planning from 41 to 60", measure: "Reassess", target_weeks: 6 }],
-    confidence_notes: ["Scores are estimates."],
+    progress_notes: [],
+    limitations: ["Scores are estimates."],
+    additional_questions: ["Describe a recent plan you made."],
     reassessment_weeks: 6,
   },
 };
@@ -40,10 +46,27 @@ describe("AnalysisPanel", () => {
     expect(screen.queryByRole("link", { name: "Plan a launch" })).not.toBeInTheDocument();
     expect(screen.getByText("Raise Planning from 41 to 60")).toBeInTheDocument();
     expect(screen.getByText("A reassessment is useful in about 6 weeks.")).toBeInTheDocument();
+    // Each claim shows its confidence and the learner's own answers it rests on.
+    expect(screen.getByText("High confidence")).toBeInTheDocument();
+    expect(screen.getByText("Based on 2 of your answers")).toBeInTheDocument();
+    expect(screen.getByText("Your answer: «Answer 7»")).toBeInTheDocument();
+    expect(screen.getByText("Scores are estimates.")).toBeInTheDocument();
+    expect(screen.getByText("Describe a recent plan you made.")).toBeInTheDocument();
   });
 
-  it("shows a pending state while the analysis is being written", async () => {
-    mockApi({ "GET /api/assessments/attempts/5/analysis": { json: { status: "pending", attempt_id: 5 } } });
+  it("runs a queued (pending) analysis once", async () => {
+    let posts = 0;
+    mockApi({
+      "GET /api/assessments/attempts/5/analysis": { json: { status: "pending", attempt_id: 5 } },
+      "POST /api/assessments/attempts/5/analysis": () => { posts++; return { json: ready }; },
+    });
+    renderWithProviders(<AnalysisPanel attemptId={5} />);
+    expect(await screen.findByText("Your overall score is 64 out of 100.")).toBeInTheDocument();
+    expect(posts).toBe(1);
+  });
+
+  it("shows a processing state while the analysis is being written", async () => {
+    mockApi({ "GET /api/assessments/attempts/5/analysis": { json: { status: "processing", attempt_id: 5 } } });
     renderWithProviders(<AnalysisPanel attemptId={5} />);
     expect(await screen.findByText(/Analysing your results/)).toBeInTheDocument();
   });
